@@ -1,0 +1,5 @@
+#!/bin/bash
+# Shell wrapper required because macOS cannot execute .py files directly as Native Messaging hosts.
+# Chrome invokes this script; it calls the Python host module.
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+exec "$SCRIPT_DIR/.venv/bin/python" -m host.host "$@"
