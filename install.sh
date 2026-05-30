@@ -34,8 +34,17 @@ main()
 EOF
 chmod +x "$HOST_BINARY"
 
-# 4. Strip Gatekeeper quarantine (Ventura+ silently blocks unsigned binaries)
+# 4. Strip Gatekeeper quarantine from our wrapper and the claude CLI it invokes.
+#    Without this, macOS pops a security dialog on EVERY clip because claude's
+#    native .node addons carry quarantine attributes from download.
 xattr -d com.apple.quarantine "$HOST_BINARY" 2>/dev/null || true
+CLAUDE_BIN="$(command -v claude 2>/dev/null)"
+if [ -n "$CLAUDE_BIN" ]; then
+    CLAUDE_REAL="$(python3 -c "import os,sys; print(os.path.realpath(sys.argv[1]))" "$CLAUDE_BIN")"
+    CLAUDE_PKG="$(dirname "$(dirname "$CLAUDE_REAL")")"
+    xattr -dr com.apple.quarantine "$CLAUDE_PKG" 2>/dev/null || true
+    echo "Stripped quarantine from Claude CLI at $CLAUDE_PKG"
+fi
 
 echo ""
 echo "Paste your Chrome extension ID (find it at chrome://extensions with Developer Mode on):"
