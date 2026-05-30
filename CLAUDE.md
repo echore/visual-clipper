@@ -31,3 +31,35 @@ python3 -m venv .venv && .venv/bin/pip install -r server/requirements.txt
 - `pytest -m "not integration"` — all green
 - `pytest -m integration` — PASS (real note written with hex color in q1, q3 blank)
 - No hardcoded secrets anywhere
+
+---
+
+## Coding Principles
+
+### Think Before Coding
+Before writing any code on a non-trivial task:
+- State assumptions explicitly. If uncertain, ask — don't guess.
+- If multiple interpretations exist, list them; don't silently pick one.
+- If a simpler approach exists, say so and push back.
+
+### Simplicity First (YAGNI)
+- Add only what was explicitly requested — nothing more.
+- No abstractions, flexibility, or configurability that wasn't asked for.
+- No error handling for scenarios that can't happen.
+- Self-check before submitting: "Would a senior engineer call this over-engineered?" → simplify if yes.
+
+### Surgical Changes
+- Only touch code directly required by the task.
+- Do not improve, reformat, or clean up adjacent code that wasn't asked about.
+- Match the style of existing code even if you'd do it differently.
+- Spot unrelated dead code? Mention it — don't delete it.
+- Clean up only the orphans YOUR changes created (unused imports, vars, functions).
+
+### Verifiable Done
+- Every task needs a concrete, checkable success criterion before starting.
+- After completing: report test command + output, not just "done".
+- After a bug fix: verify the bug is gone AND nothing else broke.
+- When stuck: ask "why is this happening?" before asking "how do I fix it?"
+
+### Long-term Lens
+Every non-trivial decision: privacy/security risk? Still maintainable in a year? Safe for other users?
