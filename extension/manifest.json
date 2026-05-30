@@ -1,18 +1,19 @@
 {
   "manifest_version": 3,
-  "name": "Screenshot Clipper",
+  "name": "Obsidian Visual Clipper",
   "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEArQgax6Bf9ExsKcekDymf3YslMzMX324di2LOty+TgbYgj7xiOG8trwYKQTIANmopq+P2Eaf/84LQrPOHS5YxqyzunpqAubfb9MQ9JFlxKKRbv+6oZ13BmYfeVl5rYyU/6lW6RfAEBvZQRIS53pPrB6SWCegX5vjymlTzbquL+TcZ4gld2YCN0jRKepcxSgsTdUDk1tkbfjQtXxRu4bI32LsBWu6T3kqVZbQ0t7CyqYGuY2KRtOtcA+AHd81QolXZNwTiS0L+et5wwEbCgceQqOBtfuGdc8dhlWxdPfMTXeCi6fLQjeAShMV6n8CDOWT73666soegCj4p4qTdO4nXoQIDAQAB",
-  "version": "0.1.0",
-  "description": "Clip a design region to Obsidian as a 五个问题 study note",
+  "version": "0.2.0",
+  "description": "Capture screenshots and video frames to Obsidian via vault-autopilot",
   "icons": {
     "16": "icons/icon16.png",
     "48": "icons/icon48.png",
     "128": "icons/icon128.png"
   },
-  "permissions": ["storage", "activeTab", "nativeMessaging", "notifications"],
+  "permissions": ["storage", "activeTab", "notifications", "tabs"],
   "host_permissions": ["<all_urls>"],
   "background": {
-    "service_worker": "background.js"
+    "service_worker": "background.js",
+    "type": "module"
   },
   "content_scripts": [
     {

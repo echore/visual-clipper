@@ -1,0 +1,11 @@
+{
+  "name": "obsidian-visual-clipper",
+  "private": true,
+  "type": "module",
+  "devDependencies": {
+    "jest": "^29.0.0"
+  },
+  "scripts": {
+    "test": "node --experimental-vm-modules node_modules/.bin/jest"
+  }
+}
