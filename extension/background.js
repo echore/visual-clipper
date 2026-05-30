@@ -9,26 +9,21 @@ chrome.runtime.onInstalled.addListener(({ reason }) => {
   }
 });
 
-// ── Per-tab screenshot store (cleared after use) ─────────────────────────────
-const pending = new Map(); // tabId → dataUrl
-
 // ── Message router ───────────────────────────────────────────────────────────
 chrome.runtime.onMessage.addListener((msg, sender) => {
   if (msg.action === 'startCapture') startCapture(msg.tabId, msg.windowId);
   if (msg.action === 'regionSelected') handleRegion(msg, sender.tab.id);
 });
 
-// ── Step 1: capture full tab screenshot, then show overlay ───────────────────
+// ── Step 1: capture full tab screenshot, pass dataUrl to content script ──────
 async function startCapture(tabId, windowId) {
   try {
     // Capture BEFORE overlay so overlay doesn't appear in the screenshot
     const dataUrl = await chrome.tabs.captureVisibleTab(windowId, { format: 'png' });
-    pending.set(tabId, dataUrl);
-    chrome.tabs.sendMessage(tabId, { action: 'showOverlay' }, (resp) => {
+    // Pass dataUrl directly to content script — avoids service worker memory issues
+    chrome.tabs.sendMessage(tabId, { action: 'showOverlay', dataUrl }, (resp) => {
       if (chrome.runtime.lastError) {
-        // Content script not injected yet — user needs to refresh the page
-        pending.delete(tabId);
-        console.warn('[SC] content script not ready:', chrome.runtime.lastError.message);
+        console.warn('[SC] content script not ready — refresh the page first');
       }
     });
   } catch (err) {
@@ -39,12 +34,12 @@ async function startCapture(tabId, windowId) {
 
 // ── Step 2: crop + native message ────────────────────────────────────────────
 async function handleRegion(msg, tabId) {
-  const dataUrl = pending.get(tabId);
-  pending.delete(tabId);
+  // dataUrl comes from content script (which held it since showOverlay)
+  const dataUrl = msg.dataUrl;
 
   if (!dataUrl) {
     chrome.tabs.sendMessage(tabId, {
-      action: 'captureResult', success: false, error: '截图已过期，请重试',
+      action: 'captureResult', success: false, error: '截图数据丢失，请重试',
     });
     return;
   }
@@ -67,7 +62,6 @@ async function handleRegion(msg, tabId) {
       title: sanitize(msg.title),
     });
   } catch (err) {
-    // Host not installed or crashed
     chrome.tabs.sendMessage(tabId, {
       action: 'captureResult', success: false,
       error: 'Host 未安装，请先运行 install.sh',

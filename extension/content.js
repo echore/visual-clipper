@@ -9,10 +9,12 @@
   let overlay, canvas, ctx, hint;
   let state = 'idle'; // 'idle' | 'selecting' | 'processing'
   let startX = 0, startY = 0, endX = 0, endY = 0;
+  let pendingDataUrl = null; // screenshot held here until region is selected
 
-  function show() {
+  function show(dataUrl) {
     if (window.__SC_OVERLAY_ACTIVE__) return;
     window.__SC_OVERLAY_ACTIVE__ = true;
+    pendingDataUrl = dataUrl || null;
 
     overlay = document.createElement('div');
     overlay.style.cssText =
@@ -78,6 +80,7 @@
     document.removeEventListener('keydown', onKey, true);
     overlay.remove();
     window.__SC_OVERLAY_ACTIVE__ = false;
+    pendingDataUrl = null;
     state = 'idle';
   }
 
@@ -120,6 +123,7 @@
       dpr: window.devicePixelRatio || 1,
       source_url: location.href,
       title: document.title,
+      dataUrl: pendingDataUrl,  // pass screenshot back to background
     }, () => clearTimeout(safetyTimer));
   }
 
@@ -129,7 +133,7 @@
 
   // Listen for messages from background
   chrome.runtime.onMessage.addListener((msg) => {
-    if (msg.action === 'showOverlay') { show(); return; }
+    if (msg.action === 'showOverlay') { show(msg.dataUrl); return; }
     if (msg.action === 'cancelOverlay') { remove(); return; }
     if (msg.action === 'captureResult') {
       if (!hint) return;
