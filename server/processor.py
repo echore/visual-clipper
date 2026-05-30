@@ -54,7 +54,7 @@ def run_claude(prompt: str, cfg: Config):
 def process_job(job: dict, cfg: Config) -> dict:
     proc = run_claude(build_prompt(job, cfg), cfg)
     if proc.returncode != 0:
-        return {"success": False, "error": (proc.stderr or "claude exited nonzero").strip()}
+        return {"success": False, "error": (proc.stderr or f"claude exited with code {proc.returncode}").strip()}
     for line in proc.stdout.splitlines():
         if line.strip().startswith("NOTE_PATH:"):
             return {"success": True, "note_path": line.split("NOTE_PATH:", 1)[1].strip()}

@@ -1,5 +1,6 @@
 import json
 from pathlib import Path
+from types import SimpleNamespace
 from tests.helpers import TINY_PNG_B64
 from server import processor
 
@@ -36,9 +37,6 @@ def test_build_prompt_references_sop_job_and_paths(tmp_config):
     assert "abc123" in prompt
     assert str(tmp_config.vault_path) in prompt
     assert "NOTE_PATH:" in prompt
-
-
-from types import SimpleNamespace
 
 
 def test_process_job_parses_note_path(tmp_config, monkeypatch):
