@@ -61,5 +61,13 @@ Before writing any code on a non-trivial task:
 - After a bug fix: verify the bug is gone AND nothing else broke.
 - When stuck: ask "why is this happening?" before asking "how do I fix it?"
 
+### Bug Fix Protocol
+Never guess-and-patch. Always in order:
+1. **Reproduce first** — confirm you can trigger the bug reliably before touching any code.
+2. **Find the root cause** — fix the cause, not the symptom.
+3. **Verify no regression** — confirm the bug is gone AND existing behaviour still works.
+
+Skipping step 1 is how one fix spawns two new bugs.
+
 ### Long-term Lens
 Every non-trivial decision: privacy/security risk? Still maintainable in a year? Safe for other users?
