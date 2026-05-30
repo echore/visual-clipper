@@ -1,0 +1,7 @@
+.venv/
+__pycache__/
+*.log
+dist/
+*.zip
+.claude/
+.DS_Store
