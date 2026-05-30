@@ -2,6 +2,7 @@ import base64
 import json
 import subprocess
 import uuid
+from urllib.parse import quote, urlencode
 
 from server.config import Config
 
@@ -59,3 +60,21 @@ def process_job(job: dict, cfg: Config) -> dict:
         if line.strip().startswith("NOTE_PATH:"):
             return {"success": True, "note_path": line.split("NOTE_PATH:", 1)[1].strip()}
     return {"success": False, "error": "no NOTE_PATH in claude output"}
+
+
+def obsidian_uri(vault_name: str, vault_relative_path: str) -> str:
+    # urlencode default (quote_plus) replaces spaces with '+'; Obsidian URIs require '%20'.
+    qs = urlencode(
+        {"vault": vault_name, "file": vault_relative_path},
+        quote_via=lambda s, safe, enc, err: quote(s, safe=""),
+    )
+    return f"obsidian://open?{qs}"
+
+
+def open_note(vault_name: str, note_path: str) -> bool:
+    """Best-effort: open the note in Obsidian. Never raises (opening is non-critical)."""
+    try:
+        subprocess.run(["open", obsidian_uri(vault_name, note_path)], timeout=10, check=False)
+        return True
+    except Exception:
+        return False

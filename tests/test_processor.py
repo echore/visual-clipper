@@ -75,3 +75,16 @@ def test_process_job_no_note_path_in_output_is_failure(tmp_config, monkeypatch):
     )
     result = processor.process_job(job, tmp_config)
     assert result["success"] is False
+
+
+def test_obsidian_uri_encodes_spaces_as_percent20():
+    uri = processor.obsidian_uri("Obsidian Vault", "AI协作/05 审美积累/单张分析/My Note.md")
+    assert uri.startswith("obsidian://open?")
+    assert "%20" in uri
+    assert "+" not in uri
+
+
+def test_obsidian_uri_includes_vault_and_file():
+    uri = processor.obsidian_uri("My Vault", "a/b.md")
+    assert "vault=My%20Vault" in uri
+    assert "file=a%2Fb.md" in uri or "file=a/b.md" in uri
