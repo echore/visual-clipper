@@ -5,7 +5,7 @@ from io import RawIOBase
 from typing import Optional
 
 from server.config import Config
-from server.processor import save_to_staging, process_job, open_note
+from server.processor import save_to_staging, process_job
 from server.resolver import resolve_vault, resolve_folder
 
 CONFIG = Config.load()
@@ -59,8 +59,6 @@ def handle_message(msg: dict, cfg: Config) -> dict:
             cfg,
         )
         result = process_job(job, cfg)
-        if result.get("success") and result.get("note_path"):
-            open_note(cfg.vault_path.name, result["note_path"])
         return result
     except Exception as e:
         return {"success": False, "error": str(e)}

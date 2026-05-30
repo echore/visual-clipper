@@ -41,7 +41,6 @@ def test_handle_message_success(tmp_config, monkeypatch):
         host, "process_job",
         lambda job, cfg: {"success": True, "note_path": "AI协作/test.md"},
     )
-    monkeypatch.setattr(host, "open_note", lambda v, p: True)
     result = host.handle_message(
         {"image_base64": TINY_PNG_B64, "source_url": "https://x.com", "title": "T"},
         tmp_config,
