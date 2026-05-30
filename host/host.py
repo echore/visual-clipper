@@ -6,6 +6,7 @@ from typing import Optional
 
 from server.config import Config
 from server.processor import save_to_staging, process_job, open_note
+from server.resolver import resolve_vault, resolve_folder
 
 CONFIG = Config.load()
 
@@ -26,14 +27,17 @@ def decode_message(stream: RawIOBase) -> Optional[dict]:
 
 def handle_message(msg: dict, cfg: Config) -> dict:
     try:
-        from pathlib import Path
         overrides = {}
-        if msg.get("vault_path"):
-            overrides["vault_path"] = Path(msg["vault_path"]).expanduser()
-        if msg.get("notes_folder"):
-            overrides["aesthetic_folder"] = msg["notes_folder"]
-        if msg.get("assets_folder"):
-            overrides["assets_folder"] = msg["assets_folder"]
+        vault_name = msg.get("vault_name", "").strip()
+        if vault_name:
+            overrides["vault_path"] = resolve_vault(vault_name)
+        vault_path = overrides.get("vault_path", cfg.vault_path)
+
+        if msg.get("notes_folder", "").strip():
+            overrides["aesthetic_folder"] = resolve_folder(vault_path, msg["notes_folder"].strip())
+        if msg.get("assets_folder", "").strip():
+            overrides["assets_folder"] = resolve_folder(vault_path, msg["assets_folder"].strip())
+
         if overrides:
             cfg = cfg.model_copy(update=overrides)
 

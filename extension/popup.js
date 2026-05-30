@@ -1,10 +1,10 @@
 // popup.js
 
-const SETTING_KEYS = { vault_path: '', notes_folder: '', assets_folder: '' };
+const SETTING_KEYS = { vault_name: '', notes_folder: '', assets_folder: '' };
 
 // ── Load settings ─────────────────────────────────────────────────────────────
 chrome.storage.local.get(SETTING_KEYS, (stored) => {
-  document.getElementById('vault_path').value    = stored.vault_path;
+  document.getElementById('vault_name').value    = stored.vault_name;
   document.getElementById('notes_folder').value  = stored.notes_folder;
   document.getElementById('assets_folder').value = stored.assets_folder;
 });
@@ -13,7 +13,7 @@ chrome.storage.local.get(SETTING_KEYS, (stored) => {
 let _saveTimer = null;
 function save() {
   chrome.storage.local.set({
-    vault_path:    document.getElementById('vault_path').value.trim(),
+    vault_name:    document.getElementById('vault_name').value.trim(),
     notes_folder:  document.getElementById('notes_folder').value.trim(),
     assets_folder: document.getElementById('assets_folder').value.trim(),
   });
@@ -22,7 +22,7 @@ function save() {
   clearTimeout(_saveTimer);
   _saveTimer = setTimeout(() => { hint.style.opacity = '0'; }, 1500);
 }
-['vault_path', 'notes_folder', 'assets_folder'].forEach(id => {
+['vault_name', 'notes_folder', 'assets_folder'].forEach(id => {
   document.getElementById(id).addEventListener('input', save);
 });
 

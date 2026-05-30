@@ -55,7 +55,7 @@ async function handleRegion(msg, tabId) {
   }
 
   const settings = await new Promise(resolve =>
-    chrome.storage.local.get({ vault_path: '', notes_folder: '', assets_folder: '' }, resolve)
+    chrome.storage.local.get({ vault_name: '', notes_folder: '', assets_folder: '' }, resolve)
   );
 
   let response;
@@ -64,7 +64,7 @@ async function handleRegion(msg, tabId) {
       image_base64: croppedB64,
       source_url: msg.source_url,
       title: sanitize(msg.title),
-      vault_path:    settings.vault_path    || undefined,
+      vault_name:    settings.vault_name    || undefined,
       notes_folder:  settings.notes_folder  || undefined,
       assets_folder: settings.assets_folder || undefined,
     });
