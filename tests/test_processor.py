@@ -88,3 +88,40 @@ def test_obsidian_uri_includes_vault_and_file():
     uri = processor.obsidian_uri("My Vault", "a/b.md")
     assert "vault=My%20Vault" in uri
     assert "file=a%2Fb.md" in uri or "file=a/b.md" in uri
+
+
+import shutil
+import pytest
+
+
+@pytest.mark.integration
+def test_real_claude_produces_note(tmp_path):
+    """Real claude -p run. Requires: claude CLI logged in, a real PNG, write access."""
+    from server.config import Config
+    from server import processor
+
+    src_png = "/Users/liyachen/Documents/Obsidian Vault/Assets/images/Pasted image 20260505213152.png"
+    vault = tmp_path / "vault"
+    (vault / "AI协作/05 审美积累/单张分析").mkdir(parents=True)
+    (vault / "Assets/审美").mkdir(parents=True)
+    repo_sop = Path(__file__).resolve().parent.parent / "sop" / "处理审美-SOP.md"
+
+    cfg = Config(staging_dir=tmp_path / "staging", vault_path=vault, sop_path=repo_sop)
+    cfg.staging_dir.mkdir(parents=True)
+    staged = cfg.staging_dir / "real.png"
+    shutil.copy(src_png, staged)
+    job = {"id": "real", "png_path": str(staged), "source_url": "https://test/", "title": "Integration Sample"}
+    (cfg.staging_dir / "real.json").write_text(json.dumps(job, ensure_ascii=False), encoding="utf-8")
+
+    result = processor.process_job(job, cfg)
+    assert result["success"] is True, f"process_job failed: {result}"
+    note = vault / result["note_path"]
+    assert note.exists(), f"Note file not found: {note}"
+    text = note.read_text(encoding="utf-8")
+    assert "## 五个问题" in text
+    assert "status: 已分析" in text
+    assert "palette:" in text
+    # objective fields filled:
+    assert "### 1. 背景色" in text
+    # subjective fields blank (q3 line immediately followed by blank line or next heading):
+    assert "### 3. 眼睛第一秒落在哪里\n\n" in text or "### 3. 眼睛第一秒落在哪里\n###" in text
