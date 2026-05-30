@@ -9,14 +9,16 @@ chrome.storage.local.get(SETTING_KEYS, (stored) => {
   document.getElementById('assets_folder').value = stored.assets_folder;
 });
 
-// ── Auto-save on any input change ─────────────────────────────────────────────
+// ── Auto-save; clear validation cache on any change ───────────────────────────
 let _saveTimer = null;
 function save() {
   chrome.storage.local.set({
-    vault_name:    document.getElementById('vault_name').value.trim(),
-    notes_folder:  document.getElementById('notes_folder').value.trim(),
-    assets_folder: document.getElementById('assets_folder').value.trim(),
+    vault_name:         document.getElementById('vault_name').value.trim(),
+    notes_folder:       document.getElementById('notes_folder').value.trim(),
+    assets_folder:      document.getElementById('assets_folder').value.trim(),
+    validated_snapshot: null,  // invalidate cache whenever settings change
   });
+  document.getElementById('settings-error').style.display = 'none';
   const hint = document.getElementById('save-hint');
   hint.style.opacity = '1';
   clearTimeout(_saveTimer);
@@ -32,37 +34,51 @@ const errorDiv = document.getElementById('settings-error');
 
 clipBtn.addEventListener('click', async () => {
   errorDiv.style.display = 'none';
-  clipBtn.disabled = true;
-  clipBtn.textContent = '检查设置…';
 
-  const settings = {
-    action:        'validate',
+  const current = {
     vault_name:    document.getElementById('vault_name').value.trim(),
     notes_folder:  document.getElementById('notes_folder').value.trim(),
     assets_folder: document.getElementById('assets_folder').value.trim(),
   };
 
-  const ok = await new Promise(resolve => {
-    chrome.runtime.sendNativeMessage('com.screenshot_clipper.host', settings, (resp) => {
-      if (chrome.runtime.lastError) {
-        errorDiv.textContent = 'Host 未安装，请先运行 install.sh';
-        errorDiv.style.display = 'block';
-        resolve(false);
-        return;
-      }
-      if (!resp || !resp.valid) {
-        errorDiv.textContent = resp?.error || '设置有误，请检查 Vault 和文件夹名称';
-        errorDiv.style.display = 'block';
-        resolve(false);
-        return;
-      }
-      resolve(true);
-    });
-  });
+  // Skip validation if settings haven't changed since last successful check
+  const { validated_snapshot: snap } = await chrome.storage.local.get('validated_snapshot');
+  const alreadyValid = snap &&
+    snap.vault_name    === current.vault_name &&
+    snap.notes_folder  === current.notes_folder &&
+    snap.assets_folder === current.assets_folder;
 
-  clipBtn.disabled = false;
-  clipBtn.textContent = '✂ Clip 当前页面';
-  if (!ok) return;
+  if (!alreadyValid) {
+    clipBtn.disabled = true;
+    clipBtn.textContent = '检查设置…';
+
+    const ok = await new Promise(resolve => {
+      chrome.runtime.sendNativeMessage(
+        'com.screenshot_clipper.host',
+        { action: 'validate', ...current },
+        (resp) => {
+          if (chrome.runtime.lastError) {
+            errorDiv.textContent = 'Host 未安装，请先运行 install.sh';
+            errorDiv.style.display = 'block';
+            resolve(false);
+            return;
+          }
+          if (!resp?.valid) {
+            errorDiv.textContent = resp?.error || '设置有误，请检查 Vault 和文件夹名称';
+            errorDiv.style.display = 'block';
+            resolve(false);
+            return;
+          }
+          chrome.storage.local.set({ validated_snapshot: current });
+          resolve(true);
+        }
+      );
+    });
+
+    clipBtn.disabled = false;
+    clipBtn.textContent = '✂ Clip 当前页面';
+    if (!ok) return;
+  }
 
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   if (!tab) return;
