@@ -24,7 +24,13 @@ async function startCapture(tabId, windowId) {
     // Capture BEFORE overlay so overlay doesn't appear in the screenshot
     const dataUrl = await chrome.tabs.captureVisibleTab(windowId, { format: 'png' });
     pending.set(tabId, dataUrl);
-    chrome.tabs.sendMessage(tabId, { action: 'showOverlay' });
+    chrome.tabs.sendMessage(tabId, { action: 'showOverlay' }, (resp) => {
+      if (chrome.runtime.lastError) {
+        // Content script not injected yet — user needs to refresh the page
+        pending.delete(tabId);
+        console.warn('[SC] content script not ready:', chrome.runtime.lastError.message);
+      }
+    });
   } catch (err) {
     console.error('[SC] captureVisibleTab failed:', err.message);
     // e.g. restricted page (chrome://) — silently ignore
