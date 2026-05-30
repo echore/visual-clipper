@@ -48,7 +48,7 @@ async function handleRegion(msg, tabId) {
     croppedB64 = await cropImage(dataUrl, msg.rect, msg.dpr);
   } catch (err) {
     chrome.tabs.sendMessage(tabId, {
-      action: 'captureResult', success: false, error: '裁剪失败：' + err.message,
+      action: 'captureResult', success: false, error: '裁剪失败，请重试',
     });
     return;
   }
@@ -64,7 +64,7 @@ async function handleRegion(msg, tabId) {
     // Host not installed or crashed
     chrome.tabs.sendMessage(tabId, {
       action: 'captureResult', success: false,
-      error: 'Host 未安装，请先运行 install.sh（' + err.message + '）',
+      error: 'Host 未安装，请先运行 install.sh',
     });
     return;
   }
@@ -116,7 +116,7 @@ function nativeMessage(msg) {
       if (chrome.runtime.lastError) {
         reject(new Error(chrome.runtime.lastError.message));
       } else {
-        resolve(resp || { success: false, error: 'no response from host' });
+        resolve(resp || { success: false, error: 'Host 无响应' });
       }
     });
   });
