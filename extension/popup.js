@@ -65,7 +65,7 @@ btnKeyframe.addEventListener('click', async () => {
   if (stored.keyframe_in_time === undefined || stored.keyframe_tab_id !== tab.id) {
     // First click on this tab: Mark In
     chrome.tabs.sendMessage(tab.id, { action: 'getCurrentTime' }, (resp) => {
-      if (!resp?.currentTime) return;
+      if (resp?.currentTime == null) return;
       chrome.storage.local.set({ keyframe_in_time: resp.currentTime, keyframe_tab_id: tab.id });
       chrome.action.setBadgeText({ text: '▶' });
       chrome.action.setBadgeBackgroundColor({ color: '#6366f1' });
@@ -74,10 +74,11 @@ btnKeyframe.addEventListener('click', async () => {
   } else {
     // Second click: Mark Out → capture
     chrome.tabs.sendMessage(tab.id, { action: 'getCurrentTime' }, (resp) => {
-      if (!resp?.currentTime) return;
+      if (resp?.currentTime == null) return;
       chrome.runtime.sendMessage({
         action: 'markOut',
         tabId: tab.id,
+        inTime: stored.keyframe_in_time,
         currentTime: resp.currentTime,
         url: tab.url,
         title: tab.title,
