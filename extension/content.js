@@ -105,13 +105,22 @@
     state = 'processing';
     hint.textContent = '正在保存，请稍候…';
 
+    // Safety: reset to idle if background never replies (crash / connection loss)
+    const safetyTimer = setTimeout(() => {
+      if (state === 'processing') {
+        state = 'idle';
+        hint.textContent = '✗ 超时，请重试';
+        hint.style.background = 'rgba(239,68,68,.85)';
+      }
+    }, 120000);
+
     chrome.runtime.sendMessage({
       action: 'regionSelected',
       rect: { x, y, width: w, height: h },
       dpr: window.devicePixelRatio || 1,
       source_url: location.href,
       title: document.title,
-    });
+    }, () => clearTimeout(safetyTimer));
   }
 
   function onKey(e) {
