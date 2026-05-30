@@ -36,3 +36,44 @@ def test_build_prompt_references_sop_job_and_paths(tmp_config):
     assert "abc123" in prompt
     assert str(tmp_config.vault_path) in prompt
     assert "NOTE_PATH:" in prompt
+
+
+from types import SimpleNamespace
+
+
+def test_process_job_parses_note_path(tmp_config, monkeypatch):
+    job = {"id": "abc", "png_path": "/x/abc.png", "source_url": "u", "title": "T"}
+
+    def fake_run(prompt, cfg):
+        return SimpleNamespace(
+            returncode=0,
+            stdout="some log...\nNOTE_PATH: AI协作/05 审美积累/单张分析/T.md\n",
+            stderr="",
+        )
+
+    monkeypatch.setattr(processor, "run_claude", fake_run)
+    result = processor.process_job(job, tmp_config)
+    assert result["success"] is True
+    assert result["note_path"] == "AI协作/05 审美积累/单张分析/T.md"
+
+
+def test_process_job_handles_claude_failure(tmp_config, monkeypatch):
+    job = {"id": "abc", "png_path": "/x/abc.png", "source_url": "u", "title": "T"}
+
+    def fake_run(prompt, cfg):
+        return SimpleNamespace(returncode=1, stdout="", stderr="boom")
+
+    monkeypatch.setattr(processor, "run_claude", fake_run)
+    result = processor.process_job(job, tmp_config)
+    assert result["success"] is False
+    assert "boom" in result["error"]
+
+
+def test_process_job_no_note_path_in_output_is_failure(tmp_config, monkeypatch):
+    job = {"id": "abc", "png_path": "/x/abc.png", "source_url": "u", "title": "T"}
+    monkeypatch.setattr(
+        processor, "run_claude",
+        lambda prompt, cfg: SimpleNamespace(returncode=0, stdout="no marker here", stderr=""),
+    )
+    result = processor.process_job(job, tmp_config)
+    assert result["success"] is False

@@ -1,5 +1,6 @@
 import base64
 import json
+import subprocess
 import uuid
 
 from server.config import Config
@@ -38,3 +39,23 @@ def build_prompt(job: dict, cfg: Config) -> str:
         f"Title hint: {job['title']}\n"
         f"When done, print exactly one final line: NOTE_PATH: <vault-relative path to the .md>"
     )
+
+
+def run_claude(prompt: str, cfg: Config):
+    return subprocess.run(
+        [cfg.claude_bin, "-p", prompt, "--allowedTools", "Read,Write,Edit,Bash"],
+        capture_output=True,
+        text=True,
+        timeout=300,
+        cwd=str(cfg.vault_path),
+    )
+
+
+def process_job(job: dict, cfg: Config) -> dict:
+    proc = run_claude(build_prompt(job, cfg), cfg)
+    if proc.returncode != 0:
+        return {"success": False, "error": (proc.stderr or "claude exited nonzero").strip()}
+    for line in proc.stdout.splitlines():
+        if line.strip().startswith("NOTE_PATH:"):
+            return {"success": True, "note_path": line.split("NOTE_PATH:", 1)[1].strip()}
+    return {"success": False, "error": "no NOTE_PATH in claude output"}
