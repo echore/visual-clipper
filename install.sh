@@ -9,7 +9,8 @@ HOST_BINARY="$INSTALL_DIR/screenshot-clipper-host"
 
 echo "=== Screenshot Clipper install ==="
 
-# 1. Create install dir (non-TCC path — NOT ~/Documents)
+# 1. Clean previous install and recreate (ensures no stale/nested files)
+rm -rf "$INSTALL_DIR"
 mkdir -p "$INSTALL_DIR"
 
 # 2. Copy host code + venv into install dir
