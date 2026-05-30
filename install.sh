@@ -36,6 +36,23 @@ chmod +x "$HOST_BINARY"
 xattr -d com.apple.quarantine "$HOST_BINARY" 2>/dev/null || true
 
 # 5. Get extension ID from user
+# 5b. Detect claude binary and write config so host can find it
+CLAUDE_BIN=$(which claude 2>/dev/null || echo "")
+if [ -z "$CLAUDE_BIN" ]; then
+    # Check common install locations
+    for p in "$HOME/.local/bin/claude" "/usr/local/bin/claude" "/opt/homebrew/bin/claude"; do
+        if [ -x "$p" ]; then CLAUDE_BIN="$p"; break; fi
+    done
+fi
+if [ -z "$CLAUDE_BIN" ]; then
+    echo "WARNING: could not find claude binary. Add it to PATH or set claude_bin in ~/.config/screenshot-clipper/config.json"
+else
+    CONFIG_DIR="$HOME/.config/screenshot-clipper"
+    mkdir -p "$CONFIG_DIR"
+    echo "{\"claude_bin\": \"$CLAUDE_BIN\"}" > "$CONFIG_DIR/config.json"
+    echo "Claude binary: $CLAUDE_BIN"
+fi
+
 echo ""
 echo "Paste your Chrome extension ID (find it at chrome://extensions with Developer Mode on):"
 read -r EXTENSION_ID
