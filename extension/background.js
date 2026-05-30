@@ -41,6 +41,7 @@ async function handleRegion(msg, tabId) {
     chrome.tabs.sendMessage(tabId, {
       action: 'captureResult', success: false, error: '截图数据丢失，请重试',
     });
+    notifyError('截图数据丢失，请重试');
     return;
   }
 
@@ -51,6 +52,7 @@ async function handleRegion(msg, tabId) {
     chrome.tabs.sendMessage(tabId, {
       action: 'captureResult', success: false, error: '裁剪失败，请重试',
     });
+    notifyError('裁剪失败，请重试');
     return;
   }
 
@@ -73,13 +75,36 @@ async function handleRegion(msg, tabId) {
       action: 'captureResult', success: false,
       error: 'Host 未安装，请先运行 install.sh',
     });
+    notifyError('Host 未安装，请先运行 install.sh');
     return;
   }
 
   chrome.tabs.sendMessage(tabId, { action: 'captureResult', ...response });
+
+  if (response.success && response.note_path) {
+    chrome.tabs.create({ url: buildObsidianUrl(settings.vault_name, response.note_path) });
+  } else if (!response.success) {
+    notifyError(response.error || '截图处理失败，请重试');
+  }
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
+
+function notifyError(errMsg) {
+  chrome.storage.local.set({ last_error: errMsg });
+  chrome.action.setBadgeText({ text: '!' });
+  chrome.action.setBadgeBackgroundColor({ color: '#E53E3E' });
+  chrome.notifications.create({
+    type: 'basic',
+    iconUrl: 'icons/icon48.png',
+    title: 'Screenshot Clipper 处理失败',
+    message: errMsg,
+  });
+}
+
+function buildObsidianUrl(vaultName, notePath) {
+  return `obsidian://open?vault=${encodeURIComponent(vaultName)}&file=${encodeURIComponent(notePath)}`;
+}
 
 async function cropImage(dataUrl, rect, dpr) {
   // createImageBitmap with source rect handles the DPR scaling automatically
