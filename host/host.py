@@ -26,6 +26,17 @@ def decode_message(stream: RawIOBase) -> Optional[dict]:
 
 def handle_message(msg: dict, cfg: Config) -> dict:
     try:
+        from pathlib import Path
+        overrides = {}
+        if msg.get("vault_path"):
+            overrides["vault_path"] = Path(msg["vault_path"]).expanduser()
+        if msg.get("notes_folder"):
+            overrides["aesthetic_folder"] = msg["notes_folder"]
+        if msg.get("assets_folder"):
+            overrides["assets_folder"] = msg["assets_folder"]
+        if overrides:
+            cfg = cfg.model_copy(update=overrides)
+
         job = save_to_staging(
             msg.get("image_base64", ""),
             msg.get("source_url", ""),

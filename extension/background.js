@@ -54,12 +54,19 @@ async function handleRegion(msg, tabId) {
     return;
   }
 
+  const settings = await new Promise(resolve =>
+    chrome.storage.local.get({ vault_path: '', notes_folder: '', assets_folder: '' }, resolve)
+  );
+
   let response;
   try {
     response = await nativeMessage({
       image_base64: croppedB64,
       source_url: msg.source_url,
       title: sanitize(msg.title),
+      vault_path:    settings.vault_path    || undefined,
+      notes_folder:  settings.notes_folder  || undefined,
+      assets_folder: settings.assets_folder || undefined,
     });
   } catch (err) {
     chrome.tabs.sendMessage(tabId, {
@@ -68,22 +75,6 @@ async function handleRegion(msg, tabId) {
     });
     return;
   }
-
-  // Store result for popup history
-  const entry = {
-    success: response.success,
-    note_path: response.note_path || '',
-    error: response.error || '',
-    title: msg.title,
-    source_url: msg.source_url,
-    time: Date.now(),
-  };
-  chrome.storage.local.get({ clip_history: [] }, ({ clip_history }) => {
-    chrome.storage.local.set({
-      clip_history: [entry, ...clip_history].slice(0, 20),
-      last_result: entry,
-    });
-  });
 
   chrome.tabs.sendMessage(tabId, { action: 'captureResult', ...response });
 }
