@@ -149,4 +149,86 @@
       }
     }
   });
+
+  // ── Video detection & frame capture ──────────────────────────────────────────
+  chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
+    if (msg.action === 'detectVideo') {
+      const video = document.querySelector('video');
+      sendResponse({ hasVideo: !!video && video.readyState >= 1 });
+      return true;
+    }
+
+    if (msg.action === 'getCurrentTime') {
+      const video = document.querySelector('video');
+      sendResponse({ currentTime: video ? video.currentTime : null });
+      return true;
+    }
+
+    if (msg.action === 'captureVideoFrames') {
+      captureFrames(msg.timestamps).then(
+        frames => sendResponse({ frames }),
+        err => sendResponse({ error: err.message }),
+      );
+      return true;
+    }
+
+    if (msg.action === 'getVideoMeta') {
+      sendResponse(extractVideoMeta());
+      return true;
+    }
+  });
+
+  async function captureFrames(timestamps) {
+    const video = document.querySelector('video');
+    if (!video) throw new Error('No video element found');
+
+    const originalTime = video.currentTime;
+    const wasPaused = video.paused;
+    if (!wasPaused) video.pause();
+
+    const frames = [];
+    try {
+      for (const t of timestamps) {
+        await seekTo(video, t);
+        const canvas = document.createElement('canvas');
+        canvas.width = video.videoWidth || 1280;
+        canvas.height = video.videoHeight || 720;
+        try {
+          canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+        } catch (e) {
+          throw new Error('此视频不支持帧捕获');
+        }
+        frames.push(canvas.toDataURL('image/jpeg', 0.85).split(',')[1]);
+      }
+    } finally {
+      await seekTo(video, originalTime);
+      if (!wasPaused) video.play();
+    }
+    return frames;
+  }
+
+  function seekTo(video, time) {
+    return new Promise((resolve, reject) => {
+      if (Math.abs(video.currentTime - time) < 0.05) { resolve(); return; }
+      const timeout = setTimeout(() => reject(new Error('Seek timeout')), 5000);
+      video.onseeked = () => { clearTimeout(timeout); video.onseeked = null; resolve(); };
+      video.currentTime = time;
+    });
+  }
+
+  function extractVideoMeta() {
+    const ytTitle = document.querySelector('h1.ytd-video-primary-info-renderer')?.textContent?.trim()
+      || document.querySelector('h1.ytd-watch-metadata yt-formatted-string')?.textContent?.trim();
+    const ytChannel = document.querySelector('ytd-channel-name yt-formatted-string a')?.textContent?.trim();
+
+    const biliTitle = document.querySelector('.video-title')?.textContent?.trim()
+      || document.querySelector('h1.video-title')?.textContent?.trim();
+    const biliChannel = document.querySelector('.up-name')?.textContent?.trim()
+      || document.querySelector('.username')?.textContent?.trim();
+
+    return {
+      videoTitle: ytTitle || biliTitle || document.title,
+      channel: ytChannel || biliChannel || null,
+    };
+  }
 })();
