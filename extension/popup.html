@@ -30,7 +30,9 @@
     .setting-row input:focus { outline: none; border-color: #6366f1; }
 
     #save-hint { font-size: 11px; color: #6366f1; opacity: 0;
-      transition: opacity .3s; padding: 2px 16px 6px; }
+      transition: opacity .3s; padding: 2px 16px 0; }
+    #settings-error { font-size: 11px; color: #ef4444; padding: 2px 16px 6px;
+      display: none; line-height: 1.4; }
 
     .footer { padding: 8px 16px; border-top: 1px solid #f3f4f6; }
     .footer a { font-size: 11px; color: #9ca3af; text-decoration: none; }
@@ -59,6 +61,7 @@
     <input id="assets_folder" type="text" placeholder="AI协作/05 审美积累/assets">
   </div>
   <div id="save-hint">已保存</div>
+  <div id="settings-error"></div>
 
   <div class="footer">
     <a id="open-welcome" href="#">安装说明 / 帮助</a>

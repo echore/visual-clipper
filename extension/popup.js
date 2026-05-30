@@ -27,7 +27,43 @@ function save() {
 });
 
 // ── Clip button ───────────────────────────────────────────────────────────────
-document.getElementById('clip-btn').addEventListener('click', async () => {
+const clipBtn = document.getElementById('clip-btn');
+const errorDiv = document.getElementById('settings-error');
+
+clipBtn.addEventListener('click', async () => {
+  errorDiv.style.display = 'none';
+  clipBtn.disabled = true;
+  clipBtn.textContent = '检查设置…';
+
+  const settings = {
+    action:        'validate',
+    vault_name:    document.getElementById('vault_name').value.trim(),
+    notes_folder:  document.getElementById('notes_folder').value.trim(),
+    assets_folder: document.getElementById('assets_folder').value.trim(),
+  };
+
+  const ok = await new Promise(resolve => {
+    chrome.runtime.sendNativeMessage('com.screenshot_clipper.host', settings, (resp) => {
+      if (chrome.runtime.lastError) {
+        errorDiv.textContent = 'Host 未安装，请先运行 install.sh';
+        errorDiv.style.display = 'block';
+        resolve(false);
+        return;
+      }
+      if (!resp || !resp.valid) {
+        errorDiv.textContent = resp?.error || '设置有误，请检查 Vault 和文件夹名称';
+        errorDiv.style.display = 'block';
+        resolve(false);
+        return;
+      }
+      resolve(true);
+    });
+  });
+
+  clipBtn.disabled = false;
+  clipBtn.textContent = '✂ Clip 当前页面';
+  if (!ok) return;
+
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   if (!tab) return;
   chrome.runtime.sendMessage({ action: 'startCapture', tabId: tab.id, windowId: tab.windowId });

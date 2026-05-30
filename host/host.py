@@ -25,19 +25,30 @@ def decode_message(stream: RawIOBase) -> Optional[dict]:
     return json.loads(body.decode("utf-8"))
 
 
+def _resolve_overrides(msg: dict, cfg: Config) -> dict:
+    """Resolve vault + folder names to concrete paths. Raises ValueError on bad input."""
+    overrides = {}
+    vault_name = msg.get("vault_name", "").strip()
+    if vault_name:
+        overrides["vault_path"] = resolve_vault(vault_name)
+    vault_path = overrides.get("vault_path", cfg.vault_path)
+    if msg.get("notes_folder", "").strip():
+        overrides["aesthetic_folder"] = resolve_folder(vault_path, msg["notes_folder"].strip())
+    if msg.get("assets_folder", "").strip():
+        overrides["assets_folder"] = resolve_folder(vault_path, msg["assets_folder"].strip())
+    return overrides
+
+
 def handle_message(msg: dict, cfg: Config) -> dict:
+    if msg.get("action") == "validate":
+        try:
+            _resolve_overrides(msg, cfg)
+            return {"valid": True}
+        except ValueError as e:
+            return {"valid": False, "error": str(e)}
+
     try:
-        overrides = {}
-        vault_name = msg.get("vault_name", "").strip()
-        if vault_name:
-            overrides["vault_path"] = resolve_vault(vault_name)
-        vault_path = overrides.get("vault_path", cfg.vault_path)
-
-        if msg.get("notes_folder", "").strip():
-            overrides["aesthetic_folder"] = resolve_folder(vault_path, msg["notes_folder"].strip())
-        if msg.get("assets_folder", "").strip():
-            overrides["assets_folder"] = resolve_folder(vault_path, msg["assets_folder"].strip())
-
+        overrides = _resolve_overrides(msg, cfg)
         if overrides:
             cfg = cfg.model_copy(update=overrides)
 
