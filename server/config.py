@@ -9,8 +9,8 @@ _DEFAULT_SOP = _REPO_ROOT / "sop" / "处理审美-SOP.md"
 
 class Config(BaseModel):
     port: int = 27183
-    staging_dir: Path = Path.home() / ".local/share/screenshot-clipper/staging"
-    vault_path: Path = Path.home() / "Documents/Obsidian Vault"
+    staging_dir: Path = Field(default_factory=lambda: Path.home() / ".local/share/screenshot-clipper/staging")
+    vault_path: Path = Field(default_factory=lambda: Path.home() / "Documents/Obsidian Vault")
     aesthetic_folder: str = "AI协作/05 审美积累/单张分析"
     assets_folder: str = "Assets/审美"
     sop_path: Path = Field(default=_DEFAULT_SOP)
@@ -19,6 +19,6 @@ class Config(BaseModel):
     @classmethod
     def load(cls, path: Path = DEFAULT_CONFIG_PATH) -> "Config":
         data = {}
-        if Path(path).exists():
-            data = json.loads(Path(path).read_text())
+        if path.exists():
+            data = json.loads(path.read_text())
         return cls(**data)
