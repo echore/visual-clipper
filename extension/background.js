@@ -12,7 +12,7 @@ chrome.runtime.onInstalled.addListener(({ reason }) => {
 // ── Message router ───────────────────────────────────────────────────────────
 chrome.runtime.onMessage.addListener((msg, sender) => {
   if (msg.action === 'startCapture') startCapture(msg.tabId, msg.windowId);
-  if (msg.action === 'regionSelected') handleRegion(msg, sender.tab.id);
+  if (msg.action === 'regionSelected' && sender.tab) handleRegion(msg, sender.tab.id);
 });
 
 // ── Step 1: capture full tab screenshot, pass dataUrl to content script ──────
@@ -79,10 +79,16 @@ async function handleRegion(msg, tabId) {
     return;
   }
 
-  chrome.tabs.sendMessage(tabId, { action: 'captureResult', ...response });
+  chrome.tabs.sendMessage(tabId, {
+    action: 'captureResult',
+    ...response,
+    ...(response.success && response.note_path && settings.vault_name
+      ? { obsidianUrl: buildObsidianUrl(settings.vault_name, response.note_path) }
+      : {}),
+  });
 
   if (response.success && response.note_path) {
-    chrome.tabs.create({ url: buildObsidianUrl(settings.vault_name, response.note_path) });
+    chrome.action.setBadgeText({ text: '' });
   } else if (!response.success) {
     notifyError(response.error || '截图处理失败，请重试');
   }
@@ -94,7 +100,7 @@ function notifyError(errMsg) {
   chrome.storage.local.set({ last_error: errMsg });
   chrome.action.setBadgeText({ text: '!' });
   chrome.action.setBadgeBackgroundColor({ color: '#E53E3E' });
-  chrome.notifications.create({
+  chrome.notifications.create('sc-error', {
     type: 'basic',
     iconUrl: 'icons/icon48.png',
     title: 'Screenshot Clipper 处理失败',

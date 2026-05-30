@@ -138,6 +138,7 @@
     if (msg.action === 'captureResult') {
       if (!hint) return;
       if (msg.success) {
+        if (msg.obsidianUrl) window.location.href = msg.obsidianUrl;
         hint.textContent = '✓ 已保存到 Obsidian';
         hint.style.background = 'rgba(34,197,94,.9)';
         setTimeout(remove, 2000);
