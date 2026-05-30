@@ -132,7 +132,8 @@
   }
 
   // Listen for messages from background
-  chrome.runtime.onMessage.addListener((msg) => {
+  // ── Video detection & frame capture ──────────────────────────────────────────
+  chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
     if (msg.action === 'showOverlay') { show(msg.dataUrl); return; }
     if (msg.action === 'cancelOverlay') { remove(); return; }
     if (msg.action === 'captureResult') {
@@ -147,11 +148,9 @@
         hint.style.background = 'rgba(239,68,68,.85)';
         state = 'idle'; // allow retry drag
       }
+      return;
     }
-  });
 
-  // ── Video detection & frame capture ──────────────────────────────────────────
-  chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
     if (msg.action === 'detectVideo') {
       const video = document.querySelector('video');
       sendResponse({ hasVideo: !!video && video.readyState >= 1 });
@@ -201,7 +200,7 @@
         frames.push(canvas.toDataURL('image/jpeg', 0.85).split(',')[1]);
       }
     } finally {
-      await seekTo(video, originalTime);
+      try { await seekTo(video, originalTime); } catch (_) {}
       if (!wasPaused) video.play();
     }
     return frames;
