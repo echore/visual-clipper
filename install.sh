@@ -13,7 +13,7 @@ echo "=== Screenshot Clipper install ==="
 mkdir -p "$INSTALL_DIR"
 
 # 2. Copy host code + venv into install dir
-cp -r "$REPO_DIR/host/"* "$INSTALL_DIR/"
+cp -r "$REPO_DIR/host" "$INSTALL_DIR/host"
 cp -r "$REPO_DIR/server" "$INSTALL_DIR/server"
 cp -r "$REPO_DIR/sop" "$INSTALL_DIR/sop"
 if [ -d "$REPO_DIR/.venv" ]; then
