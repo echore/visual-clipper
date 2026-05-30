@@ -22,3 +22,17 @@ def test_save_to_staging_strips_data_url_prefix(tmp_config):
     data_url = "data:image/png;base64," + TINY_PNG_B64
     job = processor.save_to_staging(data_url, "u", "t", tmp_config)
     assert Path(job["png_path"]).read_bytes()[:8] == b"\x89PNG\r\n\x1a\n"
+
+
+def test_build_prompt_references_sop_job_and_paths(tmp_config):
+    job = {
+        "id": "abc123",
+        "png_path": str(tmp_config.staging_dir / "abc123.png"),
+        "source_url": "https://x.com/y",
+        "title": "T",
+    }
+    prompt = processor.build_prompt(job, tmp_config)
+    assert str(tmp_config.sop_path) in prompt
+    assert "abc123" in prompt
+    assert str(tmp_config.vault_path) in prompt
+    assert "NOTE_PATH:" in prompt

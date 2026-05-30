@@ -23,3 +23,18 @@ def save_to_staging(image_base64: str, source_url: str, title: str, cfg: Config)
     }
     (cfg.staging_dir / f"{job_id}.json").write_text(json.dumps(job, ensure_ascii=False), encoding="utf-8")
     return job
+
+
+def build_prompt(job: dict, cfg: Config) -> str:
+    job_json = str(cfg.staging_dir / f"{job['id']}.json")
+    return (
+        f"Read and follow the SOP at: {cfg.sop_path}\n"
+        f"Process this one job. Job JSON path: {job_json}\n"
+        f"Staged image path: {job['png_path']}\n"
+        f"Vault root: {cfg.vault_path}\n"
+        f"Aesthetic notes folder (relative to vault root): {cfg.aesthetic_folder}\n"
+        f"Assets folder (relative to vault root): {cfg.assets_folder}\n"
+        f"Source URL: {job['source_url']}\n"
+        f"Title hint: {job['title']}\n"
+        f"When done, print exactly one final line: NOTE_PATH: <vault-relative path to the .md>"
+    )
