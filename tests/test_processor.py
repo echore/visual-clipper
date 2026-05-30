@@ -1,6 +1,6 @@
 import json
 from pathlib import Path
-from tests.conftest import TINY_PNG_B64
+from tests.helpers import TINY_PNG_B64
 from server import processor
 
 
@@ -15,6 +15,7 @@ def test_save_to_staging_writes_png_and_job(tmp_config):
     job_json = tmp_config.staging_dir / f"{job['id']}.json"
     assert job_json.exists()
     assert json.loads(job_json.read_text())["title"] == "My Cool Design"
+    assert tmp_config.staging_dir.is_dir()
 
 
 def test_save_to_staging_strips_data_url_prefix(tmp_config):

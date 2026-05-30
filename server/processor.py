@@ -1,7 +1,6 @@
 import base64
 import json
 import uuid
-from pathlib import Path
 
 from server.config import Config
 
@@ -12,7 +11,7 @@ def save_to_staging(image_base64: str, source_url: str, title: str, cfg: Config)
     png_bytes = base64.b64decode(image_base64)
 
     cfg.staging_dir.mkdir(parents=True, exist_ok=True)
-    job_id = uuid.uuid4().hex[:8]
+    job_id = uuid.uuid4().hex[:16]
     png_path = cfg.staging_dir / f"{job_id}.png"
     png_path.write_bytes(png_bytes)
 
@@ -22,5 +21,5 @@ def save_to_staging(image_base64: str, source_url: str, title: str, cfg: Config)
         "source_url": source_url,
         "title": title,
     }
-    (cfg.staging_dir / f"{job_id}.json").write_text(json.dumps(job, ensure_ascii=False))
+    (cfg.staging_dir / f"{job_id}.json").write_text(json.dumps(job, ensure_ascii=False), encoding="utf-8")
     return job

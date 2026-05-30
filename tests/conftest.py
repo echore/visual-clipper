@@ -1,11 +1,6 @@
 import pytest
 from server.config import Config
-
-# 1x1 transparent PNG
-TINY_PNG_B64 = (
-    "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk"
-    "+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
-)
+from tests.helpers import TINY_PNG_B64
 
 
 @pytest.fixture
