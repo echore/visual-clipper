@@ -5,3 +5,4 @@ dist/
 *.zip
 .claude/
 .DS_Store
+extension-key.pem
