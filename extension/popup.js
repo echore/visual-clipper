@@ -36,7 +36,7 @@ chrome.storage.local.get({ clip_history: [] }, ({ clip_history }) => {
       hour: '2-digit', minute: '2-digit' });
     const dotClass = success ? 'dot-ok' : 'dot-err';
     const label = title || note_path || '未知标题';
-    return `<div class="history-item" data-path="${escHtml(note_path || '')}">
+    return `<div class="history-item" data-path="${note_path || ''}">
       <div class="history-dot ${dotClass}"></div>
       <div class="history-text">
         <div class="history-title">${escHtml(label)}</div>
