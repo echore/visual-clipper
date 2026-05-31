@@ -75,7 +75,9 @@ export async function start(tabId) {
       captured_at: new Date().toISOString(),
     });
   } catch (err) {
-    notifyError('vault-autopilot 无响应，请确认 Obsidian 已开启且插件已启用');
+    notifyError(err.message?.includes('400') || err.message?.includes('404')
+      ? '封面收藏需要更新 vault-autopilot 插件'
+      : 'vault-autopilot 无响应，请确认 Obsidian 已开启且插件已启用');
     return;
   }
 
