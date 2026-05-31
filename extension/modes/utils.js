@@ -1,5 +1,5 @@
 // Endpoint — must match vault-autopilot's configured port
-export const VAULT_AUTOPILOT_URL = 'http://localhost:3000/clip';
+export const VAULT_AUTOPILOT_URL = 'http://localhost:27183/clip';
 
 export function sanitize(str) {
   return (str || '').replace(/[/\\:*?"<>|]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 100);
