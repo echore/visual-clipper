@@ -26,13 +26,10 @@ chrome.storage.local.get(['last_error', 'keyframe_in_time', 'keyframe_tab_id', '
     btnBatchAnalyze.style.display = 'inline-block';
   }
 
-  // Restore keyframe state if In was already marked
+  // Show active state if keyframe mark is in progress
   if (stored.keyframe_in_time !== undefined) {
-    const inFormatted = formatTime(stored.keyframe_in_time);
-    keyframeHint.textContent = `▶ In 已标记 ${inFormatted} — 定位到结束位置，再次点击标记 Out`;
-    keyframeHint.style.display = 'block';
     btnKeyframe.classList.add('active');
-    btnKeyframe.querySelector('.sub').textContent = `Out & Capture (In: ${inFormatted})`;
+    btnKeyframe.querySelector('.sub').textContent = `已标记 ${formatTime(stored.keyframe_in_time)} · 点击打开`;
   }
 });
 
@@ -88,44 +85,12 @@ btnHook.addEventListener('click', async () => {
   window.close();
 });
 
-// ── Video Keyframes ───────────────────────────────────────────────────────────
+// ── Video Keyframes → open Side Panel ────────────────────────────────────────
 btnKeyframe.addEventListener('click', async () => {
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   if (!tab) return;
-
-  const stored = await new Promise(resolve =>
-    chrome.storage.local.get(['keyframe_in_time', 'keyframe_tab_id'], resolve)
-  );
-
-  if (stored.keyframe_in_time === undefined || stored.keyframe_tab_id !== tab.id) {
-    // First click on this tab: Mark In
-    chrome.tabs.sendMessage(tab.id, { action: 'getCurrentTime' }, (resp) => {
-      if (resp?.currentTime == null) return;
-      chrome.storage.local.set({ keyframe_in_time: resp.currentTime, keyframe_tab_id: tab.id });
-      chrome.action.setBadgeText({ text: '▶' });
-      chrome.action.setBadgeBackgroundColor({ color: '#6366f1' });
-    });
-    window.close();
-  } else {
-    // Second click: Mark Out → capture
-    chrome.tabs.sendMessage(tab.id, { action: 'getCurrentTime' }, (resp) => {
-      if (resp?.currentTime == null) return;
-      chrome.runtime.sendMessage({
-        action: 'markOut',
-        tabId: tab.id,
-        inTime: stored.keyframe_in_time,
-        currentTime: resp.currentTime,
-        url: tab.url,
-        title: tab.title,
-        platform: detectPlatform(tab.url),
-        videoTitle: null,
-        channel: null,
-      });
-      chrome.storage.local.remove(['keyframe_in_time', 'keyframe_tab_id']);
-      chrome.action.setBadgeText({ text: '' });
-    });
-    window.close();
-  }
+  await chrome.sidePanel.open({ windowId: tab.windowId });
+  window.close();
 });
 
 // ── Helpers ───────────────────────────────────────────────────────────────────

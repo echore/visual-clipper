@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="utf-8">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font: 13px/1.5 system-ui, sans-serif;
+      color: #1f2937;
+      background: #fff;
+      padding: 20px 16px;
+      min-width: 240px;
+    }
+
+    .header {
+      display: flex; align-items: center; gap: 8px;
+      margin-bottom: 24px;
+    }
+    .header .icon { font-size: 20px; }
+    .header h1 { font-size: 14px; font-weight: 600; color: #111827; }
+
+    /* ── State cards ── */
+    .card {
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+      border-radius: 10px;
+      padding: 16px;
+      margin-bottom: 12px;
+    }
+
+    .card.active {
+      background: #eef2ff;
+      border-color: #a5b4fc;
+    }
+
+    .card .step-label {
+      font-size: 10px;
+      font-weight: 600;
+      color: #9ca3af;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 4px;
+    }
+    .card.active .step-label { color: #6366f1; }
+
+    .card .instruction {
+      font-size: 12px;
+      color: #6b7280;
+      margin-bottom: 12px;
+      line-height: 1.5;
+    }
+    .card.active .instruction { color: #374151; }
+
+    .card .time-badge {
+      display: inline-flex; align-items: center; gap-: 4px;
+      background: #6366f1; color: #fff;
+      font-size: 11px; font-weight: 600;
+      padding: 2px 8px; border-radius: 99px;
+      margin-bottom: 12px;
+    }
+
+    /* ── Buttons ── */
+    .btn-primary {
+      width: 100%;
+      padding: 10px;
+      background: #6366f1;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font: 600 13px system-ui;
+      cursor: pointer;
+      transition: background .15s;
+    }
+    .btn-primary:hover { background: #4f46e5; }
+    .btn-primary:disabled {
+      background: #d1d5db;
+      cursor: not-allowed;
+    }
+
+    .btn-cancel {
+      width: 100%;
+      margin-top: 8px;
+      padding: 8px;
+      background: none;
+      color: #9ca3af;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      font: 13px system-ui;
+      cursor: pointer;
+    }
+    .btn-cancel:hover { color: #ef4444; border-color: #fca5a5; }
+
+    /* ── Live time display ── */
+    .live-time {
+      display: flex; justify-content: space-between;
+      margin-top: 14px;
+      padding-top: 12px;
+      border-top: 1px solid #e5e7eb;
+      font-size: 11px;
+      color: #9ca3af;
+    }
+    .live-time span { color: #374151; font-weight: 500; }
+
+    /* ── No video warning ── */
+    #no-video {
+      display: none;
+      text-align: center;
+      padding: 32px 16px;
+      color: #9ca3af;
+      font-size: 12px;
+      line-height: 1.8;
+    }
+    #no-video .icon { font-size: 32px; margin-bottom: 8px; }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <span class="icon">🎞</span>
+    <h1>视频关键帧</h1>
+  </div>
+
+  <!-- No video state -->
+  <div id="no-video">
+    <div class="icon">🎬</div>
+    请在视频页面使用此功能<br>
+    （YouTube / Bilibili）
+  </div>
+
+  <!-- Step 1: mark start -->
+  <div id="step1" class="card active">
+    <div class="step-label">第一步</div>
+    <div class="instruction">定位到片段开始位置，点击标记</div>
+    <button class="btn-primary" id="btn-mark-start">标记开始</button>
+    <div class="live-time">
+      当前位置 <span id="current-time-1">--:--</span>
+    </div>
+  </div>
+
+  <!-- Step 2: mark end (hidden until start marked) -->
+  <div id="step2" class="card" style="display:none">
+    <div class="step-label">第二步</div>
+    <div class="instruction">继续播放到结束位置，点击截取</div>
+    <div class="time-badge" id="start-badge">开始：0:00</div>
+    <button class="btn-primary" id="btn-capture">截取到这里</button>
+    <button class="btn-cancel" id="btn-cancel">取消</button>
+    <div class="live-time">
+      当前位置 <span id="current-time-2">--:--</span>
+      &nbsp;·&nbsp; 时长 <span id="duration">--:--</span>
+    </div>
+  </div>
+
+  <script src="sidepanel.js"></script>
+</body>
+</html>

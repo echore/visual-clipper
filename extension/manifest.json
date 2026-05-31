@@ -9,7 +9,7 @@
     "48": "icons/icon48.png",
     "128": "icons/icon128.png"
   },
-  "permissions": ["storage", "activeTab", "notifications", "tabs", "scripting"],
+  "permissions": ["storage", "activeTab", "notifications", "tabs", "scripting", "sidePanel"],
   "host_permissions": ["<all_urls>"],
   "background": {
     "service_worker": "background.js",
@@ -23,6 +23,9 @@
       "all_frames": false
     }
   ],
+  "side_panel": {
+    "default_path": "sidepanel.html"
+  },
   "action": {
     "default_popup": "popup.html",
     "default_icon": {
