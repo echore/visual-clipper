@@ -1,18 +1,29 @@
 // popup.js
 
-const btnScreenshot = document.getElementById('btn-screenshot');
-const btnHook       = document.getElementById('btn-hook');
-const btnKeyframe   = document.getElementById('btn-keyframe');
-const keyframeHint  = document.getElementById('keyframe-hint');
-const errorMsg      = document.getElementById('error-msg');
+const btnScreenshot   = document.getElementById('btn-screenshot');
+const btnHook         = document.getElementById('btn-hook');
+const btnKeyframe     = document.getElementById('btn-keyframe');
+const keyframeHint    = document.getElementById('keyframe-hint');
+const errorMsg        = document.getElementById('error-msg');
+const batchToggle     = document.getElementById('batch-toggle');
+const btnBatchAnalyze = document.getElementById('btn-batch-analyze');
+const batchCountEl    = document.getElementById('batch-count');
 
 // ── Show stored error from previous clip attempt ──────────────────────────────
-chrome.storage.local.get(['last_error', 'keyframe_in_time', 'keyframe_tab_id'], (stored) => {
+chrome.storage.local.get(['last_error', 'keyframe_in_time', 'keyframe_tab_id', 'screenshot_batch_mode', 'screenshot_queue'], (stored) => {
   if (stored.last_error) {
     errorMsg.textContent = stored.last_error;
     errorMsg.style.display = 'block';
     chrome.storage.local.remove('last_error');
     chrome.action.setBadgeText({ text: '' });
+  }
+
+  // Restore batch mode state
+  batchToggle.checked = stored.screenshot_batch_mode || false;
+  const queue = stored.screenshot_queue || [];
+  if (queue.length > 0) {
+    batchCountEl.textContent = queue.length;
+    btnBatchAnalyze.style.display = 'inline-block';
   }
 
   // Restore keyframe state if In was already marked
@@ -33,8 +44,32 @@ chrome.tabs.query({ active: true, currentWindow: true }, ([tab]) => {
     if (resp?.hasVideo) {
       btnHook.disabled = false;
       btnKeyframe.disabled = false;
+      chrome.tabs.sendMessage(tab.id, { action: 'getCurrentTime' }, (timeResp) => {
+        if (chrome.runtime.lastError) return;
+        const t = timeResp?.currentTime;
+        if (t != null) {
+          document.getElementById('hook-sub').textContent =
+            `已追踪 0:00 ~ ${formatTime(t)}  点击截取到当前位置`;
+        }
+      });
     }
   });
+});
+
+// ── Batch mode toggle ─────────────────────────────────────────────────────────
+batchToggle.addEventListener('change', () => {
+  chrome.storage.local.set({ screenshot_batch_mode: batchToggle.checked });
+});
+
+// ── Batch analyze ─────────────────────────────────────────────────────────────
+btnBatchAnalyze.addEventListener('click', async () => {
+  const stored = await new Promise(r => chrome.storage.local.get(['screenshot_queue'], r));
+  const queue = stored.screenshot_queue || [];
+  if (!queue.length) return;
+  chrome.runtime.sendMessage({ action: 'analyzeBatch', queue });
+  chrome.storage.local.remove('screenshot_queue');
+  chrome.action.setBadgeText({ text: '' });
+  window.close();
 });
 
 // ── Screenshot ────────────────────────────────────────────────────────────────

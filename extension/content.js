@@ -175,6 +175,7 @@
       sendResponse(extractVideoMeta());
       return true;
     }
+
   });
 
   async function captureFrames(timestamps) {

@@ -38,6 +38,18 @@
     #error-msg { font-size: 11px; color: #ef4444; padding: 4px 12px 8px;
       display: none; line-height: 1.4; }
 
+    .batch-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 12px 10px; font-size: 11px; color: #6b7280;
+    }
+    .batch-label { display: flex; align-items: center; gap: 5px; cursor: pointer; user-select: none; }
+    #btn-batch-analyze {
+      background: #6366f1; color: #fff; border: none;
+      padding: 4px 10px; border-radius: 6px; font-size: 11px;
+      cursor: pointer; display: none;
+    }
+    #btn-batch-analyze:hover { background: #4f46e5; }
+
     .footer { padding: 8px 12px; border-top: 1px solid #f3f4f6; }
     .footer a { font-size: 11px; color: #9ca3af; text-decoration: none; }
     .footer a:hover { color: #6366f1; }
@@ -62,7 +74,7 @@
       <span class="icon">🎬</span>
       <span class="label">
         <span class="title">Hook 分析</span>
-        <span class="sub">自动抓取视频开头 15s</span>
+        <span class="sub" id="hook-sub">自动抓取视频开头 15s</span>
       </span>
     </button>
 
@@ -73,6 +85,14 @@
         <span class="sub">标记 In / Out，采样关键帧</span>
       </span>
     </button>
+  </div>
+
+  <div class="batch-row">
+    <label class="batch-label">
+      <input type="checkbox" id="batch-toggle">
+      <span>批量截图</span>
+    </label>
+    <button id="btn-batch-analyze">分析全部 (<span id="batch-count">0</span>)</button>
   </div>
 
   <div id="keyframe-hint"></div>

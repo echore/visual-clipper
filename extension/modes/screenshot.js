@@ -29,6 +29,21 @@ export async function handleRegion(msg, tabId) {
     return;
   }
 
+  // Batch mode: queue the image, don't send yet
+  const stored = await new Promise(r =>
+    chrome.storage.local.get(['screenshot_batch_mode', 'screenshot_queue'], r)
+  );
+  if (stored.screenshot_batch_mode) {
+    const queue = stored.screenshot_queue || [];
+    queue.push({ image: croppedB64, url: msg.source_url, title: sanitize(msg.title) });
+    await new Promise(r => chrome.storage.local.set({ screenshot_queue: queue }, r));
+    chrome.action.setBadgeText({ text: String(queue.length) });
+    chrome.action.setBadgeBackgroundColor({ color: '#6366f1' });
+    chrome.tabs.sendMessage(tabId, { action: 'captureResult', success: true });
+    return;
+  }
+
+  // Single mode: send immediately
   let response;
   try {
     response = await httpPost({
@@ -47,9 +62,32 @@ export async function handleRegion(msg, tabId) {
   }
 
   chrome.tabs.sendMessage(tabId, { action: 'captureResult', ...response });
-
   if (response.success) {
     chrome.action.setBadgeText({ text: '' });
+  } else {
+    notifyError(response.error || '截图处理失败，请重试');
+  }
+}
+
+export async function analyzeBatch(queue) {
+  if (!queue.length) return;
+  let response;
+  try {
+    response = await httpPost({
+      mode: 'screenshot',
+      images: queue.map(item => item.image),
+      url: queue[0].url,
+      title: queue[0].title,
+      captured_at: new Date().toISOString(),
+    });
+  } catch (err) {
+    notifyError('vault-autopilot 无响应，请确认 Obsidian 已开启且插件已启用');
+    return;
+  }
+  if (response.success) {
+    chrome.action.setBadgeText({ text: '✓' });
+    chrome.action.setBadgeBackgroundColor({ color: '#22c55e' });
+    setTimeout(() => chrome.action.setBadgeText({ text: '' }), 3000);
   } else {
     notifyError(response.error || '截图处理失败，请重试');
   }
