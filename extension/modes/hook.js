@@ -86,8 +86,18 @@ async function extractTranscript(url, platform) {
     const playinfo = await fetch(url)
       .then(r => r.text())
       .then(html => {
-        const m = html.match(/window\.__playinfo__\s*=\s*(\{.+?\})\s*<\/script>/s);
-        return m ? JSON.parse(m[1]) : null;
+        const start = html.indexOf('window.__playinfo__=');
+        if (start === -1) return null;
+        const jsonStart = html.indexOf('{', start);
+        if (jsonStart === -1) return null;
+        // find the closing brace by counting depth
+        let depth = 0;
+        let i = jsonStart;
+        for (; i < html.length; i++) {
+          if (html[i] === '{') depth++;
+          else if (html[i] === '}') { depth--; if (depth === 0) break; }
+        }
+        try { return JSON.parse(html.slice(jsonStart, i + 1)); } catch { return null; }
       })
       .catch(() => null);
 
