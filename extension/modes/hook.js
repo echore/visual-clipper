@@ -2,11 +2,21 @@ import { buildTimestamps, sanitize, httpPost, notifyError, sendToContent, detect
 
 export async function start(tabId) {
   const tab = await chrome.tabs.get(tabId);
-  const url = tab.url;
+  const url = cleanVideoUrl(tab.url);
   const platform = detectPlatform(url);
 
-  // Capture 8 frames from 0s to 15s
-  const timestamps = buildTimestamps(0, 15, 8);
+  // Use current playback position as the Hook end point
+  let endTime = 15;
+  try {
+    const timeResp = await sendToContent(tabId, { action: 'getCurrentTime' });
+    if (timeResp?.currentTime != null && timeResp.currentTime > 0) {
+      endTime = Math.floor(timeResp.currentTime);
+    }
+  } catch (_) {}
+
+  // ~1 frame per 3s, min 5, max 8
+  const count = Math.max(5, Math.min(8, Math.ceil(endTime / 3)));
+  const timestamps = buildTimestamps(0, endTime, count);
   let captureResp;
   try {
     captureResp = await sendToContent(tabId, { action: 'captureVideoFrames', timestamps });
@@ -26,10 +36,10 @@ export async function start(tabId) {
     meta = await sendToContent(tabId, { action: 'getVideoMeta' }) || {};
   } catch (_) {}
 
-  // Attempt transcript extraction (best-effort, never blocks)
   let transcript = null;
   try {
-    transcript = await extractTranscript(url, platform);
+    if (platform === 'youtube') transcript = await fetchYouTubeTranscript(tabId, url, endTime);
+    else if (platform === 'bilibili') transcript = await extractBilibiliTranscript(url, endTime);
   } catch (_) {}
 
   const payload = {
@@ -41,7 +51,7 @@ export async function start(tabId) {
     frames: captureResp.frames,
     video_title: meta.videoTitle || null,
     channel: meta.channel || null,
-    time_range: { start: 0, end: 15 },
+    time_range: { start: 0, end: endTime },
     ...(transcript ? { transcript } : {}),
   };
 
@@ -62,52 +72,100 @@ export async function start(tabId) {
   }
 }
 
-// ── Transcript extraction (best-effort) ────────────────────────────────────────
+// ── Helpers ────────────────────────────────────────────────────────────────────
 
-async function extractTranscript(url, platform) {
-  if (platform === 'youtube') {
-    const videoId = new URL(url).searchParams.get('v');
-    if (!videoId) return null;
-    const resp = await fetch(
-      `https://www.youtube.com/api/timedtext?lang=zh-Hans&v=${videoId}&fmt=json3`,
-    );
-    if (!resp.ok) return null;
-    const data = await resp.json();
-    const events = data.events || [];
-    const text = events
-      .filter(e => e.segs)
-      .map(e => e.segs.map(s => s.utf8).join(''))
-      .join(' ')
-      .trim();
-    return text || null;
-  }
+function cleanVideoUrl(url) {
+  try {
+    const u = new URL(url);
+    u.searchParams.delete('si');
+    return u.toString();
+  } catch { return url; }
+}
 
-  if (platform === 'bilibili') {
-    const playinfo = await fetch(url)
-      .then(r => r.text())
-      .then(html => {
-        const start = html.indexOf('window.__playinfo__=');
-        if (start === -1) return null;
-        const jsonStart = html.indexOf('{', start);
-        if (jsonStart === -1) return null;
-        // find the closing brace by counting depth
-        let depth = 0;
-        let i = jsonStart;
-        for (; i < html.length; i++) {
-          if (html[i] === '{') depth++;
-          else if (html[i] === '}') { depth--; if (depth === 0) break; }
+// ── Transcript extraction ──────────────────────────────────────────────────────
+
+async function fetchYouTubeTranscript(tabId, videoUrl, endTime) {
+  const videoId = new URL(videoUrl).searchParams.get('v');
+  if (!videoId) return null;
+
+  // Run inside the YouTube tab (content script context) so fetch uses the tab's
+  // cookies and doesn't trigger extension host-permission prompts — same approach
+  // as Obsidian Web Clipper / defuddle's YoutubeExtractor.
+  const results = await chrome.scripting.executeScript({
+    target: { tabId },
+    world: 'MAIN',
+    func: async (videoId, endTime) => {
+      // iOS Innertube client: no POT required for subtitles (unlike web client)
+      const playerData = await fetch(
+        'https://www.youtube.com/youtubei/v1/player?prettyPrint=false',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            context: { client: { clientName: 'IOS', clientVersion: '20.10.3' } },
+            videoId,
+          }),
         }
-        try { return JSON.parse(html.slice(jsonStart, i + 1)); } catch { return null; }
-      })
-      .catch(() => null);
+      ).then(r => r.json()).catch(() => null);
 
-    const subtitleUrl = playinfo?.data?.subtitle?.subtitles?.[0]?.subtitle_url;
-    if (!subtitleUrl) return null;
+      const tracks = playerData?.captions?.playerCaptionsTracklistRenderer?.captionTracks || [];
+      if (!tracks.length) return null;
 
-    const subs = await fetch(`https:${subtitleUrl}`).then(r => r.json()).catch(() => null);
-    if (!subs?.body) return null;
-    return subs.body.map(s => s.content).join(' ').trim() || null;
-  }
+      const track = tracks.find(t => t.languageCode === 'en') || tracks[0];
+      const data = await fetch(`${track.baseUrl}&fmt=json3`).then(r => r.json()).catch(() => null);
+      if (!data) return null;
 
-  return null;
+      const lookahead = 5;
+      const events = (data.events || []).filter(e => e.segs);
+      const inWindow = events.filter(e => e.tStartMs / 1000 <= endTime + lookahead);
+
+      let cutIdx = -1;
+      for (let i = inWindow.length - 1; i >= 0; i--) {
+        if (inWindow[i].tStartMs / 1000 <= endTime) { cutIdx = i; break; }
+      }
+      if (cutIdx === -1) return null;
+
+      const SENTENCE_END = /[.!?。！？]["']?\s*$/;
+      if (!SENTENCE_END.test(inWindow[cutIdx].segs.map(s => s.utf8).join(''))) {
+        for (let i = cutIdx + 1; i < inWindow.length; i++) {
+          if (SENTENCE_END.test(inWindow[i].segs.map(s => s.utf8).join(''))) { cutIdx = i; break; }
+        }
+      }
+
+      return inWindow.slice(0, cutIdx + 1)
+        .map(e => e.segs.map(s => s.utf8).join(''))
+        .join(' ').trim() || null;
+    },
+    args: [videoId, endTime],
+  });
+
+  return results?.[0]?.result || null;
+}
+
+async function extractBilibiliTranscript(url, endTime) {
+  const playinfo = await fetch(url)
+    .then(r => r.text())
+    .then(html => {
+      const start = html.indexOf('window.__playinfo__=');
+      if (start === -1) return null;
+      const jsonStart = html.indexOf('{', start);
+      if (jsonStart === -1) return null;
+      let depth = 0, i = jsonStart;
+      for (; i < html.length; i++) {
+        if (html[i] === '{') depth++;
+        else if (html[i] === '}') { depth--; if (depth === 0) break; }
+      }
+      try { return JSON.parse(html.slice(jsonStart, i + 1)); } catch { return null; }
+    })
+    .catch(() => null);
+
+  const subtitleUrl = playinfo?.data?.subtitle?.subtitles?.[0]?.subtitle_url;
+  if (!subtitleUrl) return null;
+
+  const subs = await fetch(`https:${subtitleUrl}`).then(r => r.json()).catch(() => null);
+  if (!subs?.body) return null;
+  return subs.body
+    .filter(s => s.from <= endTime)
+    .map(s => s.content)
+    .join(' ').trim() || null;
 }
