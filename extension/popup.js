@@ -3,6 +3,7 @@
 const btnScreenshot   = document.getElementById('btn-screenshot');
 const btnHook         = document.getElementById('btn-hook');
 const btnKeyframe     = document.getElementById('btn-keyframe');
+const btnThumbnail    = document.getElementById('btn-thumbnail');
 const keyframeHint    = document.getElementById('keyframe-hint');
 const errorMsg        = document.getElementById('error-msg');
 const batchToggle     = document.getElementById('batch-toggle');
@@ -41,6 +42,10 @@ chrome.tabs.query({ active: true, currentWindow: true }, ([tab]) => {
     if (resp?.hasVideo) {
       btnHook.disabled = false;
       btnKeyframe.disabled = false;
+      // Thumbnail only on YouTube/Bilibili video pages
+      if (/youtube\.com\/watch|bilibili\.com\/video/.test(tab.url)) {
+        btnThumbnail.disabled = false;
+      }
       chrome.tabs.sendMessage(tab.id, { action: 'getCurrentTime' }, (timeResp) => {
         if (chrome.runtime.lastError) return;
         const t = timeResp?.currentTime;
@@ -82,6 +87,14 @@ btnHook.addEventListener('click', async () => {
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   if (!tab) return;
   chrome.runtime.sendMessage({ action: 'startHook', tabId: tab.id });
+  window.close();
+});
+
+// ── Thumbnail save ────────────────────────────────────────────────────────────
+btnThumbnail.addEventListener('click', async () => {
+  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+  if (!tab) return;
+  chrome.runtime.sendMessage({ action: 'saveThumbnail', tabId: tab.id });
   window.close();
 });
 

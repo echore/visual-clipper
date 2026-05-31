@@ -2,6 +2,7 @@
 import * as screenshot from './modes/screenshot.js';
 import * as hook from './modes/hook.js';
 import * as keyframe from './modes/keyframe.js';
+import * as thumbnail from './modes/thumbnail.js';
 
 chrome.runtime.onInstalled.addListener(({ reason }) => {
   if (reason === 'install') {
@@ -31,6 +32,9 @@ chrome.runtime.onMessage.addListener((msg, sender) => {
       break;
     case 'analyzeBatch':
       screenshot.analyzeBatch(msg.queue);
+      break;
+    case 'saveThumbnail':
+      thumbnail.start(msg.tabId);
       break;
   }
 });
