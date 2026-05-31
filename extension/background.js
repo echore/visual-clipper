@@ -26,7 +26,8 @@ chrome.runtime.onMessage.addListener((msg, sender) => {
       keyframe.start(msg.tabId);
       break;
     case 'markOut':
-      keyframe.markOut(msg.tabId, msg.currentTime, msg.inTime, msg.url, msg.title, msg.platform, msg.videoTitle, msg.channel);
+      keyframe.markOut(msg.tabId, msg.currentTime, msg.inTime, msg.url, msg.title, msg.platform, msg.videoTitle, msg.channel)
+        .catch(err => console.error('[OVC] markOut failed:', err));
       break;
   }
 });
