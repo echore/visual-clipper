@@ -62,19 +62,38 @@ document.getElementById('btn-mark-start').addEventListener('click', () => {
 });
 
 // ── Capture ────────────────────────────────────────────────────────────────────
-document.getElementById('btn-capture').addEventListener('click', () => {
+document.getElementById('btn-capture').addEventListener('click', async () => {
   if (!tabId || inTime === null) return;
-  chrome.tabs.sendMessage(tabId, { action: 'getCurrentTime' }, (resp) => {
-    if (chrome.runtime.lastError || resp?.currentTime == null) return;
-    // TODO: trigger actual capture via background
-    chrome.runtime.sendMessage({
-      action: 'markOut',
-      tabId,
-      inTime,
-      currentTime: resp.currentTime,
-    });
-    clearMark();
+
+  const btn = document.getElementById('btn-capture');
+  btn.disabled = true;
+  btn.textContent = '处理中...';
+
+  // Get current time and tab info in parallel
+  const [timeResp, tab] = await Promise.all([
+    new Promise(r => chrome.tabs.sendMessage(tabId, { action: 'getCurrentTime' }, r)),
+    chrome.tabs.get(tabId),
+  ]);
+
+  if (!timeResp?.currentTime == null || !tab) {
+    btn.disabled = false;
+    btn.textContent = '截取到这里';
+    return;
+  }
+
+  chrome.runtime.sendMessage({
+    action: 'markOut',
+    tabId,
+    inTime,
+    currentTime: timeResp.currentTime,
+    url: tab.url,
+    title: tab.title,
+    platform: detectPlatform(tab.url),
+    videoTitle: null,
+    channel: null,
   });
+
+  clearMark();
 });
 
 // ── Cancel ─────────────────────────────────────────────────────────────────────
@@ -92,6 +111,9 @@ function clearMark() {
   inTime = null;
   chrome.storage.local.remove(['keyframe_in_time', 'keyframe_tab_id']);
   chrome.action.setBadgeText({ text: '' });
+  const btn = document.getElementById('btn-capture');
+  btn.disabled = false;
+  btn.textContent = '截取到这里';
   document.getElementById('step2').style.display = 'none';
   document.getElementById('step1').style.display = 'block';
 }
@@ -100,4 +122,10 @@ function fmt(seconds) {
   const s = Math.round(seconds);
   const m = Math.floor(s / 60);
   return `${String(m).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
+}
+
+function detectPlatform(url) {
+  if (/youtube\.com|youtu\.be/.test(url)) return 'youtube';
+  if (/bilibili\.com/.test(url)) return 'bilibili';
+  return 'other';
 }
