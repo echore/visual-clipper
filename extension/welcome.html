@@ -2,7 +2,7 @@
 <html lang="zh">
 <head>
   <meta charset="utf-8">
-  <title>Screenshot Clipper — 安装配置</title>
+  <title>Obsidian Visual Clipper — 使用说明</title>
   <style>
     body { max-width: 640px; margin: 60px auto; font: 15px/1.7 system-ui,sans-serif;
       color: #1f2937; padding: 0 24px; }
@@ -12,60 +12,56 @@
     p  { margin: 6px 0; }
     code { background: #f3f4f6; padding: 2px 6px; border-radius: 4px;
       font: 13px/1.4 monospace; }
-    pre  { background: #1f2937; color: #e5e7eb; padding: 14px 18px;
-      border-radius: 8px; font: 13px/1.6 monospace; overflow-x: auto; margin: 10px 0; }
     .step { display: flex; gap: 14px; margin: 12px 0; }
-    .step-num { width: 24px; height: 24px; background: #6366f1; color: #fff;
-      border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    .step-num { min-width: 24px; height: 24px; padding: 0 6px; background: #6366f1; color: #fff;
+      border-radius: 12px; display: flex; align-items: center; justify-content: center;
       font: 600 12px system-ui; flex-shrink: 0; margin-top: 2px; }
     .note { background: #fef9c3; border: 1px solid #fde047; padding: 10px 14px;
       border-radius: 8px; font-size: 13px; margin: 16px 0; }
-    #ext-id { font-family: monospace; font-size: 13px; color: #6366f1; }
   </style>
 </head>
 <body>
-  <h1>Screenshot Clipper</h1>
-  <p class="sub">看到好设计 → 框选 → 自动存进 Obsidian，AI 填好客观分析</p>
+  <h1>Obsidian Visual Clipper</h1>
+  <p class="sub">截图 · Hook · 关键帧 · 收藏封面 → 一键存进 Obsidian</p>
 
-  <h2>第一步：安装本地 Host</h2>
+  <h2>工作原理</h2>
+  <p>本扩展把你截取的内容通过本地 HTTP 直接发给 Obsidian 的
+     <strong>vault-autopilot</strong> 插件，由插件按规则写入你的库。
+     无需任何本地程序、无需命令行、无需配置 Extension ID。</p>
+
+  <h2>安装（只需一步）</h2>
   <div class="step">
     <div class="step-num">1</div>
     <div>
-      <p>在终端里进入项目目录，运行安装脚本：</p>
-      <pre>cd ~/Documents/fang/screenshot-clipper
-bash install.sh</pre>
-      <p>脚本会问你 Extension ID（见第二步）。</p>
+      <p>在 Obsidian 里安装并启用 <strong>vault-autopilot</strong> 插件。</p>
+      <p>打开插件设置 <code>Settings → Clip Rules</code>，为下面四种模式分别配置
+         输出文件夹、SOP、Provider 等规则。</p>
+      <div class="note">⚠️ 使用时请保持 Obsidian 开着、vault-autopilot 已启用——
+         扩展通过本地端口 <code>localhost:27183</code> 把内容发给插件，
+         Obsidian 没开就发不进去。</div>
     </div>
   </div>
 
-  <h2>第二步：复制 Extension ID</h2>
+  <h2>四种模式</h2>
   <div class="step">
-    <div class="step-num">2</div>
-    <div>
-      <p>你的 Extension ID 是：</p>
-      <p><strong id="ext-id">（加载中…）</strong></p>
-      <p>把它粘贴给 <code>install.sh</code> 的提示。</p>
-      <div class="note">⚠️ 每次重新"Load unpacked"都会生成新 ID，需要重新运行 <code>install.sh</code>。上架 Chrome Web Store 后 ID 才会固定。</div>
-    </div>
+    <div class="step-num">截图</div>
+    <div><p><strong>框选任意区域</strong>：点工具栏图标 → 截图 → 在页面上拖拽选区 → 存为截图笔记。</p></div>
   </div>
-
-  <h2>第三步：设置 Vault 名称</h2>
   <div class="step">
-    <div class="step-num">3</div>
-    <div>
-      <p>点击工具栏的插件图标，在弹窗里填入你的 Obsidian Vault 名称。</p>
-      <p>Vault 名称必须和 Obsidian 标题栏里显示的完全一致（大小写、空格都算）。</p>
-    </div>
+    <div class="step-num">Hook</div>
+    <div><p><strong>抓取视频开头</strong>：在视频页点 Hook 分析 → 自动采样开头到当前播放位置的关键帧（含字幕）→ 存为 Hook 笔记。</p></div>
   </div>
-
-  <h2>使用方法</h2>
   <div class="step">
-    <div class="step-num">▶</div>
-    <div>
-      <p>在任何网页上，点击工具栏图标 → 点"Clip 当前页面" → 在页面上拖拽选择你想截的区域 → 松手 → 等几秒钟 → 笔记自动出现在 Obsidian 里。</p>
-    </div>
+    <div class="step-num">关键帧</div>
+    <div><p><strong>标记 In / Out</strong>：在视频页点关键帧 → 在侧边栏标记起止点 → 采样区间内关键帧 → 存为关键帧笔记。</p></div>
+  </div>
+  <div class="step">
+    <div class="step-num">封面</div>
+    <div><p><strong>收藏封面</strong>：在 YouTube / Bilibili 视频页点收藏封面 → 抓封面图 + 标题元数据 → 存入 Great Videos 笔记。</p></div>
   </div>
 
-  <script src="welcome.js"></script>
+  <h2>提示</h2>
+  <p>· 保存成功后会自动跳转到 Obsidian 里对应的笔记（首次会弹「打开 Obsidian」，可勾选「始终允许」之后免确认）。</p>
+  <p>· <code>chrome://</code> 等受浏览器限制的页面无法框选，截图模式会自动改存整页并在弹窗里提示。</p>
 </body>
 </html>
