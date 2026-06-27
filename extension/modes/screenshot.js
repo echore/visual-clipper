@@ -1,15 +1,72 @@
-import { sanitize, httpPost, notifyError } from './utils.js';
+import { sanitize, httpPost, notifyError, notifyNotice, sendToContent } from './utils.js';
 
 export async function start(tabId, windowId) {
+  let dataUrl;
   try {
-    const dataUrl = await chrome.tabs.captureVisibleTab(windowId, { format: 'png' });
-    chrome.tabs.sendMessage(tabId, { action: 'showOverlay', dataUrl }, () => {
-      if (chrome.runtime.lastError) {
-        console.warn('[OVC] content script not ready — refresh the page first');
-      }
-    });
+    dataUrl = await chrome.tabs.captureVisibleTab(windowId, { format: 'png' });
   } catch (err) {
     console.error('[OVC] captureVisibleTab failed:', err.message);
+    notifyError('截图失败，请重试');
+    return;
+  }
+
+  const sendOverlay = () => new Promise((resolve) => {
+    chrome.tabs.sendMessage(tabId, { action: 'showOverlay', dataUrl }, () => {
+      resolve(!chrome.runtime.lastError);
+    });
+  });
+
+  // First try: content.js may already be present.
+  if (await sendOverlay()) return;
+
+  // Tab predates the extension install/reload — inject content.js, then retry.
+  try {
+    await chrome.scripting.executeScript({ target: { tabId }, files: ['content.js'] });
+  } catch (err) {
+    // Chrome forbids injecting into restricted pages (other extensions' pages,
+    // chrome://, the web store, …), so region-select is impossible here. But the
+    // full visible tab is already captured — save that whole image instead.
+    console.warn('[OVC] cannot inject here, saving full page instead:', err.message);
+    await saveFullCapture(tabId, dataUrl);
+    return;
+  }
+  if (!(await sendOverlay())) {
+    notifyError('无法在此页面截图，请刷新页面后重试');
+  }
+}
+
+// Fallback for pages where a content script can't run: there's no region overlay,
+// so we save the entire visible capture we already have.
+async function saveFullCapture(tabId, dataUrl) {
+  let tab;
+  try { tab = await chrome.tabs.get(tabId); } catch (_) { tab = {}; }
+
+  let response;
+  try {
+    response = await httpPost({
+      mode: 'screenshot',
+      url: tab.url || '',
+      title: sanitize(tab.title || '截图'),
+      platform: 'other',
+      captured_at: new Date().toISOString(),
+      image: dataUrl.split(',')[1],
+    });
+  } catch (err) {
+    notifyError('vault-autopilot 无响应，请确认 Obsidian 已开启且插件已启用');
+    return;
+  }
+
+  if (!response.success) {
+    notifyError(response.error || '截图处理失败，请重试');
+    return;
+  }
+
+  notifyNotice('此页面受浏览器限制，无法框选，已为你保存整页截图到 Obsidian。');
+  // This page can't host a content script, so trigger the deep link from the tab
+  // itself — Obsidian handles the protocol, the page stays put. Same "Open Obsidian?"
+  // dialog as normal pages, just initiated via the extension API instead of page JS.
+  if (response.obsidianUrl) {
+    chrome.tabs.update(tabId, { url: response.obsidianUrl }).catch(() => {});
   }
 }
 
@@ -88,6 +145,12 @@ export async function analyzeBatch(queue) {
     chrome.action.setBadgeText({ text: '✓' });
     chrome.action.setBadgeBackgroundColor({ color: '#22c55e' });
     setTimeout(() => chrome.action.setBadgeText({ text: '' }), 3000);
+    if (response.obsidianUrl) {
+      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+      if (tab?.id != null) {
+        sendToContent(tab.id, { action: 'openObsidian', url: response.obsidianUrl }).catch(() => {});
+      }
+    }
   } else {
     notifyError(response.error || '截图处理失败，请重试');
   }

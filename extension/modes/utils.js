@@ -54,3 +54,12 @@ export function notifyError(errMsg) {
     message: errMsg,
   });
 }
+
+// Non-error notice surfaced inside the popup (same slot as errors, calmer color)
+// plus a badge so the user notices to open it — used for graceful fallbacks the
+// user should know about, e.g. saving a full page when region-select isn't possible.
+export function notifyNotice(message) {
+  chrome.storage.local.set({ last_notice: message });
+  chrome.action.setBadgeText({ text: '✓' });
+  chrome.action.setBadgeBackgroundColor({ color: '#6366f1' });
+}

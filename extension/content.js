@@ -136,6 +136,10 @@
   chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
     if (msg.action === 'showOverlay') { show(msg.dataUrl); return; }
     if (msg.action === 'cancelOverlay') { remove(); return; }
+    // Top-level navigation to obsidian:// triggers Chrome's "Open Obsidian?"
+    // dialog (same as Obsidian Web Clipper); the page itself stays put because
+    // the OS handles the custom protocol. Used by hook/keyframe/batch success.
+    if (msg.action === 'openObsidian') { if (msg.url) window.location.href = msg.url; return; }
     if (msg.action === 'captureResult') {
       if (!hint) return;
       if (msg.success) {

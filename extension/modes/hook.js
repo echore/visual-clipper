@@ -67,6 +67,9 @@ export async function start(tabId) {
     chrome.action.setBadgeText({ text: '✓' });
     chrome.action.setBadgeBackgroundColor({ color: '#22c55e' });
     setTimeout(() => chrome.action.setBadgeText({ text: '' }), 3000);
+    if (response.obsidianUrl) {
+      sendToContent(tabId, { action: 'openObsidian', url: response.obsidianUrl }).catch(() => {});
+    }
   } else {
     notifyError(response.error || 'Hook 分析失败，请重试');
   }

@@ -11,11 +11,17 @@ const btnBatchAnalyze = document.getElementById('btn-batch-analyze');
 const batchCountEl    = document.getElementById('batch-count');
 
 // ── Show stored error from previous clip attempt ──────────────────────────────
-chrome.storage.local.get(['last_error', 'keyframe_in_time', 'keyframe_tab_id', 'screenshot_batch_mode', 'screenshot_queue'], (stored) => {
+chrome.storage.local.get(['last_error', 'last_notice', 'keyframe_in_time', 'keyframe_tab_id', 'screenshot_batch_mode', 'screenshot_queue'], (stored) => {
   if (stored.last_error) {
     errorMsg.textContent = stored.last_error;
     errorMsg.style.display = 'block';
     chrome.storage.local.remove('last_error');
+    chrome.action.setBadgeText({ text: '' });
+  } else if (stored.last_notice) {
+    errorMsg.textContent = stored.last_notice;
+    errorMsg.style.color = '#6366f1'; // notice, not an error
+    errorMsg.style.display = 'block';
+    chrome.storage.local.remove('last_notice');
     chrome.action.setBadgeText({ text: '' });
   }
 
