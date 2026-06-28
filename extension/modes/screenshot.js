@@ -6,7 +6,7 @@ export async function start(tabId, windowId) {
     dataUrl = await chrome.tabs.captureVisibleTab(windowId, { format: 'png' });
   } catch (err) {
     console.error('[OVC] captureVisibleTab failed:', err.message);
-    notifyError('截图失败，请重试');
+    notifyError('此页面受浏览器限制，无法截图');
     return;
   }
 
