@@ -29,12 +29,15 @@ export async function start(tabId) {
       let video_id = null, channel = null, channel_handle = null, views = null;
 
       if (platform === 'youtube') {
+        // video_id + cover + title come straight from the URL / matching player
+        // data — og:image and og:title are SPA-stale on YouTube (they keep the
+        // PREVIOUS video after in-site navigation), which saved the wrong cover.
         video_id = new URLSearchParams(location.search).get('v');
-        // Prefer og:image (YouTube already points it at the best available res);
-        // maxresdefault.jpg 404s to a gray placeholder when that size doesn't exist.
-        if (video_id && !thumbnail_url) thumbnail_url = `https://img.youtube.com/vi/${video_id}/maxresdefault.jpg`;
+        if (video_id) thumbnail_url = `https://img.youtube.com/vi/${video_id}/maxresdefault.jpg`;
         const pr = window.ytInitialPlayerResponse;
         const vd = pr?.videoDetails?.videoId === video_id ? pr.videoDetails : null;
+        if (vd?.title) title = vd.title;
+        else { const dt = document.title.replace(/\s*-\s*YouTube\s*$/i, '').trim(); if (dt) title = dt; }
         const channelEl = document.querySelector('ytd-channel-name yt-formatted-string a, #channel-name a');
         channel = vd?.author || channelEl?.textContent?.trim() || null;
         channel_handle = (channelEl?.href || '').match(/\/@([^/?]+)/)?.[0] || null;
