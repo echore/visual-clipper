@@ -174,7 +174,7 @@
     }
 
     if (msg.action === 'captureVideoFrames') {
-      captureFrames(msg.timestamps, msg.select).then(
+      captureFrames(msg.timestamps).then(
         frames => sendResponse({ frames }),
         err => sendResponse({ error: err.message }),
       );
@@ -188,14 +188,12 @@
 
   });
 
-  // Capture candidate frames at `timestamps`, then keep `select` of them that are
-  // actually informative: drop near-black/near-white/blank frames, and prefer the
-  // moments where the most changed (motion / effects). Oversampling + selection
-  // happens in memory — only the chosen frames are returned/saved.
-  async function captureFrames(timestamps, select) {
+  // Capture candidate frames at `timestamps`, drop blank/near-black ones and
+  // near-duplicates, and return the remaining candidates. The plugin (AI selector
+  // or a heuristic) picks the final few from these.
+  async function captureFrames(timestamps) {
     const video = document.querySelector('video');
     if (!video) throw new Error('No video element found');
-    const want = select || timestamps.length;
 
     const originalTime = video.currentTime;
     const wasPaused = video.paused;
@@ -238,19 +236,19 @@
 
     // Drop blank-ish frames (near black/white, or near-uniform color).
     const useful = cands.filter(c => c.mean > 16 && c.mean < 245 && c.variance > 40);
-    const pool = useful.length >= Math.min(want, 2) ? useful : cands; // never return empty
-    if (pool.length <= want) return pool.map(c => c.data);
-
-    // Score each by how much it changed from the previous kept candidate.
-    for (let i = 0; i < pool.length; i++) {
-      if (i === 0) { pool[i].change = 0; continue; }
-      let d = 0; const a = pool[i].luma, b = pool[i - 1].luma;
-      for (let k = 0; k < a.length; k++) d += Math.abs(a[k] - b[k]);
-      pool[i].change = d / a.length;
+    const pool = useful.length ? useful : cands;
+    // Drop near-duplicates so candidates are visually distinct (cap the count).
+    const kept = [];
+    for (const c of pool) {
+      if (kept.length < 12 && kept.every(k => sigDiff(c.luma, k.luma) > 10)) kept.push(c);
     }
-    // Keep the `want` highest-change frames, back in time order.
-    return pool.slice().sort((x, y) => y.change - x.change).slice(0, want)
-      .sort((x, y) => x.t - y.t).map(c => c.data);
+    return (kept.length ? kept : pool).map(c => c.data);
+  }
+
+  function sigDiff(a, b) {
+    let d = 0;
+    for (let i = 0; i < a.length; i++) d += Math.abs(a[i] - b[i]);
+    return d / a.length;
   }
 
   function seekTo(video, time) {

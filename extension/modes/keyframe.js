@@ -25,7 +25,7 @@ export async function markOut(tabId, outTime, inTime, url, title, platform, vide
 
   let captureResp;
   try {
-    captureResp = await ensureSendToContent(tabId, { action: 'captureVideoFrames', timestamps, select: count });
+    captureResp = await ensureSendToContent(tabId, { action: 'captureVideoFrames', timestamps });
   } catch (err) {
     notifyError('无法与页面通信，请刷新后重试');
     return;
@@ -52,6 +52,7 @@ export async function markOut(tabId, outTime, inTime, url, title, platform, vide
     platform: resolvedPlatform,
     captured_at: new Date().toISOString(),
     frames: captureResp.frames,
+    frames_select: count,
     video_title: meta.videoTitle || videoTitle || null,
     channel: meta.channel || channel || null,
     time_range: { start, end },

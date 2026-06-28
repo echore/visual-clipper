@@ -19,7 +19,7 @@ export async function start(tabId) {
   const timestamps = buildTimestamps(0, endTime, Math.min(20, count * 3));
   let captureResp;
   try {
-    captureResp = await ensureSendToContent(tabId, { action: 'captureVideoFrames', timestamps, select: count });
+    captureResp = await ensureSendToContent(tabId, { action: 'captureVideoFrames', timestamps });
   } catch (err) {
     notifyError('无法与页面通信，请刷新后重试');
     return;
@@ -51,6 +51,7 @@ export async function start(tabId) {
     platform,
     captured_at: new Date().toISOString(),
     frames: captureResp.frames,
+    frames_select: count,
     video_title: meta.videoTitle || null,
     channel: meta.channel || null,
     time_range: { start: 0, end: endTime },
