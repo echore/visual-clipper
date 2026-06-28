@@ -19,13 +19,14 @@ export async function markOut(tabId, outTime, inTime, url, title, platform, vide
     return;
   }
 
-  // Adaptive frame count: ~2 frames/sec, min 2, max 8 — oversample, pick the best.
-  const count = Math.max(2, Math.min(8, Math.ceil((end - start) * 2)));
-  const timestamps = buildTimestamps(start, end, Math.min(20, count * 3));
+  // Keyframe segments are short — sample densely (~4/s, min 12) so the user has
+  // plenty to pick from across the effect's progression.
+  const sampleN = Math.min(20, Math.max(12, Math.ceil((end - start) * 4)));
+  const timestamps = buildTimestamps(start, end, sampleN);
 
   let captureResp;
   try {
-    captureResp = await ensureSendToContent(tabId, { action: 'captureVideoFrames', timestamps });
+    captureResp = await ensureSendToContent(tabId, { action: 'captureVideoFrames', timestamps, minDiff: 6 });
   } catch (err) {
     notifyError('无法与页面通信，请刷新后重试');
     return;

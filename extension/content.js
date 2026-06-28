@@ -174,7 +174,7 @@
     }
 
     if (msg.action === 'captureVideoFrames') {
-      captureFrames(msg.timestamps).then(
+      captureFrames(msg.timestamps, msg.minDiff).then(
         async frames => {
           const picked = await showFramePicker(frames);
           if (!picked) sendResponse({ cancelled: true });
@@ -193,9 +193,9 @@
   });
 
   // Capture candidate frames at `timestamps`, drop blank/near-black ones and
-  // near-duplicates, and return the remaining candidates. The plugin (AI selector
-  // or a heuristic) picks the final few from these.
-  async function captureFrames(timestamps) {
+  // near-duplicates (frames closer than `minDiff` are treated as the same shot),
+  // and return the remaining candidates for the picker. Lower minDiff = keep more.
+  async function captureFrames(timestamps, minDiff = 16) {
     const video = document.querySelector('video');
     if (!video) throw new Error('No video element found');
 
@@ -244,7 +244,7 @@
     // Drop near-duplicates so candidates are visually distinct (cap the count).
     const kept = [];
     for (const c of pool) {
-      if (kept.length < 12 && kept.every(k => sigDiff(c.luma, k.luma) > 16)) kept.push(c);
+      if (kept.length < 16 && kept.every(k => sigDiff(c.luma, k.luma) > minDiff)) kept.push(c);
     }
     return (kept.length ? kept : pool).map(c => c.data);
   }
