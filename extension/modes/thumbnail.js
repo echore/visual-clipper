@@ -10,30 +10,36 @@ export async function start(tabId) {
     world: 'MAIN',
     func: (platform) => {
       if (platform === 'youtube') {
-        const pr = window.ytInitialPlayerResponse;
-        const vd = pr?.videoDetails;
-        if (!vd?.videoId) return null;
+        // video_id from the URL — always correct for the page you're on.
+        const videoId = new URLSearchParams(location.search).get('v');
+        if (!videoId) return null;
 
-        // channel handle: try DOM first, fall back to null
-        const handleEl = document.querySelector(
-          'ytd-channel-name yt-formatted-string a, #channel-name a'
-        );
-        const handleHref = handleEl?.href || '';
-        const handle = handleHref.match(/\/@([^/?]+)/)?.[0] || null;
+        // ytInitialPlayerResponse is a SPA-cached blob that can be stale/empty
+        // after in-site navigation — only trust it when it's for THIS video.
+        const pr = window.ytInitialPlayerResponse;
+        const vd = pr?.videoDetails?.videoId === videoId ? pr.videoDetails : null;
+
+        const title = vd?.title
+          || document.querySelector('h1.ytd-watch-metadata yt-formatted-string, #title h1')?.textContent?.trim()
+          || document.title.replace(/\s*-\s*YouTube\s*$/, '').trim();
+
+        const channelEl = document.querySelector('ytd-channel-name yt-formatted-string a, #channel-name a');
+        const channel = vd?.author || channelEl?.textContent?.trim() || null;
+        const handle = (channelEl?.href || '').match(/\/@([^/?]+)/)?.[0] || null;
 
         // view count: format as "27.8万" / "1.2百万"
-        const views = parseInt(vd.viewCount || '0', 10);
+        const views = parseInt(vd?.viewCount || '0', 10);
         let viewsStr = null;
         if (views >= 1_000_000) viewsStr = `${(views / 1_000_000).toFixed(1)}百万`;
         else if (views >= 10_000)  viewsStr = `${(views / 10_000).toFixed(1)}万`;
         else if (views > 0)        viewsStr = String(views);
 
         return {
-          video_id: vd.videoId,
-          title: vd.title,
-          channel: vd.author,
+          video_id: videoId,
+          title,
+          channel,
           channel_handle: handle,
-          thumbnail_url: `https://img.youtube.com/vi/${vd.videoId}/maxresdefault.jpg`,
+          thumbnail_url: `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`,
           views: viewsStr,
         };
       }
