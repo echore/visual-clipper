@@ -51,7 +51,8 @@ function detectVideo(tab) {
     if (chrome.runtime.lastError) {
       // content.js isn't on this tab (e.g. it predates the extension reload), so
       // the video buttons would stay disabled forever. Inject it, then retry once.
-      chrome.scripting.executeScript({ target: { tabId: tab.id }, files: ['content.js'] })
+      chrome.scripting.executeScript({ target: { tabId: tab.id }, func: () => { try { delete window.__SC_BOUND__; window.__SC_OVERLAY_ACTIVE__ = false; } catch (_) {} } })
+        .then(() => chrome.scripting.executeScript({ target: { tabId: tab.id }, files: ['content.js'] }))
         .then(() => chrome.tabs.sendMessage(tab.id, { action: 'detectVideo' }, (resp2) => {
           if (!chrome.runtime.lastError) enableForVideo(tab, resp2);
         }))

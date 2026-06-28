@@ -1,4 +1,4 @@
-import { sanitize, httpPost, notifyError, notifyNotice, sendToContent } from './utils.js';
+import { sanitize, httpPost, notifyError, notifyNotice, sendToContent, injectContentScript } from './utils.js';
 
 export async function start(tabId, windowId) {
   let dataUrl;
@@ -21,7 +21,7 @@ export async function start(tabId, windowId) {
 
   // Tab predates the extension install/reload — inject content.js, then retry.
   try {
-    await chrome.scripting.executeScript({ target: { tabId }, files: ['content.js'] });
+    await injectContentScript(tabId);
   } catch (err) {
     // Chrome forbids injecting into restricted pages (other extensions' pages,
     // chrome://, the web store, …), so region-select is impossible here. But the

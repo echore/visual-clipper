@@ -1,4 +1,4 @@
-import { buildTimestamps, sanitize, httpPost, notifyError, notifyNotice, sendToContent, detectPlatform } from './utils.js';
+import { buildTimestamps, sanitize, httpPost, notifyError, notifyNotice, ensureSendToContent, detectPlatform } from './utils.js';
 
 export function start(tabId) {
   // State is managed in chrome.storage.local by popup.js (Mark In click)
@@ -25,7 +25,7 @@ export async function markOut(tabId, outTime, inTime, url, title, platform, vide
 
   let captureResp;
   try {
-    captureResp = await sendToContent(tabId, { action: 'captureVideoFrames', timestamps });
+    captureResp = await ensureSendToContent(tabId, { action: 'captureVideoFrames', timestamps });
   } catch (err) {
     notifyError('无法与页面通信，请刷新后重试');
     return;
@@ -39,7 +39,7 @@ export async function markOut(tabId, outTime, inTime, url, title, platform, vide
   // Get video metadata (best-effort)
   let meta = {};
   try {
-    meta = await sendToContent(tabId, { action: 'getVideoMeta' }) || {};
+    meta = await ensureSendToContent(tabId, { action: 'getVideoMeta' }) || {};
   } catch (_) {}
 
   const resolvedPlatform = platform || detectPlatform(url);
@@ -69,7 +69,7 @@ export async function markOut(tabId, outTime, inTime, url, title, platform, vide
     chrome.action.setBadgeBackgroundColor({ color: '#22c55e' });
     setTimeout(() => chrome.action.setBadgeText({ text: '' }), 3000);
     if (response.obsidianUrl) {
-      sendToContent(tabId, { action: 'openObsidian', url: response.obsidianUrl }).catch(() => {});
+      ensureSendToContent(tabId, { action: 'openObsidian', url: response.obsidianUrl }).catch(() => {});
     }
     if (response.notice) notifyNotice(response.notice);
   } else {

@@ -34,6 +34,28 @@ export function sendToContent(tabId, msg) {
   });
 }
 
+// (Re)inject content.js. First clears stale guard flags so the fresh script
+// re-binds its message listener and the overlay can show again — SPA re-renders
+// and extension reloads can leave those flags set with no live script behind them.
+export async function injectContentScript(tabId) {
+  await chrome.scripting.executeScript({
+    target: { tabId },
+    func: () => { try { delete window.__SC_BOUND__; window.__SC_OVERLAY_ACTIVE__ = false; } catch (_) {} },
+  }).catch(() => {});
+  await chrome.scripting.executeScript({ target: { tabId }, files: ['content.js'] });
+}
+
+// Send to content.js; if it isn't there/ready (first try after a reload), inject
+// it and retry once — so the first interaction works instead of erroring.
+export async function ensureSendToContent(tabId, msg) {
+  try {
+    return await sendToContent(tabId, msg);
+  } catch (_) {
+    await injectContentScript(tabId);
+    return await sendToContent(tabId, msg);
+  }
+}
+
 export async function httpPost(payload) {
   const resp = await fetch(VAULT_AUTOPILOT_URL, {
     method: 'POST',

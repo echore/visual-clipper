@@ -3,8 +3,10 @@
 // Background sends {action:"showOverlay"} to activate.
 
 (function () {
-  // Guard: only one overlay at a time
-  if (window.__SC_OVERLAY_ACTIVE__) return;
+  // Register the message listener once per document. injectContentScript() clears
+  // this flag before re-injecting, so a freshly injected script always re-binds.
+  if (window.__SC_BOUND__) return;
+  window.__SC_BOUND__ = true;
 
   let overlay, canvas, ctx, hint;
   let state = 'idle'; // 'idle' | 'selecting' | 'processing'
@@ -12,7 +14,9 @@
   let pendingDataUrl = null; // screenshot held here until region is selected
 
   function show(dataUrl) {
-    if (window.__SC_OVERLAY_ACTIVE__) return;
+    // Trust the DOM, not the flag: an SPA re-render can detach the overlay without
+    // remove() running, leaving the flag stuck and blocking the next capture.
+    if (overlay && overlay.isConnected) return;
     window.__SC_OVERLAY_ACTIVE__ = true;
     pendingDataUrl = dataUrl || null;
 
@@ -76,9 +80,8 @@
   }
 
   function remove() {
-    if (!window.__SC_OVERLAY_ACTIVE__) return;
     document.removeEventListener('keydown', onKey, true);
-    overlay.remove();
+    if (overlay) overlay.remove();
     window.__SC_OVERLAY_ACTIVE__ = false;
     pendingDataUrl = null;
     state = 'idle';
