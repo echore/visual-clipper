@@ -9,60 +9,55 @@ export async function start(tabId) {
     target: { tabId },
     world: 'MAIN',
     func: (platform) => {
+      const metaContent = (sel) => document.querySelector(sel)?.getAttribute('content') || null;
+      const og = (key) => metaContent(`meta[property="${key}"]`) || metaContent(`meta[name="${key}"]`);
+
+      // ── Generic Open Graph / Twitter-card layer (works on most sites) ──
+      let title = (og('og:title') || og('twitter:title') || document.title || '')
+        .replace(/\s*[-|–]\s*(YouTube|bilibili|哔哩哔哩|Twitter|X|Vimeo)\s*$/i, '').trim();
+      let thumbnail_url = og('og:image') || og('twitter:image');
+      if (thumbnail_url && thumbnail_url.startsWith('//')) thumbnail_url = 'https:' + thumbnail_url;
+      const video_url = og('og:url')
+        || document.querySelector('link[rel="canonical"]')?.href
+        || location.href;
+      const source_name = og('og:site_name') || location.hostname;
+
+      // ── Platform enrichment layer ──
+      let video_id = null, channel = null, channel_handle = null, views = null;
+
       if (platform === 'youtube') {
-        // video_id from the URL — always correct for the page you're on.
-        const videoId = new URLSearchParams(location.search).get('v');
-        if (!videoId) return null;
-
-        // ytInitialPlayerResponse is a SPA-cached blob that can be stale/empty
-        // after in-site navigation — only trust it when it's for THIS video.
+        video_id = new URLSearchParams(location.search).get('v');
+        if (video_id) thumbnail_url = `https://img.youtube.com/vi/${video_id}/maxresdefault.jpg`;
         const pr = window.ytInitialPlayerResponse;
-        const vd = pr?.videoDetails?.videoId === videoId ? pr.videoDetails : null;
-
-        const title = vd?.title
-          || document.querySelector('h1.ytd-watch-metadata yt-formatted-string, #title h1')?.textContent?.trim()
-          || document.title.replace(/\s*-\s*YouTube\s*$/, '').trim();
-
+        const vd = pr?.videoDetails?.videoId === video_id ? pr.videoDetails : null;
         const channelEl = document.querySelector('ytd-channel-name yt-formatted-string a, #channel-name a');
-        const channel = vd?.author || channelEl?.textContent?.trim() || null;
-        const handle = (channelEl?.href || '').match(/\/@([^/?]+)/)?.[0] || null;
-
-        // view count: format as "27.8万" / "1.2百万"
-        const views = parseInt(vd?.viewCount || '0', 10);
-        let viewsStr = null;
-        if (views >= 1_000_000) viewsStr = `${(views / 1_000_000).toFixed(1)}百万`;
-        else if (views >= 10_000)  viewsStr = `${(views / 10_000).toFixed(1)}万`;
-        else if (views > 0)        viewsStr = String(views);
-
-        return {
-          video_id: videoId,
-          title,
-          channel,
-          channel_handle: handle,
-          thumbnail_url: `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`,
-          views: viewsStr,
-        };
+        channel = vd?.author || channelEl?.textContent?.trim() || null;
+        channel_handle = (channelEl?.href || '').match(/\/@([^/?]+)/)?.[0] || null;
+        const v = parseInt(vd?.viewCount || '0', 10);
+        if (v >= 1_000_000) views = `${(v / 1_000_000).toFixed(1)}百万`;
+        else if (v >= 10_000) views = `${(v / 10_000).toFixed(1)}万`;
+        else if (v > 0) views = String(v);
+      } else if (platform === 'bilibili') {
+        video_id = location.href.match(/\/video\/(BV[\w]+)/)?.[1] || null;
+        channel = document.querySelector('.up-name, .username')?.textContent?.trim() || null;
       }
 
-      if (platform === 'bilibili') {
-        const bvMatch = location.href.match(/\/video\/(BV[\w]+)/);
-        const bvid = bvMatch?.[1] || null;
-        const title = document.querySelector('h1.video-title')?.textContent?.trim()
-          || document.title;
-        const channel = document.querySelector('.up-name, .username')?.textContent?.trim() || null;
-        const thumb = document.querySelector('meta[property="og:image"]')?.content || null;
-        return bvid ? { video_id: bvid, title, channel, channel_handle: null,
-          thumbnail_url: thumb, views: null } : null;
+      // Fallback id (used only for the cover filename) from host + path.
+      if (!video_id) {
+        video_id = (location.hostname + location.pathname)
+          .replace(/[^a-zA-Z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 60) || 'cover';
       }
 
-      return null;
+      if (!thumbnail_url) return null; // nothing to save on this page
+
+      return { video_id, title, channel, channel_handle, thumbnail_url, source_name, views, video_url };
     },
     args: [platform],
   }).catch(() => null);
 
   const meta = results?.[0]?.result;
-  if (!meta?.video_id) {
-    notifyError('无法获取视频信息，请刷新页面后重试');
+  if (!meta?.thumbnail_url) {
+    notifyError('此页面没有可收藏的封面');
     return;
   }
 
@@ -72,9 +67,10 @@ export async function start(tabId) {
       mode: 'thumbnail',
       platform,
       video_id: meta.video_id,
-      video_url: tab.url,
+      video_url: meta.video_url || tab.url,
       thumbnail_url: meta.thumbnail_url,
       title: sanitize(meta.title),
+      source_name: meta.source_name || null,
       channel: meta.channel || null,
       channel_handle: meta.channel_handle || null,
       views: meta.views || null,
