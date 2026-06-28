@@ -27,7 +27,9 @@ export async function start(tabId) {
 
       if (platform === 'youtube') {
         video_id = new URLSearchParams(location.search).get('v');
-        if (video_id) thumbnail_url = `https://img.youtube.com/vi/${video_id}/maxresdefault.jpg`;
+        // Prefer og:image (YouTube already points it at the best available res);
+        // maxresdefault.jpg 404s to a gray placeholder when that size doesn't exist.
+        if (video_id && !thumbnail_url) thumbnail_url = `https://img.youtube.com/vi/${video_id}/maxresdefault.jpg`;
         const pr = window.ytInitialPlayerResponse;
         const vd = pr?.videoDetails?.videoId === video_id ? pr.videoDetails : null;
         const channelEl = document.querySelector('ytd-channel-name yt-formatted-string a, #channel-name a');
@@ -48,6 +50,7 @@ export async function start(tabId) {
           .replace(/[^a-zA-Z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 60) || 'cover';
       }
 
+      if (!title) title = source_name; // never POST a blank title (hostname is always present)
       if (!thumbnail_url) return null; // nothing to save on this page
 
       return { video_id, title, channel, channel_handle, thumbnail_url, source_name, views, video_url };
