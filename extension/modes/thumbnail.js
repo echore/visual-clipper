@@ -1,4 +1,4 @@
-import { sanitize, httpPost, notifyError, detectPlatform } from './utils.js';
+import { sanitize, httpPost, notifyError, detectPlatform, sendToContent } from './utils.js';
 
 export async function start(tabId) {
   const tab = await chrome.tabs.get(tabId);
@@ -85,6 +85,9 @@ export async function start(tabId) {
     chrome.action.setBadgeText({ text: '✓' });
     chrome.action.setBadgeBackgroundColor({ color: '#22c55e' });
     setTimeout(() => chrome.action.setBadgeText({ text: '' }), 3000);
+    if (response.obsidianUrl) {
+      sendToContent(tabId, { action: 'openObsidian', url: response.obsidianUrl }).catch(() => {});
+    }
   } else {
     notifyError(response.error || '封面收藏失败，请重试');
   }

@@ -43,26 +43,42 @@ chrome.storage.local.get(['last_error', 'last_notice', 'keyframe_in_time', 'keyf
 // ── Detect video on active tab ────────────────────────────────────────────────
 chrome.tabs.query({ active: true, currentWindow: true }, ([tab]) => {
   if (!tab) return;
+  detectVideo(tab);
+});
+
+function detectVideo(tab) {
   chrome.tabs.sendMessage(tab.id, { action: 'detectVideo' }, (resp) => {
-    if (chrome.runtime.lastError) return; // content script not ready
-    if (resp?.hasVideo) {
-      btnHook.disabled = false;
-      btnKeyframe.disabled = false;
-      // Thumbnail only on YouTube/Bilibili video pages
-      if (/youtube\.com\/watch|bilibili\.com\/video/.test(tab.url)) {
-        btnThumbnail.disabled = false;
-      }
-      chrome.tabs.sendMessage(tab.id, { action: 'getCurrentTime' }, (timeResp) => {
-        if (chrome.runtime.lastError) return;
-        const t = timeResp?.currentTime;
-        if (t != null) {
-          document.getElementById('hook-sub').textContent =
-            `已追踪 0:00 ~ ${formatTime(t)}  点击截取到当前位置`;
-        }
-      });
+    if (chrome.runtime.lastError) {
+      // content.js isn't on this tab (e.g. it predates the extension reload), so
+      // the video buttons would stay disabled forever. Inject it, then retry once.
+      chrome.scripting.executeScript({ target: { tabId: tab.id }, files: ['content.js'] })
+        .then(() => chrome.tabs.sendMessage(tab.id, { action: 'detectVideo' }, (resp2) => {
+          if (!chrome.runtime.lastError) enableForVideo(tab, resp2);
+        }))
+        .catch(() => {}); // restricted page — nothing we can do, leave buttons disabled
+      return;
+    }
+    enableForVideo(tab, resp);
+  });
+}
+
+function enableForVideo(tab, resp) {
+  if (!resp?.hasVideo) return;
+  btnHook.disabled = false;
+  btnKeyframe.disabled = false;
+  // Thumbnail only on YouTube/Bilibili video pages
+  if (/youtube\.com\/watch|bilibili\.com\/video/.test(tab.url)) {
+    btnThumbnail.disabled = false;
+  }
+  chrome.tabs.sendMessage(tab.id, { action: 'getCurrentTime' }, (timeResp) => {
+    if (chrome.runtime.lastError) return;
+    const t = timeResp?.currentTime;
+    if (t != null) {
+      document.getElementById('hook-sub').textContent =
+        `已追踪 0:00 ~ ${formatTime(t)}  点击截取到当前位置`;
     }
   });
-});
+}
 
 // ── Batch mode toggle ─────────────────────────────────────────────────────────
 batchToggle.addEventListener('change', () => {
