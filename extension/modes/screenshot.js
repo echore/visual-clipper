@@ -1,4 +1,4 @@
-import { sanitize, httpPost, notifyError, notifyNotice, sendToContent, injectContentScript } from './utils.js';
+import { sanitize, httpPost, notifyError, notifyNotice, sendToContent, injectContentScript, detectPlatform, getCoverUrl } from './utils.js';
 
 export async function start(tabId, windowId) {
   let dataUrl;
@@ -101,6 +101,7 @@ export async function handleRegion(msg, tabId) {
   }
 
   // Single mode: send immediately
+  const cover_url = await getCoverUrl(tabId, detectPlatform(msg.source_url));
   let response;
   try {
     response = await httpPost({
@@ -110,6 +111,7 @@ export async function handleRegion(msg, tabId) {
       platform: 'other',
       captured_at: new Date().toISOString(),
       image: croppedB64,
+      ...(cover_url ? { cover_url } : {}),
     });
   } catch (err) {
     const errMsg = 'vault-autopilot 无响应，请确认 Obsidian 已开启且插件已启用';

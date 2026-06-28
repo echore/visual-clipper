@@ -56,6 +56,36 @@ export async function ensureSendToContent(tabId, msg) {
   }
 }
 
+// Runs in the page (MAIN world) — returns the best cover image URL for this page.
+function extractCoverUrl(platform) {
+  const m = (sel) => document.querySelector(sel)?.getAttribute('content') || null;
+  const og = (k) => m(`meta[property="${k}"]`) || m(`meta[name="${k}"]`);
+  if (platform === 'youtube') {
+    const id = new URLSearchParams(location.search).get('v');
+    if (id) return `https://img.youtube.com/vi/${id}/maxresdefault.jpg`;
+  }
+  if (platform === 'xiaohongshu') {
+    const noteId = location.pathname.match(/\/(?:explore|discovery\/item)\/(\w+)/)?.[1];
+    const note = window.__INITIAL_STATE__?.note?.noteDetailMap?.[noteId]?.note;
+    const cover = note?.imageList?.[0]?.urlDefault || note?.imageList?.[0]?.url;
+    if (cover) return cover.startsWith('http://') ? 'https://' + cover.slice(7) : cover;
+  }
+  let img = og('og:image') || og('twitter:image');
+  if (img && img.startsWith('//')) img = 'https:' + img;
+  if (img && img.includes('hdslb.com')) img = img.split('@')[0];
+  return img || null;
+}
+
+// Best-effort: get the video/post cover URL so a note always has a gallery cover.
+export async function getCoverUrl(tabId, platform) {
+  try {
+    const r = await chrome.scripting.executeScript({
+      target: { tabId }, world: 'MAIN', func: extractCoverUrl, args: [platform],
+    });
+    return r?.[0]?.result || null;
+  } catch (_) { return null; }
+}
+
 export async function httpPost(payload) {
   const resp = await fetch(VAULT_AUTOPILOT_URL, {
     method: 'POST',

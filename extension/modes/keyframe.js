@@ -1,4 +1,4 @@
-import { buildTimestamps, sanitize, httpPost, notifyError, notifyNotice, ensureSendToContent, detectPlatform } from './utils.js';
+import { buildTimestamps, sanitize, httpPost, notifyError, notifyNotice, ensureSendToContent, detectPlatform, getCoverUrl } from './utils.js';
 
 export function start(tabId) {
   // State is managed in chrome.storage.local by popup.js (Mark In click)
@@ -43,6 +43,7 @@ export async function markOut(tabId, outTime, inTime, url, title, platform, vide
   } catch (_) {}
 
   const resolvedPlatform = platform || detectPlatform(url);
+  const cover_url = await getCoverUrl(tabId, resolvedPlatform);
 
   const payload = {
     mode: 'keyframe',
@@ -54,6 +55,7 @@ export async function markOut(tabId, outTime, inTime, url, title, platform, vide
     video_title: meta.videoTitle || videoTitle || null,
     channel: meta.channel || channel || null,
     time_range: { start, end },
+    ...(cover_url ? { cover_url } : {}),
   };
 
   let response;

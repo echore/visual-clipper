@@ -1,4 +1,4 @@
-import { buildTimestamps, sanitize, httpPost, notifyError, notifyNotice, ensureSendToContent, detectPlatform } from './utils.js';
+import { buildTimestamps, sanitize, httpPost, notifyError, notifyNotice, ensureSendToContent, detectPlatform, getCoverUrl } from './utils.js';
 
 export async function start(tabId) {
   const tab = await chrome.tabs.get(tabId);
@@ -42,6 +42,8 @@ export async function start(tabId) {
     else if (platform === 'bilibili') transcript = await extractBilibiliTranscript(url, endTime);
   } catch (_) {}
 
+  const cover_url = await getCoverUrl(tabId, platform);
+
   const payload = {
     mode: 'hook',
     url,
@@ -52,6 +54,7 @@ export async function start(tabId) {
     video_title: meta.videoTitle || null,
     channel: meta.channel || null,
     time_range: { start: 0, end: endTime },
+    ...(cover_url ? { cover_url } : {}),
     ...(transcript ? { transcript } : {}),
   };
 
