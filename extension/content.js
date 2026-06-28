@@ -240,7 +240,7 @@
     // Drop near-duplicates so candidates are visually distinct (cap the count).
     const kept = [];
     for (const c of pool) {
-      if (kept.length < 12 && kept.every(k => sigDiff(c.luma, k.luma) > 10)) kept.push(c);
+      if (kept.length < 12 && kept.every(k => sigDiff(c.luma, k.luma) > 16)) kept.push(c);
     }
     return (kept.length ? kept : pool).map(c => c.data);
   }
