@@ -17,6 +17,9 @@ export async function start(tabId) {
         .replace(/(?:\s*[-|–_]\s*(?:YouTube|bilibili|哔哩哔哩|Twitter|X|Vimeo))+\s*$/i, '').trim();
       let thumbnail_url = og('og:image') || og('twitter:image');
       if (thumbnail_url && thumbnail_url.startsWith('//')) thumbnail_url = 'https:' + thumbnail_url;
+      // Bilibili's og:image is a tiny resized variant (…hash.jpg@100w_100h_1c.png);
+      // strip the @-suffix on hdslb CDN URLs to get the full-resolution cover.
+      if (thumbnail_url && thumbnail_url.includes('hdslb.com')) thumbnail_url = thumbnail_url.split('@')[0];
       const video_url = og('og:url')
         || document.querySelector('link[rel="canonical"]')?.href
         || location.href;
