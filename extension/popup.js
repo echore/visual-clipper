@@ -66,10 +66,8 @@ function enableForVideo(tab, resp) {
   if (!resp?.hasVideo) return;
   btnHook.disabled = false;
   btnKeyframe.disabled = false;
-  // Thumbnail only on YouTube/Bilibili video pages
-  if (/youtube\.com\/watch|bilibili\.com\/video/.test(tab.url)) {
-    btnThumbnail.disabled = false;
-  }
+  // Any page with a <video> can have a cover to save (OG-based extraction).
+  btnThumbnail.disabled = false;
   chrome.tabs.sendMessage(tab.id, { action: 'getCurrentTime' }, (timeResp) => {
     if (chrome.runtime.lastError) return;
     const t = timeResp?.currentTime;
