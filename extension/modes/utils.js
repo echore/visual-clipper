@@ -21,6 +21,7 @@ export function buildTimestamps(start, end, count) {
 export function detectPlatform(url) {
   if (/youtube\.com|youtu\.be/.test(url)) return 'youtube';
   if (/bilibili\.com/.test(url)) return 'bilibili';
+  if (/xiaohongshu\.com/.test(url)) return 'xiaohongshu';
   return 'other';
 }
 

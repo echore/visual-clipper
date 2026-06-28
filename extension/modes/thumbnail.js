@@ -14,7 +14,7 @@ export async function start(tabId) {
 
       // ── Generic Open Graph / Twitter-card layer (works on most sites) ──
       let title = (og('og:title') || og('twitter:title') || document.title || '')
-        .replace(/(?:\s*[-|–_]\s*(?:YouTube|bilibili|哔哩哔哩|Twitter|X|Vimeo))+\s*$/i, '').trim();
+        .replace(/(?:\s*[-|–_]\s*(?:YouTube|bilibili|哔哩哔哩|小红书|Twitter|X|Vimeo))+\s*$/i, '').trim();
       let thumbnail_url = og('og:image') || og('twitter:image');
       if (thumbnail_url && thumbnail_url.startsWith('//')) thumbnail_url = 'https:' + thumbnail_url;
       // Bilibili's og:image is a tiny resized variant (…hash.jpg@100w_100h_1c.png);
@@ -45,6 +45,17 @@ export async function start(tabId) {
       } else if (platform === 'bilibili') {
         video_id = location.href.match(/\/video\/(BV[\w]+)/)?.[1] || null;
         channel = document.querySelector('.up-name, .username')?.textContent?.trim() || null;
+      } else if (platform === 'xiaohongshu') {
+        // og:image is a placeholder; the real cover/title/author live in __INITIAL_STATE__.
+        const noteId = location.pathname.match(/\/(?:explore|discovery\/item)\/(\w+)/)?.[1];
+        const note = window.__INITIAL_STATE__?.note?.noteDetailMap?.[noteId]?.note;
+        if (note) {
+          title = note.title || title;
+          channel = note.user?.nickname || null;
+          const cover = note.imageList?.[0]?.urlDefault || note.imageList?.[0]?.url;
+          if (cover) thumbnail_url = cover.startsWith('http://') ? 'https://' + cover.slice(7) : cover;
+        }
+        video_id = noteId || video_id;
       }
 
       // Fallback id (used only for the cover filename) from host + path.

@@ -63,11 +63,12 @@ function detectVideo(tab) {
 }
 
 function enableForVideo(tab, resp) {
+  // Thumbnail: any page with a cover (a <video> OR an og:image / post) can be saved.
+  if (resp?.hasVideo || resp?.hasCover) btnThumbnail.disabled = false;
+  // Hook / Keyframe need an actual <video> element.
   if (!resp?.hasVideo) return;
   btnHook.disabled = false;
   btnKeyframe.disabled = false;
-  // Any page with a <video> can have a cover to save (OG-based extraction).
-  btnThumbnail.disabled = false;
   chrome.tabs.sendMessage(tab.id, { action: 'getCurrentTime' }, (timeResp) => {
     if (chrome.runtime.lastError) return;
     const t = timeResp?.currentTime;

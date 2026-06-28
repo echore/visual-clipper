@@ -157,7 +157,10 @@
 
     if (msg.action === 'detectVideo') {
       const video = document.querySelector('video');
-      sendResponse({ hasVideo: !!video && video.readyState >= 1 });
+      const hasCover = !!document.querySelector(
+        'meta[property="og:image"], meta[name="og:image"], meta[name="twitter:image"]'
+      );
+      sendResponse({ hasVideo: !!video && video.readyState >= 1, hasCover });
       return true;
     }
 
