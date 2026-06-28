@@ -36,6 +36,10 @@ export async function markOut(tabId, outTime, inTime, url, title, platform, vide
     return;
   }
 
+  if (captureResp.cancelled || !captureResp.frames || captureResp.frames.length === 0) {
+    return; // user cancelled the picker — save nothing
+  }
+
   // Get video metadata (best-effort)
   let meta = {};
   try {
@@ -52,7 +56,7 @@ export async function markOut(tabId, outTime, inTime, url, title, platform, vide
     platform: resolvedPlatform,
     captured_at: new Date().toISOString(),
     frames: captureResp.frames,
-    frames_select: count,
+    frames_select: captureResp.frames.length, // user already picked — save all
     video_title: meta.videoTitle || videoTitle || null,
     channel: meta.channel || channel || null,
     time_range: { start, end },

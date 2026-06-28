@@ -175,7 +175,11 @@
 
     if (msg.action === 'captureVideoFrames') {
       captureFrames(msg.timestamps).then(
-        frames => sendResponse({ frames }),
+        async frames => {
+          const picked = await showFramePicker(frames);
+          if (!picked) sendResponse({ cancelled: true });
+          else sendResponse({ frames: picked });
+        },
         err => sendResponse({ error: err.message }),
       );
       return true;
@@ -243,6 +247,58 @@
       if (kept.length < 12 && kept.every(k => sigDiff(c.luma, k.luma) > 16)) kept.push(c);
     }
     return (kept.length ? kept : pool).map(c => c.data);
+  }
+
+  // Show the candidate frames; user deselects the ones they don't want. Resolves
+  // with the kept frames (base64[]), or null if cancelled. Only kept frames are
+  // ever sent on to be saved — nothing unwanted touches the vault.
+  function showFramePicker(frames) {
+    return new Promise(resolve => {
+      if (!frames || frames.length === 0) { resolve(frames || []); return; }
+      const selected = new Set(frames.map((_, i) => i));
+      const ov = document.createElement('div');
+      ov.style.cssText = 'position:fixed;inset:0;z-index:2147483647;background:rgba(0,0,0,.82);display:flex;align-items:center;justify-content:center;';
+      const panel = document.createElement('div');
+      panel.style.cssText = 'background:#1e1e1f;color:#fff;border-radius:12px;padding:20px;width:min(880px,92vw);max-height:90vh;overflow:auto;font-family:system-ui,-apple-system,sans-serif;box-shadow:0 10px 40px rgba(0,0,0,.5);';
+      const title = document.createElement('div');
+      title.textContent = '选择要保存的帧 — 点击取消掉不想要的';
+      title.style.cssText = 'font-size:15px;font-weight:600;margin-bottom:14px;';
+      const grid = document.createElement('div');
+      grid.style.cssText = 'display:grid;grid-template-columns:repeat(3,1fr);gap:10px;';
+      frames.forEach((f, i) => {
+        const wrap = document.createElement('div');
+        wrap.style.cssText = 'position:relative;cursor:pointer;border:3px solid #4f8cff;border-radius:8px;overflow:hidden;line-height:0;transition:opacity .1s;';
+        const img = document.createElement('img');
+        img.src = 'data:image/jpeg;base64,' + f;
+        img.style.cssText = 'width:100%;display:block;';
+        const tick = document.createElement('div');
+        tick.textContent = '✓';
+        tick.style.cssText = 'position:absolute;top:5px;right:6px;background:#4f8cff;color:#fff;border-radius:50%;width:22px;height:22px;text-align:center;line-height:22px;font-size:13px;';
+        wrap.appendChild(img); wrap.appendChild(tick);
+        wrap.onclick = () => {
+          if (selected.has(i)) { selected.delete(i); wrap.style.borderColor = 'transparent'; wrap.style.opacity = '.35'; tick.style.display = 'none'; }
+          else { selected.add(i); wrap.style.borderColor = '#4f8cff'; wrap.style.opacity = '1'; tick.style.display = 'block'; }
+          save.textContent = '保存选中 (' + selected.size + ')';
+          save.disabled = selected.size === 0;
+        };
+        grid.appendChild(wrap);
+      });
+      const bar = document.createElement('div');
+      bar.style.cssText = 'margin-top:16px;display:flex;justify-content:flex-end;gap:10px;';
+      const cancel = document.createElement('button');
+      cancel.textContent = '取消';
+      cancel.style.cssText = 'padding:9px 18px;border-radius:8px;border:1px solid #555;background:transparent;color:#fff;cursor:pointer;font-size:14px;';
+      const save = document.createElement('button');
+      save.textContent = '保存选中 (' + selected.size + ')';
+      save.style.cssText = 'padding:9px 18px;border-radius:8px;border:none;background:#4f8cff;color:#fff;cursor:pointer;font-size:14px;';
+      const finish = (result) => { ov.remove(); resolve(result); };
+      cancel.onclick = () => finish(null);
+      save.onclick = () => finish(frames.filter((_, i) => selected.has(i)));
+      bar.appendChild(cancel); bar.appendChild(save);
+      panel.appendChild(title); panel.appendChild(grid); panel.appendChild(bar);
+      ov.appendChild(panel);
+      document.body.appendChild(ov);
+    });
   }
 
   function sigDiff(a, b) {

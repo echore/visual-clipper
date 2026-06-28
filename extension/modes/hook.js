@@ -14,9 +14,10 @@ export async function start(tabId) {
     }
   } catch (_) {}
 
-  // ~1 frame per 3s, min 5, max 8 — oversample candidates, let content.js pick the best.
-  const count = Math.max(5, Math.min(8, Math.ceil(endTime / 3)));
-  const timestamps = buildTimestamps(0, endTime, Math.min(20, count * 3));
+  // Hook: keep MORE frames so the user can curate by hand. ~1 frame per 2s,
+  // min 8, max 12 selected; oversample a wide candidate pool for the AI to pick from.
+  const count = Math.max(8, Math.min(12, Math.ceil(endTime / 2)));
+  const timestamps = buildTimestamps(0, endTime, Math.min(24, count * 2));
   let captureResp;
   try {
     captureResp = await ensureSendToContent(tabId, { action: 'captureVideoFrames', timestamps });
@@ -28,6 +29,10 @@ export async function start(tabId) {
   if (captureResp.error) {
     notifyError(captureResp.error);
     return;
+  }
+
+  if (captureResp.cancelled || !captureResp.frames || captureResp.frames.length === 0) {
+    return; // user cancelled the picker — save nothing
   }
 
   // Get video metadata from page
@@ -51,7 +56,7 @@ export async function start(tabId) {
     platform,
     captured_at: new Date().toISOString(),
     frames: captureResp.frames,
-    frames_select: count,
+    frames_select: captureResp.frames.length, // user already picked — save all
     video_title: meta.videoTitle || null,
     channel: meta.channel || null,
     time_range: { start: 0, end: endTime },
