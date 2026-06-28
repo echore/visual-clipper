@@ -14,10 +14,10 @@ export async function start(tabId) {
     }
   } catch (_) {}
 
-  // Hook: keep MORE frames so the user can curate by hand. ~1 frame per 2s,
-  // min 8, max 12 selected; oversample a wide candidate pool for the AI to pick from.
-  const count = Math.max(8, Math.min(12, Math.ceil(endTime / 2)));
-  const timestamps = buildTimestamps(0, endTime, Math.min(24, count * 2));
+  // Candidate count scales with the hook length: ~1 frame per 2s, min 6, max 16.
+  // The user picks which to keep from these in the grid.
+  const sampleN = Math.min(16, Math.max(6, Math.ceil(endTime / 2)));
+  const timestamps = buildTimestamps(0, endTime, sampleN);
   let captureResp;
   try {
     captureResp = await ensureSendToContent(tabId, { action: 'captureVideoFrames', timestamps });

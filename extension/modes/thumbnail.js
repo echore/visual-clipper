@@ -20,7 +20,9 @@ export async function start(tabId) {
       // Bilibili's og:image is a tiny resized variant (…hash.jpg@100w_100h_1c.png);
       // strip the @-suffix on hdslb CDN URLs to get the full-resolution cover.
       if (thumbnail_url && thumbnail_url.includes('hdslb.com')) thumbnail_url = thumbnail_url.split('@')[0];
-      const video_url = og('og:url')
+      // NOTE: og:url and canonical are SPA-stale on YouTube too (previous video
+      // after in-site nav). The youtube branch below overrides this from the URL.
+      let video_url = og('og:url')
         || document.querySelector('link[rel="canonical"]')?.href
         || location.href;
       const source_name = og('og:site_name') || location.hostname;
@@ -33,7 +35,10 @@ export async function start(tabId) {
         // data — og:image and og:title are SPA-stale on YouTube (they keep the
         // PREVIOUS video after in-site navigation), which saved the wrong cover.
         video_id = new URLSearchParams(location.search).get('v');
-        if (video_id) thumbnail_url = `https://img.youtube.com/vi/${video_id}/maxresdefault.jpg`;
+        if (video_id) {
+          thumbnail_url = `https://img.youtube.com/vi/${video_id}/maxresdefault.jpg`;
+          video_url = `https://www.youtube.com/watch?v=${video_id}`; // fresh, not SPA-stale
+        }
         const pr = window.ytInitialPlayerResponse;
         const vd = pr?.videoDetails?.videoId === video_id ? pr.videoDetails : null;
         if (vd?.title) title = vd.title;

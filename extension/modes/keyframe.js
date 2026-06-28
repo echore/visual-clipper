@@ -19,9 +19,9 @@ export async function markOut(tabId, outTime, inTime, url, title, platform, vide
     return;
   }
 
-  // Keyframe segments are short — sample densely (~4/s, min 12) so the user has
-  // plenty to pick from across the effect's progression.
-  const sampleN = Math.min(20, Math.max(12, Math.ceil((end - start) * 4)));
+  // Candidate count scales with the segment length: ~3 frames/sec, min 4, max 14.
+  // Short clip → few candidates to pick from; long clip → more.
+  const sampleN = Math.min(14, Math.max(4, Math.ceil((end - start) * 3)));
   const timestamps = buildTimestamps(start, end, sampleN);
 
   let captureResp;
