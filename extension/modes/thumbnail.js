@@ -14,7 +14,7 @@ export async function start(tabId) {
 
       // ── Generic Open Graph / Twitter-card layer (works on most sites) ──
       let title = (og('og:title') || og('twitter:title') || document.title || '')
-        .replace(/\s*[-|–]\s*(YouTube|bilibili|哔哩哔哩|Twitter|X|Vimeo)\s*$/i, '').trim();
+        .replace(/(?:\s*[-|–_]\s*(?:YouTube|bilibili|哔哩哔哩|Twitter|X|Vimeo))+\s*$/i, '').trim();
       let thumbnail_url = og('og:image') || og('twitter:image');
       if (thumbnail_url && thumbnail_url.startsWith('//')) thumbnail_url = 'https:' + thumbnail_url;
       const video_url = og('og:url')
