@@ -1,4 +1,4 @@
-import { sanitize, httpPost, notifyError, detectPlatform, sendToContent } from './utils.js';
+import { sanitize, httpPost, notifyError, notifyNotice, detectPlatform, sendToContent } from './utils.js';
 
 export async function start(tabId) {
   const tab = await chrome.tabs.get(tabId);
@@ -107,6 +107,7 @@ export async function start(tabId) {
     if (response.obsidianUrl) {
       sendToContent(tabId, { action: 'openObsidian', url: response.obsidianUrl }).catch(() => {});
     }
+    if (response.notice) notifyNotice(response.notice);
   } else {
     notifyError(response.error || '封面收藏失败，请重试');
   }

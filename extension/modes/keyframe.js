@@ -1,4 +1,4 @@
-import { buildTimestamps, sanitize, httpPost, notifyError, sendToContent, detectPlatform } from './utils.js';
+import { buildTimestamps, sanitize, httpPost, notifyError, notifyNotice, sendToContent, detectPlatform } from './utils.js';
 
 export function start(tabId) {
   // State is managed in chrome.storage.local by popup.js (Mark In click)
@@ -71,6 +71,7 @@ export async function markOut(tabId, outTime, inTime, url, title, platform, vide
     if (response.obsidianUrl) {
       sendToContent(tabId, { action: 'openObsidian', url: response.obsidianUrl }).catch(() => {});
     }
+    if (response.notice) notifyNotice(response.notice);
   } else {
     notifyError(response.error || '关键帧捕获失败，请重试');
   }

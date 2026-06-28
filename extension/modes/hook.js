@@ -1,4 +1,4 @@
-import { buildTimestamps, sanitize, httpPost, notifyError, sendToContent, detectPlatform } from './utils.js';
+import { buildTimestamps, sanitize, httpPost, notifyError, notifyNotice, sendToContent, detectPlatform } from './utils.js';
 
 export async function start(tabId) {
   const tab = await chrome.tabs.get(tabId);
@@ -70,6 +70,7 @@ export async function start(tabId) {
     if (response.obsidianUrl) {
       sendToContent(tabId, { action: 'openObsidian', url: response.obsidianUrl }).catch(() => {});
     }
+    if (response.notice) notifyNotice(response.notice);
   } else {
     notifyError(response.error || 'Hook 分析失败，请重试');
   }
