@@ -14,12 +14,12 @@ export async function start(tabId) {
     }
   } catch (_) {}
 
-  // ~1 frame per 3s, min 5, max 8
+  // ~1 frame per 3s, min 5, max 8 — oversample candidates, let content.js pick the best.
   const count = Math.max(5, Math.min(8, Math.ceil(endTime / 3)));
-  const timestamps = buildTimestamps(0, endTime, count);
+  const timestamps = buildTimestamps(0, endTime, Math.min(20, count * 3));
   let captureResp;
   try {
-    captureResp = await ensureSendToContent(tabId, { action: 'captureVideoFrames', timestamps });
+    captureResp = await ensureSendToContent(tabId, { action: 'captureVideoFrames', timestamps, select: count });
   } catch (err) {
     notifyError('无法与页面通信，请刷新后重试');
     return;

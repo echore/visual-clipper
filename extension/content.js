@@ -174,7 +174,7 @@
     }
 
     if (msg.action === 'captureVideoFrames') {
-      captureFrames(msg.timestamps).then(
+      captureFrames(msg.timestamps, msg.select).then(
         frames => sendResponse({ frames }),
         err => sendResponse({ error: err.message }),
       );
@@ -188,33 +188,69 @@
 
   });
 
-  async function captureFrames(timestamps) {
+  // Capture candidate frames at `timestamps`, then keep `select` of them that are
+  // actually informative: drop near-black/near-white/blank frames, and prefer the
+  // moments where the most changed (motion / effects). Oversampling + selection
+  // happens in memory — only the chosen frames are returned/saved.
+  async function captureFrames(timestamps, select) {
     const video = document.querySelector('video');
     if (!video) throw new Error('No video element found');
+    const want = select || timestamps.length;
 
     const originalTime = video.currentTime;
     const wasPaused = video.paused;
     if (!wasPaused) video.pause();
 
-    const frames = [];
+    const w = video.videoWidth || 1280, h = video.videoHeight || 720;
+    const full = document.createElement('canvas'); full.width = w; full.height = h;
+    const fctx = full.getContext('2d');
+    const SW = 32, SH = 18;                          // tiny canvas just for scoring
+    const small = document.createElement('canvas'); small.width = SW; small.height = SH;
+    const sctx = small.getContext('2d');
+
+    const cands = [];
     try {
       for (const t of timestamps) {
         await seekTo(video, t);
-        const canvas = document.createElement('canvas');
-        canvas.width = video.videoWidth || 1280;
-        canvas.height = video.videoHeight || 720;
         try {
-          canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+          fctx.drawImage(video, 0, 0, w, h);
+          sctx.drawImage(video, 0, 0, SW, SH);
         } catch (e) {
           throw new Error('此视频不支持帧捕获');
         }
-        frames.push(canvas.toDataURL('image/jpeg', 0.85).split(',')[1]);
+        const px = sctx.getImageData(0, 0, SW, SH).data;
+        const luma = new Float32Array(SW * SH);
+        let sum = 0;
+        for (let i = 0; i < luma.length; i++) {
+          const l = 0.299 * px[i * 4] + 0.587 * px[i * 4 + 1] + 0.114 * px[i * 4 + 2];
+          luma[i] = l; sum += l;
+        }
+        const mean = sum / luma.length;
+        let variance = 0;
+        for (let i = 0; i < luma.length; i++) variance += (luma[i] - mean) ** 2;
+        variance /= luma.length;
+        cands.push({ t, mean, variance, luma, data: full.toDataURL('image/jpeg', 0.85).split(',')[1] });
       }
     } finally {
       try { await seekTo(video, originalTime); } catch (_) {}
       if (!wasPaused) video.play();
     }
-    return frames;
+
+    // Drop blank-ish frames (near black/white, or near-uniform color).
+    const useful = cands.filter(c => c.mean > 16 && c.mean < 245 && c.variance > 40);
+    const pool = useful.length >= Math.min(want, 2) ? useful : cands; // never return empty
+    if (pool.length <= want) return pool.map(c => c.data);
+
+    // Score each by how much it changed from the previous kept candidate.
+    for (let i = 0; i < pool.length; i++) {
+      if (i === 0) { pool[i].change = 0; continue; }
+      let d = 0; const a = pool[i].luma, b = pool[i - 1].luma;
+      for (let k = 0; k < a.length; k++) d += Math.abs(a[k] - b[k]);
+      pool[i].change = d / a.length;
+    }
+    // Keep the `want` highest-change frames, back in time order.
+    return pool.slice().sort((x, y) => y.change - x.change).slice(0, want)
+      .sort((x, y) => x.t - y.t).map(c => c.data);
   }
 
   function seekTo(video, time) {

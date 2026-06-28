@@ -19,13 +19,13 @@ export async function markOut(tabId, outTime, inTime, url, title, platform, vide
     return;
   }
 
-  // Adaptive frame count: ~2 frames/sec, min 2, max 8
+  // Adaptive frame count: ~2 frames/sec, min 2, max 8 — oversample, pick the best.
   const count = Math.max(2, Math.min(8, Math.ceil((end - start) * 2)));
-  const timestamps = buildTimestamps(start, end, count);
+  const timestamps = buildTimestamps(start, end, Math.min(20, count * 3));
 
   let captureResp;
   try {
-    captureResp = await ensureSendToContent(tabId, { action: 'captureVideoFrames', timestamps });
+    captureResp = await ensureSendToContent(tabId, { action: 'captureVideoFrames', timestamps, select: count });
   } catch (err) {
     notifyError('无法与页面通信，请刷新后重试');
     return;
