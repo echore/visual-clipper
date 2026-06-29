@@ -262,10 +262,15 @@
     const useful = cands.filter(c => c.mean > 16 && c.mean < 245 && c.variance > 40);
     const pool = useful.length ? useful : cands;
     // Drop near-duplicates so candidates are visually distinct (cap the count).
+    // Scan latest→earliest so each cluster of similar frames keeps its LAST frame
+    // (the settled shot where an animation/effect has finished) rather than the
+    // first; then restore chronological order for display.
     const kept = [];
-    for (const c of pool) {
+    for (let i = pool.length - 1; i >= 0; i--) {
+      const c = pool[i];
       if (kept.length < 16 && kept.every(k => sigDiff(c.luma, k.luma) > minDiff)) kept.push(c);
     }
+    kept.sort((a, b) => a.t - b.t);
     return (kept.length ? kept : pool).map(c => c.data);
   }
 
