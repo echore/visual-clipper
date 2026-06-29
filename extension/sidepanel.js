@@ -75,7 +75,7 @@ document.getElementById('btn-capture').addEventListener('click', async () => {
     chrome.tabs.get(tabId),
   ]);
 
-  if (!timeResp?.currentTime == null || !tab) {
+  if (timeResp?.currentTime == null || !tab) {
     btn.disabled = false;
     btn.textContent = '截取到这里';
     return;
