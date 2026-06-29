@@ -45,21 +45,31 @@ export async function injectContentScript(tabId) {
   await chrome.scripting.executeScript({ target: { tabId }, files: ['content.js'] });
 }
 
-// Send to content.js; if it isn't there/ready (first try after a reload), inject
-// it and retry once — so the first interaction works instead of erroring.
+// Send to content.js. If it isn't there yet (first interaction / slow page /
+// after a reload), inject it and poll until its listener is ready, then send —
+// so the FIRST click works instead of needing a second.
+// Important: if the error is "message port closed", the script DID run but the
+// reply was lost; re-sending would double-run (e.g. capture twice), so we don't.
 export async function ensureSendToContent(tabId, msg) {
   const tag = msg.action || 'msg';
   try {
-    console.log(`[SC] → "${tag}" attempt 1`);
-    const r = await sendToContent(tabId, msg);
-    console.log(`[SC] ✓ "${tag}" attempt 1 ok`);
-    return r;
+    return await sendToContent(tabId, msg);
   } catch (e) {
-    console.warn(`[SC] ✗ "${tag}" attempt 1 FAILED: ${e.message} — re-injecting + retrying`);
-    await injectContentScript(tabId);
-    const r = await sendToContent(tabId, msg);
-    console.log(`[SC] ✓ "${tag}" attempt 2 ok (this is the SECOND run)`);
-    return r;
+    if (/message port closed/i.test(e.message || '')) {
+      console.warn(`[SC] "${tag}" port closed — NOT re-sending (it may have run)`);
+      throw e;
+    }
+    console.warn(`[SC] "${tag}" not reachable (${e.message}) — injecting + polling`);
+    try { await injectContentScript(tabId); } catch (_) {}
+    for (let i = 0; i < 8; i++) {
+      await new Promise((r) => setTimeout(r, 120));
+      try {
+        const r = await sendToContent(tabId, msg);
+        console.log(`[SC] "${tag}" ok after inject (try ${i + 1})`);
+        return r;
+      } catch (_) { /* not ready yet — keep polling */ }
+    }
+    throw new Error(`内容脚本未就绪：${tag}`);
   }
 }
 
