@@ -213,7 +213,7 @@
     const cands = [];
     try {
       for (const t of timestamps) {
-        await seekTo(video, t);
+        try { await seekTo(video, t); } catch (_) { continue; } // skip points that won't seek (buffering / ad)
         try {
           fctx.drawImage(video, 0, 0, w, h);
           sctx.drawImage(video, 0, 0, SW, SH);
@@ -237,6 +237,8 @@
       try { await seekTo(video, originalTime); } catch (_) {}
       if (!wasPaused) video.play();
     }
+
+    if (cands.length === 0) throw new Error('视频还没准备好（可能在缓冲或在放广告），等它正常播放几秒后再点');
 
     // Drop blank-ish frames (near black/white, or near-uniform color).
     const useful = cands.filter(c => c.mean > 16 && c.mean < 245 && c.variance > 40);
@@ -310,7 +312,7 @@
   function seekTo(video, time) {
     return new Promise((resolve, reject) => {
       if (Math.abs(video.currentTime - time) < 0.05) { resolve(); return; }
-      const timeout = setTimeout(() => reject(new Error('Seek timeout')), 5000);
+      const timeout = setTimeout(() => reject(new Error('Seek timeout')), 8000);
       video.onseeked = () => { clearTimeout(timeout); video.onseeked = null; resolve(); };
       video.currentTime = time;
     });
