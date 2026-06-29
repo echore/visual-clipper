@@ -16,7 +16,7 @@ chrome.runtime.onConnect.addListener((port) => {
   if (port.name === 'sc-keepalive') port.onMessage.addListener(() => {});
 });
 
-chrome.runtime.onMessage.addListener((msg, sender) => {
+chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   const tabId = sender.tab?.id;
 
   switch (msg.action) {
@@ -43,4 +43,7 @@ chrome.runtime.onMessage.addListener((msg, sender) => {
       thumbnail.start(msg.tabId);
       break;
   }
+  // Ack receipt immediately so popup senders can await delivery before closing
+  // (a fire-and-forget send + window.close() can drop the message on a cold worker).
+  try { sendResponse({ ok: true }); } catch (_) {}
 });

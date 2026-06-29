@@ -90,7 +90,7 @@ btnBatchAnalyze.addEventListener('click', async () => {
   const stored = await new Promise(r => chrome.storage.local.get(['screenshot_queue'], r));
   const queue = stored.screenshot_queue || [];
   if (!queue.length) return;
-  chrome.runtime.sendMessage({ action: 'analyzeBatch', queue });
+  await chrome.runtime.sendMessage({ action: 'analyzeBatch', queue }).catch(() => {});
   chrome.storage.local.remove('screenshot_queue');
   chrome.action.setBadgeText({ text: '' });
   window.close();
@@ -100,7 +100,7 @@ btnBatchAnalyze.addEventListener('click', async () => {
 btnScreenshot.addEventListener('click', async () => {
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   if (!tab) return;
-  chrome.runtime.sendMessage({ action: 'startCapture', tabId: tab.id, windowId: tab.windowId });
+  await chrome.runtime.sendMessage({ action: 'startCapture', tabId: tab.id, windowId: tab.windowId }).catch(() => {});
   window.close();
 });
 
@@ -108,7 +108,7 @@ btnScreenshot.addEventListener('click', async () => {
 btnHook.addEventListener('click', async () => {
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   if (!tab) return;
-  chrome.runtime.sendMessage({ action: 'startHook', tabId: tab.id });
+  await chrome.runtime.sendMessage({ action: 'startHook', tabId: tab.id }).catch(() => {});
   window.close();
 });
 
@@ -116,7 +116,7 @@ btnHook.addEventListener('click', async () => {
 btnThumbnail.addEventListener('click', async () => {
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   if (!tab) return;
-  chrome.runtime.sendMessage({ action: 'saveThumbnail', tabId: tab.id });
+  await chrome.runtime.sendMessage({ action: 'saveThumbnail', tabId: tab.id }).catch(() => {});
   window.close();
 });
 
