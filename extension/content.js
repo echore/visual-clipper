@@ -136,14 +136,18 @@
 
   // Listen for messages from background
   // ── Video detection & frame capture ──────────────────────────────────────────
-  chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
-    if (msg.action === 'showOverlay') { show(msg.dataUrl); return; }
-    if (msg.action === 'cancelOverlay') { remove(); return; }
+  // Remove any listener left by a previous injection so a re-inject never doubles
+  // up handlers (which made captures run twice → "select again" / Seek timeout).
+  if (window.__SC_MSG_LISTENER__) { try { chrome.runtime.onMessage.removeListener(window.__SC_MSG_LISTENER__); } catch (_) {} }
+  const __scMsgListener = (msg, _sender, sendResponse) => {
+    if (msg.action === 'showOverlay') { show(msg.dataUrl); sendResponse({ ok: true }); return; }
+    if (msg.action === 'cancelOverlay') { remove(); sendResponse({ ok: true }); return; }
     // Top-level navigation to obsidian:// triggers Chrome's "Open Obsidian?"
     // dialog (same as Obsidian Web Clipper); the page itself stays put because
     // the OS handles the custom protocol. Used by hook/keyframe/batch success.
-    if (msg.action === 'openObsidian') { if (msg.url) window.location.href = msg.url; return; }
+    if (msg.action === 'openObsidian') { sendResponse({ ok: true }); if (msg.url) window.location.href = msg.url; return; }
     if (msg.action === 'captureResult') {
+      sendResponse({ ok: true });
       if (!hint) return;
       if (msg.success) {
         if (msg.obsidianUrl) window.location.href = msg.obsidianUrl;
@@ -175,15 +179,24 @@
 
     if (msg.action === 'captureVideoFrames') {
       console.log('[SC] content: captureVideoFrames received — starting capture');
+      // Keep the background worker awake during capture + picker so its message
+      // port can't close (a closed port made it retry → double-capture → Seek timeout).
+      let keep = null, keepPing = null;
+      try { keep = chrome.runtime.connect({ name: 'sc-keepalive' }); } catch (_) {}
+      if (keep) keepPing = setInterval(() => { try { keep.postMessage({ t: Date.now() }); } catch (_) {} }, 20000);
+      const respond = (resp) => {
+        if (keepPing) clearInterval(keepPing);
+        if (keep) { try { keep.disconnect(); } catch (_) {} }
+        sendResponse(resp);
+      };
       captureFrames(msg.timestamps, msg.minDiff).then(
         async frames => {
           console.log('[SC] content: captured', frames.length, 'frames — opening picker');
           const picked = await showFramePicker(frames);
           console.log('[SC] content: picker', picked ? `saved ${picked.length}` : 'cancelled', '— sending response');
-          if (!picked) sendResponse({ cancelled: true });
-          else sendResponse({ frames: picked });
+          respond(picked ? { frames: picked } : { cancelled: true });
         },
-        err => { console.warn('[SC] content: capture FAILED', err.message); sendResponse({ error: err.message }); },
+        err => { console.warn('[SC] content: capture FAILED', err.message); respond({ error: err.message }); },
       );
       return true;
     }
@@ -193,7 +206,9 @@
       return true;
     }
 
-  });
+  };
+  window.__SC_MSG_LISTENER__ = __scMsgListener;
+  chrome.runtime.onMessage.addListener(__scMsgListener);
 
   // Capture candidate frames at `timestamps`, drop blank/near-black ones and
   // near-duplicates (frames closer than `minDiff` are treated as the same shot),

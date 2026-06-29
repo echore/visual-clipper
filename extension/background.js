@@ -10,6 +10,12 @@ chrome.runtime.onInstalled.addListener(({ reason }) => {
   }
 });
 
+// Holding this port (and its periodic pings) keeps the worker alive while a
+// capture/picker is in progress, so its message port can't close mid-flow.
+chrome.runtime.onConnect.addListener((port) => {
+  if (port.name === 'sc-keepalive') port.onMessage.addListener(() => {});
+});
+
 chrome.runtime.onMessage.addListener((msg, sender) => {
   const tabId = sender.tab?.id;
 
