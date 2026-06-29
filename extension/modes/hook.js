@@ -1,4 +1,4 @@
-import { buildTimestamps, sanitize, httpPost, notifyError, notifyNotice, ensureSendToContent, detectPlatform, getCoverUrl } from './utils.js';
+import { buildTimestamps, sanitize, httpPost, notifyError, notifyNotice, ensureSendToContent, detectPlatform, getCoverUrl, normalizeTranscript } from './utils.js';
 
 export async function start(tabId) {
   const tab = await chrome.tabs.get(tabId);
@@ -46,6 +46,7 @@ export async function start(tabId) {
     if (platform === 'youtube') transcript = await fetchYouTubeTranscript(tabId, url, endTime);
     else if (platform === 'bilibili') transcript = await extractBilibiliTranscript(url, endTime);
   } catch (_) {}
+  transcript = normalizeTranscript(transcript);   // unify all platforms to one clean format
 
   const cover_url = await getCoverUrl(tabId, platform);
 

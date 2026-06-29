@@ -5,6 +5,17 @@ export function sanitize(str) {
   return (str || '').replace(/[/\\:*?"<>|]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 100);
 }
 
+// Unify transcript text across all platforms into one clean format:
+// drop non-speech caption tags ([Music], [Applause], ...) and collapse the
+// per-cue line wraps (YouTube json3 ASR embeds a "\n" seg at every wrap).
+export function normalizeTranscript(text) {
+  if (!text) return null;
+  return text
+    .replace(/\[[^\]]*\]/g, ' ')   // [Music] / [music] / [Applause] → gone
+    .replace(/\s+/g, ' ')          // \n and extra whitespace → single space
+    .trim() || null;
+}
+
 export function formatTime(seconds) {
   const s = Math.round(seconds);
   const m = Math.floor(s / 60);

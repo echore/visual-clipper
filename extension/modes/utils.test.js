@@ -6,7 +6,7 @@ globalThis.chrome = {
   notifications: { create: () => {} },
 };
 
-import { sanitize, formatTime, buildTimestamps, detectPlatform } from './utils.js';
+import { sanitize, formatTime, buildTimestamps, detectPlatform, normalizeTranscript } from './utils.js';
 
 describe('sanitize', () => {
   test('removes forbidden filename characters', () => {
@@ -64,5 +64,25 @@ describe('detectPlatform', () => {
   });
   test('returns other for unknown', () => {
     expect(detectPlatform('https://example.com/video')).toBe('other');
+  });
+});
+
+describe('normalizeTranscript', () => {
+  test('collapses YouTube json3 per-cue newlines into single spaces', () => {
+    expect(normalizeTranscript('back to the \n channel. So, \n if you'))
+      .toBe('back to the channel. So, if you');
+  });
+  test('strips non-speech caption tags', () => {
+    expect(normalizeTranscript('again [Music] today')).toBe('again today');
+    expect(normalizeTranscript('again [music] today')).toBe('again today');
+    expect(normalizeTranscript('[Applause] welcome')).toBe('welcome');
+  });
+  test('leaves already-clean text (e.g. Bilibili) unchanged', () => {
+    expect(normalizeTranscript('这是一句干净的字幕。')).toBe('这是一句干净的字幕。');
+  });
+  test('returns null for empty or null input', () => {
+    expect(normalizeTranscript(null)).toBe(null);
+    expect(normalizeTranscript('')).toBe(null);
+    expect(normalizeTranscript('  [Music]  ')).toBe(null);
   });
 });
