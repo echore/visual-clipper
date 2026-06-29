@@ -174,13 +174,16 @@
     }
 
     if (msg.action === 'captureVideoFrames') {
+      console.log('[SC] content: captureVideoFrames received — starting capture');
       captureFrames(msg.timestamps, msg.minDiff).then(
         async frames => {
+          console.log('[SC] content: captured', frames.length, 'frames — opening picker');
           const picked = await showFramePicker(frames);
+          console.log('[SC] content: picker', picked ? `saved ${picked.length}` : 'cancelled', '— sending response');
           if (!picked) sendResponse({ cancelled: true });
           else sendResponse({ frames: picked });
         },
-        err => sendResponse({ error: err.message }),
+        err => { console.warn('[SC] content: capture FAILED', err.message); sendResponse({ error: err.message }); },
       );
       return true;
     }

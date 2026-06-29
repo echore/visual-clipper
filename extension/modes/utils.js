@@ -48,11 +48,18 @@ export async function injectContentScript(tabId) {
 // Send to content.js; if it isn't there/ready (first try after a reload), inject
 // it and retry once — so the first interaction works instead of erroring.
 export async function ensureSendToContent(tabId, msg) {
+  const tag = msg.action || 'msg';
   try {
-    return await sendToContent(tabId, msg);
-  } catch (_) {
+    console.log(`[SC] → "${tag}" attempt 1`);
+    const r = await sendToContent(tabId, msg);
+    console.log(`[SC] ✓ "${tag}" attempt 1 ok`);
+    return r;
+  } catch (e) {
+    console.warn(`[SC] ✗ "${tag}" attempt 1 FAILED: ${e.message} — re-injecting + retrying`);
     await injectContentScript(tabId);
-    return await sendToContent(tabId, msg);
+    const r = await sendToContent(tabId, msg);
+    console.log(`[SC] ✓ "${tag}" attempt 2 ok (this is the SECOND run)`);
+    return r;
   }
 }
 
