@@ -26,7 +26,7 @@ export async function markOut(tabId, outTime, inTime, url, title, platform, vide
 
   let captureResp;
   try {
-    captureResp = await ensureSendToContent(tabId, { action: 'captureVideoFrames', timestamps, minDiff: 6 });
+    captureResp = await ensureSendToContent(tabId, { action: 'captureVideoFrames', timestamps, minDiff: 6, picker: 'toggle' });
   } catch (err) {
     notifyError('无法与页面通信，请刷新后重试');
     return;

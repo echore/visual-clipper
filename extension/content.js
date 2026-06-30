@@ -190,9 +190,12 @@
         sendResponse(resp);
       };
       captureFrames(msg.timestamps, msg.minDiff).then(
-        async frames => {
-          console.log('[SC] content: captured', frames.length, 'frames — opening picker');
-          const picked = await showFramePicker(frames);
+        async ({ all, settled }) => {
+          console.log('[SC] content: captured', settled.length, 'settled /', all.length, 'total — opening picker');
+          // keyframe mode gets the 定格/全程 toggle (full arc); hook keeps the plain picker.
+          const picked = msg.picker === 'toggle'
+            ? await showFramePicker(settled, all)
+            : await showFramePicker(settled);
           console.log('[SC] content: picker', picked ? `saved ${picked.length}` : 'cancelled', '— sending response');
           respond(picked ? { frames: picked } : { cancelled: true });
         },
@@ -271,58 +274,105 @@
       if (kept.length < 16 && kept.every(k => sigDiff(c.luma, k.luma) > minDiff)) kept.push(c);
     }
     kept.sort((a, b) => a.t - b.t);
-    return (kept.length ? kept : pool).map(c => c.data);
+    // Two sets for the picker: `settled` = one frame per distinct shot/effect
+    // (定格), `all` = every sampled frame with blanks removed (全程 — preserves an
+    // animation's full arc, including its opening, which `settled` collapses away).
+    return {
+      all: pool.map(c => c.data),
+      settled: (kept.length ? kept : pool).map(c => c.data),
+    };
   }
 
   // Show the candidate frames; user deselects the ones they don't want. Resolves
   // with the kept frames (base64[]), or null if cancelled. Only kept frames are
   // ever sent on to be saved — nothing unwanted touches the vault.
-  function showFramePicker(frames) {
+  // settledFrames = 定格 set (one frame per shot). allFrames (optional) = 全程 set
+  // (every sampled frame, full arc); when supplied and larger, a 定格/全程 toggle
+  // lets the user switch which set the grid shows. Resolves with the kept frames
+  // (base64[]), or null if cancelled — only kept frames are ever sent on to save.
+  function showFramePicker(settledFrames, allFrames) {
     return new Promise(resolve => {
-      if (!frames || frames.length === 0) { resolve(frames || []); return; }
-      const selected = new Set(frames.map((_, i) => i));
+      if (!settledFrames || settledFrames.length === 0) { resolve(settledFrames || []); return; }
+      const hasToggle = Array.isArray(allFrames) && allFrames.length > settledFrames.length;
       const ov = document.createElement('div');
       ov.style.cssText = 'position:fixed;inset:0;z-index:2147483647;background:rgba(0,0,0,.82);display:flex;align-items:center;justify-content:center;';
       const panel = document.createElement('div');
       panel.style.cssText = 'background:#1e1e1f;color:#fff;border-radius:12px;padding:20px;width:min(880px,92vw);max-height:90vh;overflow:auto;font-family:system-ui,-apple-system,sans-serif;box-shadow:0 10px 40px rgba(0,0,0,.5);';
+      const head = document.createElement('div');
+      head.style.cssText = 'display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px;';
       const title = document.createElement('div');
       title.textContent = '选择要保存的帧 — 点击取消掉不想要的';
-      title.style.cssText = 'font-size:15px;font-weight:600;margin-bottom:14px;';
-      const grid = document.createElement('div');
-      grid.style.cssText = 'display:grid;grid-template-columns:repeat(3,1fr);gap:10px;';
-      frames.forEach((f, i) => {
-        const wrap = document.createElement('div');
-        wrap.style.cssText = 'position:relative;cursor:pointer;border:3px solid #4f8cff;border-radius:8px;overflow:hidden;line-height:0;transition:opacity .1s;';
-        const img = document.createElement('img');
-        img.src = 'data:image/jpeg;base64,' + f;
-        img.style.cssText = 'width:100%;display:block;';
-        const tick = document.createElement('div');
-        tick.textContent = '✓';
-        tick.style.cssText = 'position:absolute;top:5px;right:6px;background:#4f8cff;color:#fff;border-radius:50%;width:22px;height:22px;text-align:center;line-height:22px;font-size:13px;';
-        wrap.appendChild(img); wrap.appendChild(tick);
-        wrap.onclick = () => {
-          if (selected.has(i)) { selected.delete(i); wrap.style.borderColor = 'transparent'; wrap.style.opacity = '.35'; tick.style.display = 'none'; }
-          else { selected.add(i); wrap.style.borderColor = '#4f8cff'; wrap.style.opacity = '1'; tick.style.display = 'block'; }
-          save.textContent = '保存选中 (' + selected.size + ')';
-          save.disabled = selected.size === 0;
-        };
-        grid.appendChild(wrap);
-      });
+      title.style.cssText = 'font-size:15px;font-weight:600;';
+      head.appendChild(title);
+
       const bar = document.createElement('div');
       bar.style.cssText = 'margin-top:16px;display:flex;justify-content:flex-end;gap:10px;';
       const cancel = document.createElement('button');
       cancel.textContent = '取消';
       cancel.style.cssText = 'padding:9px 18px;border-radius:8px;border:1px solid #555;background:transparent;color:#fff;cursor:pointer;font-size:14px;';
       const save = document.createElement('button');
-      save.textContent = '保存选中 (' + selected.size + ')';
       save.style.cssText = 'padding:9px 18px;border-radius:8px;border:none;background:#4f8cff;color:#fff;cursor:pointer;font-size:14px;';
       const finish = (result) => { ov.remove(); resolve(result); };
       cancel.onclick = () => finish(null);
+
+      const grid = document.createElement('div');
+      grid.style.cssText = 'display:grid;grid-template-columns:repeat(3,1fr);gap:10px;';
+
+      // Current frame set + its selection. render() rebuilds the grid; on every
+      // (re)build all frames start selected, so toggling resets to "keep all".
+      let frames = settledFrames;
+      let selected = new Set();
+      const render = () => {
+        grid.innerHTML = '';
+        selected = new Set(frames.map((_, i) => i));
+        frames.forEach((f, i) => {
+          const wrap = document.createElement('div');
+          wrap.style.cssText = 'position:relative;cursor:pointer;border:3px solid #4f8cff;border-radius:8px;overflow:hidden;line-height:0;transition:opacity .1s;';
+          const img = document.createElement('img');
+          img.src = 'data:image/jpeg;base64,' + f;
+          img.style.cssText = 'width:100%;display:block;';
+          const tick = document.createElement('div');
+          tick.textContent = '✓';
+          tick.style.cssText = 'position:absolute;top:5px;right:6px;background:#4f8cff;color:#fff;border-radius:50%;width:22px;height:22px;text-align:center;line-height:22px;font-size:13px;';
+          wrap.appendChild(img); wrap.appendChild(tick);
+          wrap.onclick = () => {
+            if (selected.has(i)) { selected.delete(i); wrap.style.borderColor = 'transparent'; wrap.style.opacity = '.35'; tick.style.display = 'none'; }
+            else { selected.add(i); wrap.style.borderColor = '#4f8cff'; wrap.style.opacity = '1'; tick.style.display = 'block'; }
+            save.textContent = '保存选中 (' + selected.size + ')';
+            save.disabled = selected.size === 0;
+          };
+          grid.appendChild(wrap);
+        });
+        save.textContent = '保存选中 (' + selected.size + ')';
+        save.disabled = selected.size === 0;
+      };
+
+      if (hasToggle) {
+        const seg = document.createElement('div');
+        seg.style.cssText = 'display:flex;border:1px solid #4f8cff;border-radius:8px;overflow:hidden;font-size:13px;flex:none;';
+        const bSettled = document.createElement('button');
+        const bAll = document.createElement('button');
+        bSettled.textContent = '定格';
+        bAll.textContent = '全程';
+        for (const b of [bSettled, bAll]) b.style.cssText = 'padding:6px 16px;border:none;background:transparent;color:#9ab;cursor:pointer;';
+        const paint = () => {
+          const on = frames === settledFrames;
+          bSettled.style.background = on ? '#4f8cff' : 'transparent';  bSettled.style.color = on ? '#fff' : '#9ab';
+          bAll.style.background = on ? 'transparent' : '#4f8cff';      bAll.style.color = on ? '#9ab' : '#fff';
+        };
+        bSettled.onclick = () => { if (frames !== settledFrames) { frames = settledFrames; paint(); render(); } };
+        bAll.onclick = () => { if (frames !== allFrames) { frames = allFrames; paint(); render(); } };
+        seg.appendChild(bSettled); seg.appendChild(bAll);
+        head.appendChild(seg);
+        paint();
+      }
+
       save.onclick = () => finish(frames.filter((_, i) => selected.has(i)));
       bar.appendChild(cancel); bar.appendChild(save);
-      panel.appendChild(title); panel.appendChild(grid); panel.appendChild(bar);
+      panel.appendChild(head); panel.appendChild(grid); panel.appendChild(bar);
       ov.appendChild(panel);
       document.body.appendChild(ov);
+      render();
     });
   }
 
