@@ -14,13 +14,14 @@ export async function start(tabId) {
     }
   } catch (_) {}
 
-  // Candidate count scales with the hook length: ~1 frame per 2s, min 6, max 16.
+  // Candidate count scales with the hook length: ~1 frame per second, min 6, max 16.
   // The user picks which to keep from these in the grid.
-  const sampleN = Math.min(16, Math.max(6, Math.ceil(endTime / 2)));
+  const sampleN = Math.min(16, Math.max(6, Math.ceil(endTime)));
   const timestamps = buildTimestamps(0, endTime, sampleN);
   let captureResp;
   try {
-    captureResp = await ensureSendToContent(tabId, { action: 'captureVideoFrames', timestamps });
+    // picker:'toggle' → the 定格/全程 picker: 定格 shows the deduped set, 全程 every sampled frame.
+    captureResp = await ensureSendToContent(tabId, { action: 'captureVideoFrames', timestamps, picker: 'toggle' });
   } catch (err) {
     notifyError('无法与页面通信，请刷新后重试');
     return;
