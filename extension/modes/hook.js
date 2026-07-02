@@ -45,7 +45,7 @@ export async function start(tabId) {
   let transcript = null;
   try {
     if (platform === 'youtube') transcript = await fetchYouTubeTranscript(tabId, url, endTime);
-    else if (platform === 'bilibili') transcript = await extractBilibiliTranscript(url, endTime);
+    else if (platform === 'bilibili') transcript = await extractBilibiliTranscript(tabId, endTime);
   } catch (_) {}
   transcript = normalizeTranscript(transcript);   // unify all platforms to one clean format
 
@@ -157,30 +157,42 @@ async function fetchYouTubeTranscript(tabId, videoUrl, endTime) {
   return results?.[0]?.result || null;
 }
 
-async function extractBilibiliTranscript(url, endTime) {
-  const playinfo = await fetch(url)
-    .then(r => r.text())
-    .then(html => {
-      const start = html.indexOf('window.__playinfo__=');
-      if (start === -1) return null;
-      const jsonStart = html.indexOf('{', start);
-      if (jsonStart === -1) return null;
-      let depth = 0, i = jsonStart;
-      for (; i < html.length; i++) {
-        if (html[i] === '{') depth++;
-        else if (html[i] === '}') { depth--; if (depth === 0) break; }
-      }
-      try { return JSON.parse(html.slice(jsonStart, i + 1)); } catch { return null; }
-    })
-    .catch(() => null);
+// Bilibili's page HTML no longer embeds window.__playinfo__, and its AI subtitles
+// (中文(AI) etc.) are only served to logged-in users. So — same trick as YouTube —
+// run the fetches in the page's MAIN world: the player API calls then carry the
+// tab's own cookies and CORS rules, exactly like Bilibili's own player does.
+async function extractBilibiliTranscript(tabId, endTime) {
+  const results = await chrome.scripting.executeScript({
+    target: { tabId },
+    world: 'MAIN',
+    func: async (endTime) => {
+      try {
+        const bvid = location.pathname.match(/BV\w+/)?.[0];
+        if (!bvid) return null;
+        const view = await fetch(`https://api.bilibili.com/x/web-interface/view?bvid=${bvid}`,
+          { credentials: 'include' }).then(r => r.json());
+        if (view.code !== 0) return null;
+        const aid = view.data.aid;
+        const p = Number(new URLSearchParams(location.search).get('p') || 1);
+        const cid = view.data.pages?.[p - 1]?.cid ?? view.data.cid;
+        const player = await fetch(`https://api.bilibili.com/x/player/wbi/v2?aid=${aid}&cid=${cid}`,
+          { credentials: 'include' }).then(r => r.json());
+        const tracks = (player.data?.subtitle?.subtitles ?? []).filter(s => s.subtitle_url);
+        if (!tracks.length) return null;
+        const track = tracks.find(s => s.lan?.startsWith('zh')) || tracks[0];
+        let subUrl = track.subtitle_url;
+        if (subUrl.startsWith('http://')) subUrl = subUrl.replace('http://', 'https://');
+        else if (subUrl.startsWith('//')) subUrl = 'https:' + subUrl;
+        const subs = await fetch(subUrl).then(r => r.json());
+        if (!subs?.body) return null;
+        return subs.body
+          .filter(s => s.from <= endTime)
+          .map(s => s.content)
+          .join(' ').trim() || null;
+      } catch { return null; }
+    },
+    args: [endTime],
+  }).catch(() => null);
 
-  const subtitleUrl = playinfo?.data?.subtitle?.subtitles?.[0]?.subtitle_url;
-  if (!subtitleUrl) return null;
-
-  const subs = await fetch(`https:${subtitleUrl}`).then(r => r.json()).catch(() => null);
-  if (!subs?.body) return null;
-  return subs.body
-    .filter(s => s.from <= endTime)
-    .map(s => s.content)
-    .join(' ').trim() || null;
+  return results?.[0]?.result || null;
 }
