@@ -371,7 +371,10 @@
       bar.appendChild(cancel); bar.appendChild(save);
       panel.appendChild(head); panel.appendChild(grid); panel.appendChild(bar);
       ov.appendChild(panel);
-      document.body.appendChild(ov);
+      // Mount inside the fullscreen element when one is active — anything appended
+      // to body is invisible while the player holds fullscreen (user had to ESC out
+      // to see the picker). position:fixed still covers the viewport either way.
+      (document.fullscreenElement || document.body).appendChild(ov);
       render();
     });
   }
