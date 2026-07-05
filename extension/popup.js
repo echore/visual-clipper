@@ -1,5 +1,20 @@
 // popup.js
 
+import { pingAutopilot } from './modes/utils.js';
+
+// ── Connection status light ───────────────────────────────────────────────────
+const connStatus = document.getElementById('conn-status');
+const connText   = document.getElementById('conn-text');
+pingAutopilot().then(({ connected }) => {
+  connStatus.classList.add(connected ? 'ok' : 'bad');
+  connText.textContent = connected ? '已连接 Obsidian' : '未连接 · 点击查看原因';
+  if (!connected) {
+    connText.addEventListener('click', () => {
+      chrome.tabs.create({ url: chrome.runtime.getURL('welcome.html') });
+    });
+  }
+});
+
 const btnScreenshot   = document.getElementById('btn-screenshot');
 const btnHook         = document.getElementById('btn-hook');
 const btnKeyframe     = document.getElementById('btn-keyframe');

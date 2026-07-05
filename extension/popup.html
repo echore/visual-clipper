@@ -9,6 +9,10 @@
     .header { padding: 14px 16px 10px; border-bottom: 1px solid #f3f4f6; }
     .header h1 { font-size: 14px; font-weight: 600; color: #111827; }
     .header p  { font-size: 11px; color: #9ca3af; margin-top: 2px; }
+    #conn-status { font-size: 11px; margin-top: 2px; color: #9ca3af; }
+    #conn-status.ok #conn-dot { color: #10b981; }
+    #conn-status.bad #conn-dot { color: #ef4444; }
+    #conn-status.bad #conn-text { color: #ef4444; cursor: pointer; text-decoration: underline; }
 
     .modes { padding: 10px 12px; display: flex; flex-direction: column; gap: 6px; }
 
@@ -58,7 +62,7 @@
 <body>
   <div class="header">
     <h1>Obsidian Visual Clipper</h1>
-    <p>截图与视频帧 → Obsidian</p>
+    <p id="conn-status"><span id="conn-dot">●</span> <span id="conn-text">检查连接…</span></p>
   </div>
 
   <div class="modes">
@@ -110,6 +114,6 @@
     <a id="open-welcome" href="#">安装说明 / 帮助</a>
   </div>
 
-  <script src="popup.js"></script>
+  <script type="module" src="popup.js"></script>
 </body>
 </html>
