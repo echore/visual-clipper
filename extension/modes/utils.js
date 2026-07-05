@@ -1,5 +1,16 @@
-// Endpoint — must match vault-autopilot's configured port
-export const VAULT_AUTOPILOT_URL = 'http://localhost:27183/clip';
+// vault-autopilot's local HTTP endpoint. Port must match on both ends; it's
+// only changeable as an escape hatch for port conflicts (welcome page → 高级).
+export const DEFAULT_PORT = 17183;
+export const clipUrl = (port) => `http://localhost:${port}/clip`;
+export const pingUrl = (port) => `http://localhost:${port}/ping`;
+export const CONNECT_FAIL_MSG =
+  '没连上 Obsidian：请确认 Obsidian 开着、vault-autopilot 插件已启用。打开扩展弹窗底部「安装说明 / 帮助」可查看排查步骤。';
+
+export async function getPort() {
+  const stored = await chrome.storage.local.get('sc_port');
+  const n = parseInt(stored.sc_port, 10);
+  return Number.isInteger(n) && n > 1024 && n < 65536 ? n : DEFAULT_PORT;
+}
 
 export function sanitize(str) {
   return (str || '').replace(/[/\\:*?"<>|]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 100);
@@ -115,13 +126,37 @@ export async function getCoverUrl(tabId, platform) {
 }
 
 export async function httpPost(payload) {
-  const resp = await fetch(VAULT_AUTOPILOT_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
-  });
-  if (!resp.ok) throw new Error(`vault-autopilot returned ${resp.status}`);
+  const port = await getPort();
+  let resp;
+  try {
+    resp = await fetch(clipUrl(port), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+  } catch (_) {
+    // Network-level failure: Obsidian closed / plugin disabled / port mismatch.
+    throw new Error(CONNECT_FAIL_MSG);
+  }
+  if (!resp.ok) {
+    const body = await resp.json().catch(() => null);
+    throw new Error(body?.error ? `保存失败：${body.error}` : `保存失败（HTTP ${resp.status}）`);
+  }
   return resp.json();
+}
+
+export async function pingAutopilot() {
+  try {
+    const port = await getPort();
+    const resp = await fetch(pingUrl(port), { signal: AbortSignal.timeout(1500) });
+    if (!resp.ok) return { connected: false };
+    const body = await resp.json();
+    return body?.app === 'vault-autopilot'
+      ? { connected: true, version: body.version }
+      : { connected: false };
+  } catch (_) {
+    return { connected: false };
+  }
 }
 
 export function notifyError(errMsg) {
