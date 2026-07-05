@@ -18,29 +18,63 @@
       font: 600 12px system-ui; flex-shrink: 0; margin-top: 2px; }
     .note { background: #fef9c3; border: 1px solid #fde047; padding: 10px 14px;
       border-radius: 8px; font-size: 13px; margin: 16px 0; }
+    .check { border: 1px solid #e5e7eb; border-radius: 10px; padding: 14px 16px; margin: 16px 0; }
+    .check.ok  { border-color: #6ee7b7; background: #ecfdf5; }
+    .check.bad { border-color: #fca5a5; background: #fef2f2; }
+    .check .status { font-weight: 600; }
+    .check .detail { font-size: 13px; color: #6b7280; margin-top: 4px; }
+    button.act { background: #6366f1; color: #fff; border: none; padding: 6px 14px;
+      border-radius: 6px; font: 600 13px system-ui; cursor: pointer; margin-top: 8px; }
+    button.act:hover { background: #4f46e5; }
+    button.act:disabled { opacity: .5; cursor: default; }
+    pre.tree { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px;
+      padding: 12px 16px; font: 12px/1.6 monospace; overflow-x: auto; }
+    details.adv { margin: 24px 0; font-size: 13px; }
+    details.adv summary { cursor: pointer; color: #6b7280; }
+    details.adv input { width: 90px; font: 13px monospace; padding: 2px 6px;
+      border: 1px solid #e5e7eb; border-radius: 4px; }
+    #test-result a { color: #6366f1; }
   </style>
 </head>
 <body>
   <h1>Obsidian Visual Clipper</h1>
   <p class="sub">截图 · 收藏封面 · Hook · 关键帧 → 一键存进 Obsidian</p>
 
-  <h2>工作原理</h2>
-  <p>本扩展把你截取的内容通过本地 HTTP 直接发给 Obsidian 的
-     <strong>vault-autopilot</strong> 插件，由插件按规则写入你的库。
-     无需任何本地程序、无需命令行、无需配置 Extension ID。</p>
+  <h2>连接状态</h2>
+  <div class="check" id="conn-check">
+    <div class="status" id="conn-status">⏳ 正在检测 vault-autopilot…</div>
+    <div class="detail" id="conn-detail"></div>
+  </div>
 
-  <h2>安装（只需一步）</h2>
-  <div class="step">
-    <div class="step-num">1</div>
-    <div>
-      <p>在 Obsidian 里安装并启用 <strong>vault-autopilot</strong> 插件。</p>
-      <p>打开插件设置 <code>Settings → Clip Rules</code>，为下面四种模式分别配置
-         输出文件夹、SOP、Provider 等规则。</p>
-      <div class="note">⚠️ 使用时请保持 Obsidian 开着、vault-autopilot 已启用——
-         扩展通过本地端口 <code>localhost:27183</code> 把内容发给插件，
-         Obsidian 没开就发不进去。</div>
+  <div id="install-guide" style="display:none">
+    <h2>安装 vault-autopilot（只需一次）</h2>
+    <div class="step">
+      <div class="step-num">1</div>
+      <div><p>Obsidian → 设置 → 第三方插件 → 社区插件市场，搜索 <strong>vault-autopilot</strong>，安装并启用。</p>
+      <p style="font-size:13px;color:#6b7280">（尚未上架期间：安装 BRAT 插件 → Add Beta Plugin → 填本插件的 GitHub 仓库地址。）</p></div>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <div><p>保持 Obsidian 开着，回到本页——上方状态会自动变绿。</p></div>
     </div>
   </div>
+
+  <div id="test-clip-block" style="display:none">
+    <h2>发一条测试 clip</h2>
+    <p>点击下面的按钮，会在你的库里创建一条测试笔记——30 秒看懂东西都存在哪。</p>
+    <button class="act" id="btn-test-clip">发送测试 clip</button>
+    <div class="detail" id="test-result" style="margin-top:8px"></div>
+  </div>
+
+  <h2>东西存在哪</h2>
+  <p>零配置即可用。<strong>一个视频 = 一条笔记</strong>：对同一个视频先后点封面、Hook、关键帧，
+     内容都追加进同一条笔记，点几个存几个，顺序随意。想换位置：Obsidian → 设置 → Vault Autopilot → 存储位置。</p>
+  <pre class="tree">Clips/
+├── Videos/            视频笔记（一视频一条）
+│   ├── covers/        封面图
+│   └── frames/        Hook / 关键帧抽的帧
+└── Screenshots/       网页截图笔记
+    └── frames/        截图图片</pre>
 
   <h2>四种模式</h2>
   <div class="step">
@@ -49,19 +83,31 @@
   </div>
   <div class="step">
     <div class="step-num" style="background:#f7de83">封面</div>
-    <div><p><strong>收藏封面</strong>：在 YouTube / Bilibili 视频页点收藏封面 → 抓封面图 + 标题元数据 → 存入 Great Videos 笔记。</p></div>
+    <div><p><strong>收藏封面</strong>：在 YouTube / Bilibili 视频页点收藏封面 → 抓封面图 + 标题元数据 → 存入视频笔记。</p></div>
   </div>
   <div class="step">
     <div class="step-num" style="background:#a8c8f9">Hook</div>
-    <div><p><strong>抓取视频开头</strong>：在视频页点 Hook 分析 → 自动采样开头到当前播放位置的候选帧 → 在页面弹出的网格里挑选要保留的帧（可取消，不选就不存）→ 连同字幕存为 Hook 笔记。</p></div>
+    <div><p><strong>抓取视频开头</strong>：在视频页点 Hook 分析 → 自动采样开头到当前播放位置的候选帧 → 网格里挑选要保留的帧 → 连同字幕存入视频笔记。</p></div>
   </div>
   <div class="step">
     <div class="step-num" style="background:#c4efe0">关键帧</div>
-    <div><p><strong>标记 In / Out</strong>：在视频页点关键帧 → 在侧边栏标记起止点 → 采样区间内候选帧 → 在页面网格里挑选要保留的帧（可取消）→ 存为关键帧笔记。</p></div>
+    <div><p><strong>标记 In / Out</strong>：在视频页点关键帧 → 侧边栏标记起止点 → 网格里挑选要保留的帧 → 存入视频笔记。</p></div>
   </div>
 
   <h2>提示</h2>
   <p>· 保存成功后会自动跳转到 Obsidian 里对应的笔记（首次会弹「打开 Obsidian」，可勾选「始终允许」之后免确认）。</p>
   <p>· <code>chrome://</code> 等受浏览器限制的页面无法框选，截图模式会自动改存整页并在弹窗里提示。</p>
+  <p>· 使用时请保持 Obsidian 开着——扩展通过本地端口把内容发给插件，Obsidian 没开就发不进去。</p>
+
+  <details class="adv">
+    <summary>高级：端口（仅端口冲突时需要改）</summary>
+    <p style="margin-top:8px">扩展与插件通过本地端口通信，默认 <code>17183</code>。
+       若插件提示端口被占用且你无法关闭占用程序，在这里和插件设置（高级 → 端口）改成<strong>同一个</strong>新端口。</p>
+    <p>端口：<input id="port-input" type="number" min="1025" max="65535">
+       <button class="act" id="btn-save-port" style="margin-left:8px">保存</button>
+       <span class="detail" id="port-saved"></span></p>
+  </details>
+
+  <script type="module" src="welcome.js"></script>
 </body>
 </html>
