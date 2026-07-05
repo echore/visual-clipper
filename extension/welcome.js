@@ -22,7 +22,9 @@ async function refreshStatus() {
   }
 }
 refreshStatus();
-setInterval(refreshStatus, 3000);
+// Don't poll while page is hidden; resume immediately when tab becomes visible
+setInterval(() => { if (!document.hidden) refreshStatus(); }, 3000);
+document.addEventListener('visibilitychange', () => { if (!document.hidden) refreshStatus(); });
 
 // ── Test clip: make the folder structure tangible within 30 seconds ───────────
 // 1×1 transparent PNG — enough to exercise the whole save pipeline.
@@ -64,8 +66,8 @@ document.getElementById('btn-save-port').addEventListener('click', async () => {
     portSaved.textContent = '端口需在 1025–65535 之间';
     return;
   }
-  await chrome.storage.local.set({ sc_port: n === DEFAULT_PORT ? undefined : n });
   if (n === DEFAULT_PORT) await chrome.storage.local.remove('sc_port');
+  else await chrome.storage.local.set({ sc_port: n });
   portSaved.textContent = '已保存';
   refreshStatus();
 });
