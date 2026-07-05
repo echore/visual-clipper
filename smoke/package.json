@@ -1,0 +1,13 @@
+{
+  "name": "screenshot-clipper-smoke",
+  "private": true,
+  "type": "module",
+  "description": "Playwright E2E smoke test for the extension onboarding chain, driven against scripts/mock-autopilot.mjs. Not part of the extension bundle.",
+  "devDependencies": {
+    "playwright": "1.61.1"
+  },
+  "scripts": {
+    "test": "node e2e-playwright.mjs",
+    "test:legacy": "node run-smoke.mjs"
+  }
+}
