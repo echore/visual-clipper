@@ -1,38 +1,52 @@
-# Screenshot Clipper
+# Obsidian Visual Clipper
 
-See a design you like → click the extension → it lands in your Obsidian vault as a study note. Claude (running on your subscription, no API cost) fills in the objective fields — background color, palette, whitespace — and leaves the subjective ones blank for you.
+> Capture screenshots, video covers, hooks and keyframes from any webpage — one click, straight into your Obsidian vault.
 
-## Status
+Chrome 扩展，配合 Obsidian 插件 **[vault-autopilot](../vault-autopilot/)** 使用：在网页上截图、收藏视频封面、抓取视频开头（Hook）或标记关键帧，一键存成 Obsidian 笔记。全程本地运行，不经过任何外部服务器。
 
-- [x] Backend pipeline — processor, Native Messaging host, 处理审美 SOP (Plan 1)
-- [ ] Browser extension — region capture, popup (Plan 2)
-- [ ] One-command install + Chrome Web Store (Plan 3)
+## 工作原理
 
-## How it works
-
-1. You click the extension and select a region (Plan 2)
-2. Chrome calls the local host script via Native Messaging (no server to start)
-3. The host stages the PNG, calls `claude -p` with the processing SOP
-4. Claude reads the image, writes the Obsidian note with objective fields filled
-5. The note opens in Obsidian
-
-## Setup (Plan 1 backend only)
-
-```bash
-# Install Python dependencies
-python3 -m venv .venv && .venv/bin/pip install -r server/requirements.txt
-
-# Register the Native Messaging host with Chrome
-bash install.sh   # will prompt for your extension ID
+```
+Chrome 扩展 ──POST localhost:17183──▶ vault-autopilot（Obsidian 插件）──▶ 写入你的 vault
 ```
 
-## Dev
+两件套缺一不可：扩展负责抓取，插件负责落库。**一个视频 = 一条笔记**——对同一个视频先后收藏封面、抓 Hook、标关键帧，内容都追加进同一条笔记，顺序随意。
+
+## 安装
+
+1. **装本扩展**：Chrome Web Store 搜索 "Obsidian Visual Clipper"（上架前：`chrome://extensions` → 开发者模式 → 加载已解压的扩展程序 → 选本仓库的 `extension/` 目录）
+2. **装 vault-autopilot**：Obsidian → 设置 → 第三方插件 → 社区插件市场搜索 vault-autopilot（上架前：用 BRAT 安装）
+3. 装完扩展会自动打开引导页，上面有**实时连接检测**和**发送测试 clip** 按钮——变绿就能用了，全程零配置
+
+## 四种模式
+
+| 模式 | 用途 | 产出 |
+|---|---|---|
+| 📷 截图 | 框选网页任意区域 | 独立截图笔记（`Clips/Screenshots/`） |
+| 🖼️ 收藏封面 | YouTube / Bilibili / 小红书视频页 | 视频笔记 + 封面图（`Clips/Videos/`） |
+| 🎬 Hook 分析 | 抓取视频开头候选帧 + 字幕 | 追加进该视频的笔记 |
+| 🎞 关键帧 | 标记 In/Out 后采样区间帧 | 追加进该视频的笔记 |
+
+默认所有内容落在 vault 的 `Clips/` 文件夹下，位置可在 vault-autopilot 设置中修改。
+
+## 数据与隐私
+
+所有内容只在你的电脑内流转（扩展 → 本机端口 17183 → 本地 Obsidian vault）。无账号、无云端、无遥测。
+
+## 常见问题
+
+- **弹窗显示红灯 / 提示"没连上 Obsidian"**：确认 Obsidian 开着、vault-autopilot 已启用。点扩展弹窗底部「安装说明 / 帮助」打开引导页，有逐项排查
+- **端口 17183 被占用**：Obsidian 会弹提示。关掉占用程序，或在插件设置和扩展引导页（高级 → 端口）两处改成同一个新端口
+- **`chrome://` 等页面无法框选**：浏览器限制，截图模式会自动改存整页
+
+## 开发
 
 ```bash
-.venv/bin/pytest -m "not integration"   # unit tests
-.venv/bin/pytest -m integration -s     # real end-to-end (~60s)
+cd extension && npm install && npm test   # Jest 单元测试
 ```
+
+无构建步骤——`extension/` 目录即成品，改完代码在 `chrome://extensions` 点刷新即可。
 
 ## License
 
-MIT
+[MIT](LICENSE)

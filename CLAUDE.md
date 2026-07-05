@@ -40,34 +40,32 @@ Every non-trivial decision: privacy/security risk? Still maintainable in a year?
 
 ---
 
-**Goal:** Browser extension that clips a design screenshot → saves it to Obsidian as a 五个问题 study note, with objective fields filled by Claude (on subscription, zero API cost) and subjective fields left blank for the user.
+**Goal:** Chrome extension (this repo) + Obsidian plugin vault-autopilot (companion repo at `../vault-autopilot`) — a two-piece suite that clips screenshots, video covers, hooks and keyframes into Obsidian notes. One video = one note; sections upsert.
 
-**Architecture:** Chrome Native Messaging. The extension calls `sendNativeMessage`, Chrome spawns `host/host.py` on-demand (no server to start, no port, no launchd). The host decodes the PNG, stages it in `~/.local/share/screenshot-clipper/staging/`, then calls `claude -p` which reads the SOP and writes the note + image into the Obsidian vault.
+**Architecture:** The extension (Manifest V3, plain JS ES modules, no build step) captures content and POSTs it to `http://localhost:17183/clip`, served by vault-autopilot inside Obsidian. `GET /ping` is the health check the popup status light and welcome self-check page rely on. No native messaging, no Python, no external servers — everything stays on-machine.
 
-**Tech:** Python 3.12 / Pydantic v2 / pytest. No FastAPI (removed in D10). Port 27183 removed.
+**Tech:** Plain JavaScript ES modules / Manifest V3 / Jest. The old Python pipeline (host/, server/, pytest) was removed 2026-07-05; see git history if you need it.
 
 **Key files:**
-- `server/config.py` — all paths and settings in one place
-- `server/processor.py` — all the work: staging, prompts, claude invocation, obsidian URI
-- `host/host.py` — Native Messaging stdio protocol (thin layer, no business logic)
-- `sop/处理审美-SOP.md` — what claude -p actually does (edit this to change analysis behavior)
-- `install.sh` — one-time setup for the host + Chrome manifest
+- `extension/modes/utils.js` — the single egress: `httpPost`, `pingAutopilot`, `getPort` (port `DEFAULT_PORT = 17183` must match vault-autopilot's default)
+- `extension/modes/{screenshot,thumbnail,hook,keyframe}.js` — the four capture modes
+- `extension/background.js` — thin service-worker router
+- `extension/content.js` — page overlay (region picker, frame grids)
+- `extension/welcome.html` + `welcome.js` — live self-check onboarding page (connection card, test clip, port escape hatch)
+- `docs/examples/处理审美-SOP.md` — example SOP; real SOPs live in the user's vault and are configured in vault-autopilot settings
 
 **How to run tests:**
 ```bash
-python3 -m venv .venv && .venv/bin/pip install -r server/requirements.txt
-.venv/bin/pytest -m "not integration"     # fast unit tests (16)
-.venv/bin/pytest -m integration -s        # real claude run (~60s, uses subscription)
+cd extension && npm test   # Jest (ESM via --experimental-vm-modules)
 ```
 
 **Collaboration rules:**
-1. Read the source before editing — especially `sop/处理审美-SOP.md` and existing vault notes at `~/Documents/Obsidian Vault/AI协作/05 审美积累/单张分析/`.
-2. Server must never write `~/Documents` directly — only `~/.local/share/screenshot-clipper/`. Vault writes go through `claude -p`.
-3. All exceptions return `{"success": False, "error": str(e)}` — never raise out to Chrome.
+1. Vault writes only ever happen through vault-autopilot's HTTP endpoint — the extension never touches the filesystem.
+2. User-facing errors go through `notifyError` / `notifyNotice` in utils.js; error copy is Chinese and actionable (tell the user what to do, not what failed internally).
+3. Any change to the port, `/ping` shape, or `/clip` payload is a cross-repo contract change — update vault-autopilot in the same session and keep both defaults identical.
 4. Never print API keys or tokens.
-5. `run_claude` in `processor.py` is the single subprocess seam — mock only that in tests.
 
-**Definition of done (Plan 1):**
-- `pytest -m "not integration"` — all green
-- `pytest -m integration` — PASS (real note written with hex color in q1, q3 blank)
+**Definition of done:**
+- `cd extension && npm test` — all green
+- Cross-repo contract unchanged, or changed on both ends together
 - No hardcoded secrets anywhere
