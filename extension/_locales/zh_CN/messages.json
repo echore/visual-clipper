@@ -20,9 +20,9 @@
   "welcome_install_brat":    { "message": "备选：用 BRAT 插件安装（可自动更新）——BRAT 里选「Add Beta Plugin」，填 github.com/echore/vault-autopilot" },
 
   "welcome_tryit_title":     { "message": "去试一试" },
-  "welcome_tryit_body":      { "message": "打开下面这个视频，点扩展图标，再点「收藏封面」——几秒钟后你的第一条笔记就出现在 Obsidian 里。" },
-  "welcome_tryit_link_text": { "message": "bilibili《后浪》→" },
-  "welcome_tryit_url":       { "message": "https://www.bilibili.com/video/BV1FV411d7u7" },
+  "welcome_tryit_body":      { "message": "随便打开一个视频，点扩展图标，再点「收藏封面」——几秒钟后你的第一条笔记就出现在 Obsidian 里。" },
+  "welcome_tryit_link_text": { "message": "打开 bilibili，随便挑一个视频 →" },
+  "welcome_tryit_url":       { "message": "https://www.bilibili.com/" },
 
   "welcome_coop_title": { "message": "两件套如何配合" },
   "welcome_coop_body":  { "message": "扩展负责「抓」——在浏览器里截图、抽帧、拿字幕；vault-autopilot 插件负责「存」——在 Obsidian 里监听本地端口 17183，把内容写进库并排版成笔记。全程都在你自己的电脑上，内容不经过任何外部服务器。" },
