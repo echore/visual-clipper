@@ -73,6 +73,7 @@
 
   "sp_title":       { "message": "Video keyframes" },
   "sp_need_video":  { "message": "Open a video page to use this feature" },
+  "sp_need_video_platforms": { "message": "(YouTube / Bilibili)" },
   "sp_step1":       { "message": "Step 1" },
   "sp_step1_body":  { "message": "Seek to where the segment starts, then mark it" },
   "sp_mark_start":  { "message": "Mark start" },

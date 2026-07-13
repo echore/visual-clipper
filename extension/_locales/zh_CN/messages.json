@@ -73,6 +73,7 @@
 
   "sp_title":       { "message": "视频关键帧" },
   "sp_need_video":  { "message": "请在视频页面使用此功能" },
+  "sp_need_video_platforms": { "message": "（YouTube / Bilibili）" },
   "sp_step1":       { "message": "第一步" },
   "sp_step1_body":  { "message": "定位到片段开始位置，点击标记" },
   "sp_mark_start":  { "message": "标记开始" },

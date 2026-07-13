@@ -6,7 +6,7 @@ All notable changes to the Obsidian Visual Clipper Chrome extension are document
 
 Onboarding overhaul — the extension now walks a stranger from "just installed" to "first clip saved" without any manual configuration:
 
-- Live welcome page: a real-time connection self-check (green/red status) and a "send test clip" button that proves the whole pipeline end-to-end before you ever touch a real page
+- Live welcome page: a real-time connection self-check (green/red status)
 - Popup status light: the toolbar popup shows at a glance whether vault-autopilot is reachable, no need to open the welcome page to check
 - Dynamic port with an escape hatch: default port `17183`, but if it's taken by another app you can change it in one place (welcome page → 高级) instead of editing files
 - Human-readable, actionable errors: connection failures now say what to check ("确认 Obsidian 开着、vault-autopilot 插件已启用...") instead of a raw exception
