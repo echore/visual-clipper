@@ -119,5 +119,10 @@
   "err_kf_no_in":       { "message": "No In mark found — mark it again" },
   "err_kf_too_close":   { "message": "In and Out are too close together — mark again" },
   "err_kf_failed":      { "message": "Keyframe capture failed — try again" },
+  "err_notion_not_configured": { "message": "Notion isn't set up yet — open the extension guide page to add your token and page link." },
+  "err_notion_auth":    { "message": "Notion rejected the token — generate a new one in Notion, then update it on the guide page." },
+  "err_notion_target":  { "message": "Notion page or database not found — re-select the page on the guide page and try again." },
+  "err_notion_rate":    { "message": "Notion is rate-limiting requests — wait a moment and try again." },
+  "err_notion_network": { "message": "Can't reach Notion — check your network connection." },
   "default_title_screenshot": { "message": "Screenshot" }
 }

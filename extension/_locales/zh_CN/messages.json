@@ -119,5 +119,10 @@
   "err_kf_no_in":       { "message": "未找到 In 标记，请重新标记" },
   "err_kf_too_close":   { "message": "In 和 Out 时间太接近，请重新标记" },
   "err_kf_failed":      { "message": "关键帧捕获失败，请重试" },
+  "err_notion_not_configured": { "message": "还未配置 Notion——请打开扩展引导页填写 token 和页面链接。" },
+  "err_notion_auth":    { "message": "Notion 拒绝了这个 token——请在 Notion 重新生成后到引导页更新。" },
+  "err_notion_target":  { "message": "找不到 Notion 页面或数据库——请到引导页重新指定页面后重试。" },
+  "err_notion_rate":    { "message": "Notion 正在限流——请稍候再试。" },
+  "err_notion_network": { "message": "无法连接 Notion——请检查网络。" },
   "default_title_screenshot": { "message": "截图" }
 }
