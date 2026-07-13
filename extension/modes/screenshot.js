@@ -53,7 +53,7 @@ async function saveFullCapture(tabId, dataUrl) {
       image: dataUrl.split(',')[1],
     });
   } catch (err) {
-    notifyError(t('err_no_response'));
+    notifyError(err.message || t('err_no_response'));
     return;
   }
 
@@ -115,7 +115,7 @@ export async function handleRegion(msg, tabId) {
       ...(cover_url ? { cover_url } : {}),
     });
   } catch (err) {
-    const errMsg = t('err_no_response');
+    const errMsg = err.message || t('err_no_response');
     chrome.tabs.sendMessage(tabId, { action: 'captureResult', success: false, error: errMsg });
     notifyError(errMsg);
     return;
@@ -141,7 +141,7 @@ export async function analyzeBatch(queue) {
       captured_at: new Date().toISOString(),
     });
   } catch (err) {
-    notifyError(t('err_no_response'));
+    notifyError(err.message || t('err_no_response'));
     return;
   }
   if (response.success) {

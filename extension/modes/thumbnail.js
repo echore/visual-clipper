@@ -105,7 +105,7 @@ export async function start(tabId) {
   } catch (err) {
     notifyError(err.message?.includes('400') || err.message?.includes('404')
       ? t('err_cover_update')
-      : t('err_no_response'));
+      : (err.message || t('err_no_response')));
     return;
   }
 

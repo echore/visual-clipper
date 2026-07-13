@@ -71,7 +71,7 @@ export async function start(tabId) {
   try {
     response = await httpPost(payload);
   } catch (err) {
-    notifyError(t('err_no_response'));
+    notifyError(err.message || t('err_no_response'));
     return;
   }
 
