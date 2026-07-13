@@ -1,4 +1,5 @@
 import { sanitize, httpPost, notifyError, notifyNotice, sendToContent, injectContentScript, detectPlatform, getCoverUrl } from './utils.js';
+import { t } from './i18n.js';
 
 export async function start(tabId, windowId) {
   let dataUrl;
@@ -6,7 +7,7 @@ export async function start(tabId, windowId) {
     dataUrl = await chrome.tabs.captureVisibleTab(windowId, { format: 'png' });
   } catch (err) {
     console.error('[OVC] captureVisibleTab failed:', err.message);
-    notifyError('此页面受浏览器限制，无法截图');
+    notifyError(t('err_page_restricted'));
     return;
   }
 
@@ -31,7 +32,7 @@ export async function start(tabId, windowId) {
     return;
   }
   if (!(await sendOverlay())) {
-    notifyError('无法在此页面截图，请刷新页面后重试');
+    notifyError(t('err_cannot_capture_refresh'));
   }
 }
 
@@ -46,22 +47,22 @@ async function saveFullCapture(tabId, dataUrl) {
     response = await httpPost({
       mode: 'screenshot',
       url: tab.url || '',
-      title: sanitize(tab.title || '截图'),
+      title: sanitize(tab.title || t('default_title_screenshot')),
       platform: 'other',
       captured_at: new Date().toISOString(),
       image: dataUrl.split(',')[1],
     });
   } catch (err) {
-    notifyError('vault-autopilot 无响应，请确认 Obsidian 已开启且插件已启用');
+    notifyError(t('err_no_response'));
     return;
   }
 
   if (!response.success) {
-    notifyError(response.error || '截图处理失败，请重试');
+    notifyError(response.error || t('err_ss_failed'));
     return;
   }
 
-  notifyNotice('此页面受浏览器限制，无法框选，已为你保存整页截图到 Obsidian。');
+  notifyNotice(t('notice_fullpage'));
   // This page can't host a content script, so trigger the deep link from the tab
   // itself — Obsidian handles the protocol, the page stays put. Same "Open Obsidian?"
   // dialog as normal pages, just initiated via the extension API instead of page JS.
@@ -72,8 +73,8 @@ async function saveFullCapture(tabId, dataUrl) {
 
 export async function handleRegion(msg, tabId) {
   if (!msg.dataUrl) {
-    chrome.tabs.sendMessage(tabId, { action: 'captureResult', success: false, error: '截图数据丢失，请重试' });
-    notifyError('截图数据丢失，请重试');
+    chrome.tabs.sendMessage(tabId, { action: 'captureResult', success: false, error: t('err_data_lost') });
+    notifyError(t('err_data_lost'));
     return;
   }
 
@@ -81,8 +82,8 @@ export async function handleRegion(msg, tabId) {
   try {
     croppedB64 = await cropImage(msg.dataUrl, msg.rect, msg.dpr);
   } catch (err) {
-    chrome.tabs.sendMessage(tabId, { action: 'captureResult', success: false, error: '裁剪失败，请重试' });
-    notifyError('裁剪失败，请重试');
+    chrome.tabs.sendMessage(tabId, { action: 'captureResult', success: false, error: t('err_crop_failed') });
+    notifyError(t('err_crop_failed'));
     return;
   }
 
@@ -114,7 +115,7 @@ export async function handleRegion(msg, tabId) {
       ...(cover_url ? { cover_url } : {}),
     });
   } catch (err) {
-    const errMsg = 'vault-autopilot 无响应，请确认 Obsidian 已开启且插件已启用';
+    const errMsg = t('err_no_response');
     chrome.tabs.sendMessage(tabId, { action: 'captureResult', success: false, error: errMsg });
     notifyError(errMsg);
     return;
@@ -124,7 +125,7 @@ export async function handleRegion(msg, tabId) {
   if (response.success) {
     chrome.action.setBadgeText({ text: '' });
   } else {
-    notifyError(response.error || '截图处理失败，请重试');
+    notifyError(response.error || t('err_ss_failed'));
   }
 }
 
@@ -140,7 +141,7 @@ export async function analyzeBatch(queue) {
       captured_at: new Date().toISOString(),
     });
   } catch (err) {
-    notifyError('vault-autopilot 无响应，请确认 Obsidian 已开启且插件已启用');
+    notifyError(t('err_no_response'));
     return;
   }
   if (response.success) {
@@ -154,7 +155,7 @@ export async function analyzeBatch(queue) {
       }
     }
   } else {
-    notifyError(response.error || '截图处理失败，请重试');
+    notifyError(response.error || t('err_ss_failed'));
   }
 }
 

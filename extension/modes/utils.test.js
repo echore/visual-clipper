@@ -1,3 +1,5 @@
+import { makeGetMessage } from '../../scripts/chrome-i18n-stub.mjs';
+
 // Mock Chrome APIs for test environment
 globalThis.__stored = {};
 globalThis.chrome = {
@@ -8,6 +10,8 @@ globalThis.chrome = {
   } },
   action: { setBadgeText: () => {}, setBadgeBackgroundColor: () => {} },
   notifications: { create: () => {} },
+  i18n: { getMessage: makeGetMessage(new URL('../_locales/en/messages.json', import.meta.url).pathname),
+          getUILanguage: () => 'en' },
 };
 
 import { sanitize, formatTime, buildTimestamps, detectPlatform, normalizeTranscript,
@@ -125,6 +129,6 @@ describe('httpPost error mapping', () => {
       ok: false, status: 500,
       json: async () => ({ success: false, error: 'Error: disk full' }),
     });
-    await expect(httpPost({ mode: 'screenshot' })).rejects.toThrow('保存失败：Error: disk full');
+    await expect(httpPost({ mode: 'screenshot' })).rejects.toThrow('Save failed: Error: disk full');
   });
 });

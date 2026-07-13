@@ -1,4 +1,5 @@
 import { buildTimestamps, sanitize, httpPost, notifyError, notifyNotice, ensureSendToContent, detectPlatform, getCoverUrl, normalizeTranscript } from './utils.js';
+import { t } from './i18n.js';
 
 export async function start(tabId) {
   const tab = await chrome.tabs.get(tabId);
@@ -23,7 +24,7 @@ export async function start(tabId) {
     // picker:'toggle' → the 定格/全程 picker: 定格 shows the deduped set, 全程 every sampled frame.
     captureResp = await ensureSendToContent(tabId, { action: 'captureVideoFrames', timestamps, picker: 'toggle' });
   } catch (err) {
-    notifyError('无法与页面通信，请刷新后重试');
+    notifyError(t('err_page_comm'));
     return;
   }
 
@@ -70,7 +71,7 @@ export async function start(tabId) {
   try {
     response = await httpPost(payload);
   } catch (err) {
-    notifyError('vault-autopilot 无响应，请确认 Obsidian 已开启且插件已启用');
+    notifyError(t('err_no_response'));
     return;
   }
 
@@ -83,7 +84,7 @@ export async function start(tabId) {
     }
     if (response.notice) notifyNotice(response.notice);
   } else {
-    notifyError(response.error || 'Hook 分析失败，请重试');
+    notifyError(response.error || t('err_hook_failed'));
   }
 }
 

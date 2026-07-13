@@ -1,10 +1,11 @@
+import { t } from './i18n.js';
+
 // vault-autopilot's local HTTP endpoint. Port must match on both ends; it's
 // only changeable as an escape hatch for port conflicts (welcome page → 高级).
 export const DEFAULT_PORT = 17183;
 export const clipUrl = (port) => `http://localhost:${port}/clip`;
 export const pingUrl = (port) => `http://localhost:${port}/ping`;
-export const CONNECT_FAIL_MSG =
-  '没连上 Obsidian：请确认 Obsidian 开着、vault-autopilot 插件已启用。打开扩展弹窗底部「安装说明 / 帮助」可查看排查步骤。';
+export const CONNECT_FAIL_MSG = t('connect_fail');
 
 export async function getPort() {
   const stored = await chrome.storage.local.get('sc_port');
@@ -91,7 +92,7 @@ export async function ensureSendToContent(tabId, msg) {
         return r;
       } catch (_) { /* not ready yet — keep polling */ }
     }
-    throw new Error(`内容脚本未就绪：${tag}`);
+    throw new Error(t('err_cs_not_ready', [tag]));
   }
 }
 
@@ -140,7 +141,7 @@ export async function httpPost(payload) {
   }
   if (!resp.ok) {
     const body = await resp.json().catch(() => null);
-    throw new Error(body?.error ? `保存失败：${body.error}` : `保存失败（HTTP ${resp.status}）`);
+    throw new Error(body?.error ? t('err_save_failed', [String(body.error)]) : t('err_save_failed_http', [String(resp.status)]));
   }
   return resp.json();
 }
@@ -166,7 +167,7 @@ export function notifyError(errMsg) {
   chrome.notifications.create('ovc-error', {
     type: 'basic',
     iconUrl: 'icons/icon48.png',
-    title: 'Obsidian Visual Clipper 处理失败',
+    title: t('err_title'),
     message: errMsg,
   });
 }

@@ -12,6 +12,7 @@ import { spawn } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { makeGetMessage } from '../scripts/chrome-i18n-stub.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -23,6 +24,8 @@ globalThis.chrome = {
     set: async (obj) => { Object.assign(stored, obj); },
     remove: async (key) => { delete stored[key]; },
   } },
+  i18n: { getMessage: makeGetMessage(join(ROOT, 'extension/_locales/en/messages.json')),
+          getUILanguage: () => 'en' },
 };
 
 const utils = await import(join(ROOT, 'extension/modes/utils.js'));
@@ -83,7 +86,7 @@ delete stored.sc_port;
 {
   const mock = await startMock('err500');
   const err = await httpPost({ mode: 'screenshot' }).then(() => null, (e) => e);
-  check('err500: httpPost surfaces server reason', err !== null && err.message === '保存失败：Error: mock disk full');
+  check('err500: httpPost surfaces server reason', err !== null && err.message === 'Save failed: Error: mock disk full');
   await stopMock(mock);
 }
 

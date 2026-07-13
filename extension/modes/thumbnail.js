@@ -1,4 +1,5 @@
 import { sanitize, httpPost, notifyError, notifyNotice, detectPlatform, sendToContent } from './utils.js';
+import { t } from './i18n.js';
 
 export async function start(tabId) {
   const tab = await chrome.tabs.get(tabId);
@@ -47,9 +48,9 @@ export async function start(tabId) {
         channel = vd?.author || channelEl?.textContent?.trim() || null;
         channel_handle = (channelEl?.href || '').match(/\/@([^/?]+)/)?.[0] || null;
         const v = parseInt(vd?.viewCount || '0', 10);
-        if (v >= 1_000_000) views = `${(v / 1_000_000).toFixed(1)}百万`;
-        else if (v >= 10_000) views = `${(v / 10_000).toFixed(1)}万`;
-        else if (v > 0) views = String(v);
+        if (v > 0) {
+          views = new Intl.NumberFormat(chrome.i18n?.getUILanguage?.() || 'en', { notation: 'compact', maximumFractionDigits: 1 }).format(v);
+        }
       } else if (platform === 'bilibili') {
         video_id = location.href.match(/\/video\/(BV[\w]+)/)?.[1] || null;
         channel = document.querySelector('.up-name, .username')?.textContent?.trim() || null;
@@ -82,7 +83,7 @@ export async function start(tabId) {
 
   const meta = results?.[0]?.result;
   if (!meta?.thumbnail_url) {
-    notifyError('此页面没有可收藏的封面');
+    notifyError(t('err_cover_none'));
     return;
   }
 
@@ -103,8 +104,8 @@ export async function start(tabId) {
     });
   } catch (err) {
     notifyError(err.message?.includes('400') || err.message?.includes('404')
-      ? '封面收藏需要更新 vault-autopilot 插件'
-      : 'vault-autopilot 无响应，请确认 Obsidian 已开启且插件已启用');
+      ? t('err_cover_update')
+      : t('err_no_response'));
     return;
   }
 
@@ -117,6 +118,6 @@ export async function start(tabId) {
     }
     if (response.notice) notifyNotice(response.notice);
   } else {
-    notifyError(response.error || '封面收藏失败，请重试');
+    notifyError(response.error || t('err_cover_failed'));
   }
 }

@@ -1,4 +1,5 @@
 import { buildTimestamps, sanitize, httpPost, notifyError, notifyNotice, ensureSendToContent, detectPlatform, getCoverUrl } from './utils.js';
+import { t } from './i18n.js';
 
 export function start(tabId) {
   // State is managed in chrome.storage.local by popup.js (Mark In click)
@@ -7,7 +8,7 @@ export function start(tabId) {
 
 export async function markOut(tabId, outTime, inTime, url, title, platform, videoTitle, channel) {
   if (inTime == null) {
-    notifyError('未找到 In 标记，请重新标记');
+    notifyError(t('err_kf_no_in'));
     return;
   }
 
@@ -15,7 +16,7 @@ export async function markOut(tabId, outTime, inTime, url, title, platform, vide
   const end   = Math.max(inTime, outTime);
 
   if (end - start < 0.1) {
-    notifyError('In 和 Out 时间太接近，请重新标记');
+    notifyError(t('err_kf_too_close'));
     return;
   }
 
@@ -28,7 +29,7 @@ export async function markOut(tabId, outTime, inTime, url, title, platform, vide
   try {
     captureResp = await ensureSendToContent(tabId, { action: 'captureVideoFrames', timestamps, minDiff: 6, picker: 'toggle' });
   } catch (err) {
-    notifyError('无法与页面通信，请刷新后重试');
+    notifyError(t('err_page_comm'));
     return;
   }
 
@@ -68,7 +69,7 @@ export async function markOut(tabId, outTime, inTime, url, title, platform, vide
   try {
     response = await httpPost(payload);
   } catch (err) {
-    notifyError('vault-autopilot 无响应，请确认 Obsidian 已开启且插件已启用');
+    notifyError(t('err_no_response'));
     return;
   }
 
@@ -81,6 +82,6 @@ export async function markOut(tabId, outTime, inTime, url, title, platform, vide
     }
     if (response.notice) notifyNotice(response.notice);
   } else {
-    notifyError(response.error || '关键帧捕获失败，请重试');
+    notifyError(response.error || t('err_kf_failed'));
   }
 }

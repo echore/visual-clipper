@@ -35,7 +35,7 @@
       'position:absolute;bottom:16px;left:50%;transform:translateX(-50%);' +
       'background:rgba(0,0,0,.75);color:#fff;padding:6px 16px;border-radius:20px;' +
       'font:13px/1.6 system-ui,sans-serif;pointer-events:none;white-space:nowrap;';
-    hint.textContent = '拖拽选择区域  ·  ESC 取消';
+    hint.textContent = chrome.i18n.getMessage('ct_drag_hint');
 
     overlay.append(canvas, hint);
     document.body.appendChild(overlay);
@@ -109,13 +109,13 @@
     if (w < 10 || h < 10) { state = 'idle'; draw(); return; }
 
     state = 'processing';
-    hint.textContent = '正在保存，请稍候…';
+    hint.textContent = chrome.i18n.getMessage('ct_saving');
 
     // Safety: reset to idle if background never replies (crash / connection loss)
     const safetyTimer = setTimeout(() => {
       if (state === 'processing') {
         state = 'idle';
-        hint.textContent = '✗ 超时，请重试';
+        hint.textContent = chrome.i18n.getMessage('ct_timeout');
         hint.style.background = 'rgba(239,68,68,.85)';
       }
     }, 120000);
@@ -151,11 +151,11 @@
       if (!hint) return;
       if (msg.success) {
         if (msg.obsidianUrl) window.location.href = msg.obsidianUrl;
-        hint.textContent = '✓ 已保存到 Obsidian';
+        hint.textContent = chrome.i18n.getMessage('ct_saved');
         hint.style.background = 'rgba(34,197,94,.9)';
         setTimeout(remove, 2000);
       } else {
-        hint.textContent = '✗ ' + (msg.error || '保存失败，请重试');
+        hint.textContent = '✗ ' + (msg.error || chrome.i18n.getMessage('ct_save_failed'));
         hint.style.background = 'rgba(239,68,68,.85)';
         state = 'idle'; // allow retry drag
       }
@@ -239,7 +239,7 @@
           fctx.drawImage(video, 0, 0, w, h);
           sctx.drawImage(video, 0, 0, SW, SH);
         } catch (e) {
-          throw new Error('此视频不支持帧捕获');
+          throw new Error(chrome.i18n.getMessage('ct_no_frame_capture'));
         }
         const px = sctx.getImageData(0, 0, SW, SH).data;
         const luma = new Float32Array(SW * SH);
@@ -259,7 +259,7 @@
       if (!wasPaused) video.play();
     }
 
-    if (cands.length === 0) throw new Error('视频还没准备好（可能在缓冲或在放广告），等它正常播放几秒后再点');
+    if (cands.length === 0) throw new Error(chrome.i18n.getMessage('ct_video_not_ready'));
 
     // Drop blank-ish frames (near black/white, or near-uniform color).
     const useful = cands.filter(c => c.mean > 16 && c.mean < 245 && c.variance > 40);
@@ -301,14 +301,14 @@
       const head = document.createElement('div');
       head.style.cssText = 'display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px;';
       const title = document.createElement('div');
-      title.textContent = '选择要保存的帧 — 点击取消掉不想要的';
+      title.textContent = chrome.i18n.getMessage('ct_picker_title');
       title.style.cssText = 'font-size:15px;font-weight:600;';
       head.appendChild(title);
 
       const bar = document.createElement('div');
       bar.style.cssText = 'margin-top:16px;display:flex;justify-content:flex-end;gap:10px;';
       const cancel = document.createElement('button');
-      cancel.textContent = '取消';
+      cancel.textContent = chrome.i18n.getMessage('ct_picker_cancel');
       cancel.style.cssText = 'padding:9px 18px;border-radius:8px;border:1px solid #555;background:transparent;color:#fff;cursor:pointer;font-size:14px;';
       const save = document.createElement('button');
       save.style.cssText = 'padding:9px 18px;border-radius:8px;border:none;background:#4f8cff;color:#fff;cursor:pointer;font-size:14px;';
@@ -338,12 +338,12 @@
           wrap.onclick = () => {
             if (selected.has(i)) { selected.delete(i); wrap.style.borderColor = 'transparent'; wrap.style.opacity = '.35'; tick.style.display = 'none'; }
             else { selected.add(i); wrap.style.borderColor = '#4f8cff'; wrap.style.opacity = '1'; tick.style.display = 'block'; }
-            save.textContent = '保存选中 (' + selected.size + ')';
+            save.textContent = chrome.i18n.getMessage('ct_picker_save', [String(selected.size)]);
             save.disabled = selected.size === 0;
           };
           grid.appendChild(wrap);
         });
-        save.textContent = '保存选中 (' + selected.size + ')';
+        save.textContent = chrome.i18n.getMessage('ct_picker_save', [String(selected.size)]);
         save.disabled = selected.size === 0;
       };
 
@@ -352,8 +352,8 @@
         seg.style.cssText = 'display:flex;border:1px solid #4f8cff;border-radius:8px;overflow:hidden;font-size:13px;flex:none;';
         const bSettled = document.createElement('button');
         const bAll = document.createElement('button');
-        bSettled.textContent = '定格';
-        bAll.textContent = '全程';
+        bSettled.textContent = chrome.i18n.getMessage('ct_picker_settled');
+        bAll.textContent = chrome.i18n.getMessage('ct_picker_all');
         for (const b of [bSettled, bAll]) b.style.cssText = 'padding:6px 16px;border:none;background:transparent;color:#9ab;cursor:pointer;';
         const paint = () => {
           const on = frames === settledFrames;
