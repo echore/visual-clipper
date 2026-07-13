@@ -2,7 +2,7 @@
 <html lang="zh">
 <head>
   <meta charset="utf-8">
-  <title>Obsidian Visual Clipper — 使用说明</title>
+  <title data-i18n="welcome_tab_title"></title>
   <style>
     body { max-width: 640px; margin: 60px auto; font: 15px/1.7 system-ui,sans-serif;
       color: #1f2937; padding: 0 24px; }
@@ -13,7 +13,7 @@
     code { background: #f3f4f6; padding: 2px 6px; border-radius: 4px;
       font: 13px/1.4 monospace; }
     .step { display: flex; gap: 14px; margin: 12px 0; }
-    .step-num { width: 56px; height: 24px; background: #e8e3d9; color: #2d2b28;
+    .step-num { min-width: 56px; padding: 0 10px; height: 24px; background: #e8e3d9; color: #2d2b28;
       border-radius: 12px; display: flex; align-items: center; justify-content: center;
       font: 600 12px system-ui; flex-shrink: 0; margin-top: 2px; }
     .note { background: #fef9c3; border: 1px solid #fde047; padding: 10px 14px;
@@ -33,78 +33,89 @@
     details.adv summary { cursor: pointer; color: #6b7280; }
     details.adv input { width: 90px; font: 13px monospace; padding: 2px 6px;
       border: 1px solid #e5e7eb; border-radius: 4px; }
-    #test-result a { color: #6366f1; }
+    .dl-btn { display: inline-block; background: #6366f1; color: #fff; padding: 8px 16px;
+      border-radius: 8px; text-decoration: none; font: 600 13px system-ui; }
+    .dl-btn:hover { background: #4f46e5; }
+    .alt { font-size: 13px; color: #6b7280; }
   </style>
 </head>
 <body>
   <h1>Obsidian Visual Clipper</h1>
-  <p class="sub">截图 · 收藏封面 · Hook · 关键帧 → 一键存进 Obsidian</p>
+  <p class="sub" data-i18n="welcome_sub"></p>
 
-  <h2>连接状态</h2>
+  <h2 data-i18n="welcome_conn_title"></h2>
   <div class="check" id="conn-check">
-    <div class="status" id="conn-status">⏳ 正在检测 vault-autopilot…</div>
+    <div class="status" id="conn-status" data-i18n="welcome_conn_checking"></div>
     <div class="detail" id="conn-detail"></div>
   </div>
 
   <div id="install-guide" style="display:none">
-    <h2>安装 vault-autopilot（只需一次）</h2>
+    <h2 data-i18n="welcome_install_title"></h2>
     <div class="step">
       <div class="step-num">1</div>
-      <div><p>Obsidian → 设置 → 第三方插件 → 社区插件市场，搜索 <strong>vault-autopilot</strong>，安装并启用。</p>
-      <p style="font-size:13px;color:#6b7280">（尚未上架期间：安装 BRAT 插件 → Add Beta Plugin → 填本插件的 GitHub 仓库地址。）</p></div>
+      <div><p data-i18n="welcome_install_s1"></p>
+      <p><a class="dl-btn" id="btn-download-zip"
+            href="https://github.com/echore/vault-autopilot/releases/latest/download/vault-autopilot.zip"
+            data-i18n="welcome_install_s1_btn"></a></p></div>
     </div>
     <div class="step">
       <div class="step-num">2</div>
-      <div><p>保持 Obsidian 开着，回到本页——上方状态会自动变绿。</p></div>
+      <div><p data-i18n-html="welcome_install_s2_html"></p></div>
     </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <div><p data-i18n-html="welcome_install_s3_html"></p></div>
+    </div>
+    <div class="step">
+      <div class="step-num">4</div>
+      <div><p data-i18n="welcome_install_s4"></p></div>
+    </div>
+    <p class="alt" data-i18n="welcome_install_brat"></p>
   </div>
 
-  <div id="test-clip-block" style="display:none">
-    <h2>发一条测试 clip</h2>
-    <p>点击下面的按钮，会在你的库里创建一条测试笔记——30 秒看懂东西都存在哪。</p>
-    <button class="act" id="btn-test-clip">发送测试 clip</button>
-    <div class="detail" id="test-result" style="margin-top:8px"></div>
+  <div id="try-it" style="display:none">
+    <h2 data-i18n="welcome_tryit_title"></h2>
+    <p data-i18n="welcome_tryit_body"></p>
+    <p><a id="tryit-link" target="_blank" rel="noopener"
+          data-i18n="welcome_tryit_link_text" data-i18n-href="welcome_tryit_url"></a></p>
   </div>
 
-  <h2>东西存在哪</h2>
-  <p>零配置即可用。<strong>一个视频 = 一条笔记</strong>：对同一个视频先后点封面、Hook、关键帧，
-     内容都追加进同一条笔记，点几个存几个，顺序随意。想换位置：Obsidian → 设置 → Vault Autopilot → 存储位置。</p>
-  <pre class="tree">Clips/
-├── Videos/            视频笔记（一视频一条）
-│   ├── covers/        封面图
-│   └── frames/        Hook / 关键帧抽的帧
-└── Screenshots/       网页截图笔记
-    └── frames/        截图图片</pre>
+  <h2 data-i18n="welcome_coop_title"></h2>
+  <p data-i18n="welcome_coop_body"></p>
+  <p data-i18n="welcome_config_hint"></p>
 
-  <h2>四种模式</h2>
+  <h2 data-i18n="welcome_storage_title"></h2>
+  <p data-i18n-html="welcome_storage_body_html"></p>
+  <pre class="tree" data-i18n="welcome_tree"></pre>
+
+  <h2 data-i18n="welcome_modes_title"></h2>
   <div class="step">
-    <div class="step-num" style="background:#ee8d83">截图</div>
-    <div><p><strong>框选任意区域</strong>：点工具栏图标 → 截图 → 在页面上拖拽选区 → 存为截图笔记。</p></div>
+    <div class="step-num" style="background:#ee8d83" data-i18n="welcome_mode_ss_badge"></div>
+    <div><p data-i18n-html="welcome_mode_ss_html"></p></div>
   </div>
   <div class="step">
-    <div class="step-num" style="background:#f7de83">封面</div>
-    <div><p><strong>收藏封面</strong>：在 YouTube / Bilibili 视频页点收藏封面 → 抓封面图 + 标题元数据 → 存入视频笔记。</p></div>
+    <div class="step-num" style="background:#f7de83" data-i18n="welcome_mode_cover_badge"></div>
+    <div><p data-i18n-html="welcome_mode_cover_html"></p></div>
   </div>
   <div class="step">
-    <div class="step-num" style="background:#a8c8f9">Hook</div>
-    <div><p><strong>抓取视频开头</strong>：在视频页点 Hook 分析 → 自动采样开头到当前播放位置的候选帧 → 网格里挑选要保留的帧 → 连同字幕存入视频笔记。</p></div>
+    <div class="step-num" style="background:#a8c8f9" data-i18n="welcome_mode_hook_badge"></div>
+    <div><p data-i18n-html="welcome_mode_hook_html"></p></div>
   </div>
   <div class="step">
-    <div class="step-num" style="background:#c4efe0">关键帧</div>
-    <div><p><strong>标记 In / Out</strong>：在视频页点关键帧 → 侧边栏标记起止点 → 网格里挑选要保留的帧 → 存入视频笔记。</p></div>
+    <div class="step-num" style="background:#c4efe0" data-i18n="welcome_mode_kf_badge"></div>
+    <div><p data-i18n-html="welcome_mode_kf_html"></p></div>
   </div>
 
-  <h2>提示</h2>
-  <p>· 保存成功后会自动跳转到 Obsidian 里对应的笔记（首次会弹「打开 Obsidian」，可勾选「始终允许」之后免确认）。</p>
-  <p>· <code>chrome://</code> 等受浏览器限制的页面无法框选，截图模式会自动改存整页并在弹窗里提示。</p>
-  <p>· 使用时请保持 Obsidian 开着——扩展通过本地端口把内容发给插件，Obsidian 没开就发不进去。</p>
+  <h2 data-i18n="welcome_tips_title"></h2>
+  <p data-i18n="welcome_tip1"></p>
+  <p data-i18n-html="welcome_tip2_html"></p>
+  <p data-i18n="welcome_tip3"></p>
 
   <details class="adv">
-    <summary>高级：端口（仅端口冲突时需要改）</summary>
-    <p style="margin-top:8px">扩展与插件通过本地端口通信，默认 <code>17183</code>。
-       若插件提示端口被占用且你无法关闭占用程序，在这里和插件设置（高级 → 端口）改成<strong>同一个</strong>新端口。</p>
-    <p>端口：<input id="port-input" type="number" min="1025" max="65535">
-       <button class="act" id="btn-save-port" style="margin-left:8px">保存</button>
+    <summary data-i18n="welcome_adv_summary"></summary>
+    <p style="margin-top:8px" data-i18n-html="welcome_adv_body_html"></p>
+    <p><span data-i18n="welcome_port_label"></span> <input id="port-input" type="number" min="1025" max="65535">
+       <button class="act" id="btn-save-port" data-i18n="welcome_port_save"></button>
        <span class="detail" id="port-saved"></span></p>
   </details>
 

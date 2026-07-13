@@ -36,6 +36,11 @@ function check(name, pass, detail = '') {
   console.log(`${pass ? 'PASS' : 'FAIL'}  ${name}${detail ? ` — ${detail}` : ''}`);
 }
 
+// Locale-independent assertion helper: resolve the expected string inside the
+// extension page itself, so checks pass under any browser UI language.
+const msg = (page, key, subs = []) =>
+  page.evaluate(([k, s]) => chrome.i18n.getMessage(k, s), [key, subs]);
+
 function startMock(mode) {
   return new Promise((resolve, reject) => {
     const child = spawn('node', [MOCK_SCRIPT], {
@@ -68,9 +73,11 @@ async function main() {
   try {
     context = await chromium.launchPersistentContext(userDataDir, {
       headless: false, // MV3 service workers are unreliable under --headless=new + --load-extension
+      locale: 'zh-CN', // TODO(Task 8): remove once popup.js is localized (Task 6)
       args: [
         `--disable-extensions-except=${EXT_PATH}`,
         `--load-extension=${EXT_PATH}`,
+        '--lang=zh-CN', // TODO(Task 8): remove once popup.js is localized (Task 6)
       ],
     });
 
@@ -88,14 +95,17 @@ async function main() {
       const cls = await page.getAttribute('#conn-check', 'class');
       const status = await page.textContent('#conn-status');
       const installGuideVisible = await page.isVisible('#install-guide');
-      const testBlockVisible = await page.isVisible('#test-clip-block');
+      const tryItVisible = await page.isVisible('#try-it');
+      const dlHref = await page.getAttribute('#btn-download-zip', 'href');
       check('welcome (down): red state class', cls.includes('bad'), cls);
-      check('welcome (down): shows 未检测到', status.includes('未检测到'), status);
+      check('welcome (down): disconnected copy', status === await msg(page, 'welcome_conn_bad'), status);
       check('welcome (down): install guide visible', installGuideVisible);
-      check('welcome (down): test-clip block hidden', !testBlockVisible);
+      check('welcome (down): try-it hidden', !tryItVisible);
+      check('welcome (down): zip download href',
+        dlHref === 'https://github.com/echore/vault-autopilot/releases/latest/download/vault-autopilot.zip', dlHref);
     }
 
-    // ── 2. welcome.html: mock UP (ok) -> green/connected + test-clip block ────
+    // ── 2. welcome.html: mock UP (ok) -> green/connected + try-it visible ─────
     mock = await startMock('ok');
     await page.reload();
     await page.waitForTimeout(1000);
@@ -103,28 +113,21 @@ async function main() {
       const cls = await page.getAttribute('#conn-check', 'class');
       const status = await page.textContent('#conn-status');
       const installGuideVisible = await page.isVisible('#install-guide');
-      const testBlockVisible = await page.isVisible('#test-clip-block');
+      const tryItVisible = await page.isVisible('#try-it');
+      const tryHref = await page.getAttribute('#tryit-link', 'href');
+      const uiLang = await page.evaluate(() => chrome.i18n.getUILanguage());
+      const expectedHref = await msg(page, 'welcome_tryit_url');
       check('welcome (up): green state class', cls.includes('ok'), cls);
-      check('welcome (up): shows 已连接 + version', status.includes('已连接') && status.includes('mock'), status);
+      check('welcome (up): connected copy + version',
+        status === await msg(page, 'welcome_conn_ok', ['mock']), status);
       check('welcome (up): install guide hidden', !installGuideVisible);
-      check('welcome (up): test-clip block visible', testBlockVisible);
+      check('welcome (up): try-it visible', tryItVisible);
+      check('welcome (up): try-it link matches locale catalog', tryHref === expectedHref, `${uiLang} → ${tryHref}`);
+      check('welcome (up): try-it link is youtube or bilibili',
+        /youtube\.com|bilibili\.com/.test(tryHref), tryHref);
     }
 
-    // ── 3. test-clip button click -> success message + correct obsidianUrl ────
-    await page.click('#btn-test-clip');
-    await page.waitForTimeout(600);
-    {
-      const resultText = await page.textContent('#test-result');
-      const href = await page.getAttribute('#test-result a', 'href').catch(() => null);
-      check('test-clip (ok): success message shown', resultText.includes('已保存'), resultText);
-      check(
-        'test-clip (ok): link href matches mock obsidianUrl',
-        href === 'obsidian://open?vault=Mock&file=Clips%2FScreenshots%2Ftest.md',
-        href,
-      );
-    }
-
-    // ── 4. popup.html: mock UP -> green dot + 已连接 Obsidian ─────────────────
+    // ── 4. popup.html: mock UP -> green dot + connected copy ──────────────────
     {
       const popupPage = await context.newPage();
       await popupPage.goto(`chrome-extension://${extId}/popup.html`);
@@ -132,31 +135,14 @@ async function main() {
       const cls = await popupPage.getAttribute('#conn-status', 'class');
       const text = await popupPage.textContent('#conn-text');
       check('popup (up): ok class', cls.includes('ok'), cls);
-      check('popup (up): shows 已连接 Obsidian', text.includes('已连接 Obsidian'), text);
+      check('popup (up): shows connected copy', text === await msg(popupPage, 'popup_conn_ok'), text);
       await popupPage.close();
     }
 
     await stopMock(mock);
     mock = null;
 
-    // ── 5. err500 mode: httpPost error mapping surfaces server reason ─────────
-    mock = await startMock('err500');
-    await page.reload();
-    await page.waitForTimeout(1000);
-    await page.click('#btn-test-clip');
-    await page.waitForTimeout(600);
-    {
-      const resultText = await page.textContent('#test-result');
-      check(
-        'test-clip (err500): surfaces "保存失败：Error: mock disk full"',
-        resultText.includes('保存失败：Error: mock disk full'),
-        resultText,
-      );
-    }
-    await stopMock(mock);
-    mock = null;
-
-    // ── 6. mock DOWN entirely: popup red/未连接 + CONNECT_FAIL_MSG on test-clip ─
+    // ── 6. mock DOWN entirely: popup red/disconnected ──────────────────────────
     {
       const popupPage = await context.newPage();
       await popupPage.goto(`chrome-extension://${extId}/popup.html`);
@@ -164,27 +150,8 @@ async function main() {
       const cls = await popupPage.getAttribute('#conn-status', 'class');
       const text = await popupPage.textContent('#conn-text');
       check('popup (down): bad class', cls.includes('bad'), cls);
-      check('popup (down): shows 未连接', text.includes('未连接'), text);
+      check('popup (down): shows disconnected copy', text === await msg(popupPage, 'popup_conn_bad'), text);
       await popupPage.close();
-    }
-    await page.reload();
-    await page.waitForTimeout(1000);
-    // test-clip-block is display:none while disconnected, so click the button
-    // directly via evaluate (bypasses Playwright's actionability/visibility check,
-    // which is appropriate here — we're testing the underlying handler's error
-    // mapping, not the block's hidden-while-disconnected visibility, already
-    // covered by check #1 above).
-    await page.evaluate(() => document.getElementById('btn-test-clip').click());
-    await page.waitForTimeout(600);
-    {
-      const resultText = await page.textContent('#test-result');
-      const CONNECT_FAIL_MSG =
-        '没连上 Obsidian：请确认 Obsidian 开着、vault-autopilot 插件已启用。打开扩展弹窗底部「安装说明 / 帮助」可查看排查步骤。';
-      check(
-        'test-clip (down): surfaces exact CONNECT_FAIL_MSG',
-        resultText.includes(CONNECT_FAIL_MSG),
-        resultText,
-      );
     }
   } catch (e) {
     check('unexpected exception during run', false, e.stack || e.message);
