@@ -1,0 +1,53 @@
+import { t } from '../i18n.js';
+
+// vault-autopilot's local HTTP endpoint. Port must match on both ends; it's
+// only changeable as an escape hatch for port conflicts (welcome page → 高级).
+export const DEFAULT_PORT = 17183;
+export const clipUrl = (port) => `http://localhost:${port}/clip`;
+export const pingUrl = (port) => `http://localhost:${port}/ping`;
+export const CONNECT_FAIL_MSG = t('connect_fail');
+
+export async function getPort() {
+  const stored = await chrome.storage.local.get('sc_port');
+  const n = parseInt(stored.sc_port, 10);
+  return Number.isInteger(n) && n > 1024 && n < 65536 ? n : DEFAULT_PORT;
+}
+
+export async function httpPost(payload) {
+  const port = await getPort();
+  let resp;
+  try {
+    resp = await fetch(clipUrl(port), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+  } catch (_) {
+    // Network-level failure: Obsidian closed / plugin disabled / port mismatch.
+    throw new Error(CONNECT_FAIL_MSG);
+  }
+  if (!resp.ok) {
+    const body = await resp.json().catch(() => null);
+    throw new Error(body?.error ? t('err_save_failed', [String(body.error)]) : t('err_save_failed_http', [String(resp.status)]));
+  }
+  return resp.json();
+}
+
+export async function pingAutopilot() {
+  try {
+    const port = await getPort();
+    const resp = await fetch(pingUrl(port), { signal: AbortSignal.timeout(1500) });
+    if (!resp.ok) return { connected: false };
+    const body = await resp.json();
+    return body?.app === 'vault-autopilot'
+      ? { connected: true, version: body.version }
+      : { connected: false };
+  } catch (_) {
+    return { connected: false };
+  }
+}
+
+// ── Destination adapter interface（destinations/index.js 依赖这三个导出）──────
+export const id = 'obsidian';
+export const send = httpPost;
+export const ping = pingAutopilot;
