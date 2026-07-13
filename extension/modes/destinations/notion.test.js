@@ -20,7 +20,7 @@ globalThis.chrome = {
           getUILanguage: () => 'en' },
 };
 
-import { parsePageId, notionRequest, ping, NOTION_VERSION } from './notion.js';
+import { parsePageId, notionRequest, ping, NOTION_VERSION, SECTION_TITLES, sectionTitleFor, chunkText, collectImages, payloadToBlocks, findSection } from './notion.js';
 
 const ok  = (json) => ({ ok: true,  status: 200, json: async () => json });
 const err = (status) => ({ ok: false, status, json: async () => ({ message: 'x' }) });
@@ -85,5 +85,67 @@ describe('ping', () => {
     globalThis.__stored = { sc_notion_token: 'T' };
     mockFetch(() => ok({ object: 'user' }));
     expect(await ping()).toEqual({ connected: true });
+  });
+});
+
+describe('chunkText', () => {
+  test('splits long text under Notion 2000-char rich_text limit', () => {
+    const chunks = chunkText('a'.repeat(4000));
+    expect(chunks.length).toBe(3);
+    expect(chunks.every((c) => c.length <= 1900)).toBe(true);
+    expect(chunks.join('')).toBe('a'.repeat(4000));
+  });
+});
+
+describe('collectImages', () => {
+  test('screenshot single/batch', () => {
+    expect(collectImages({ mode: 'screenshot', image: 'B64' })).toEqual(['B64']);
+    expect(collectImages({ mode: 'screenshot', images: ['a', 'b'] })).toEqual(['a', 'b']);
+  });
+  test('hook/keyframe use frames; thumbnail uploads nothing', () => {
+    expect(collectImages({ mode: 'hook', frames: ['f1'] })).toEqual(['f1']);
+    expect(collectImages({ mode: 'keyframe', frames: ['f1', 'f2'] })).toEqual(['f1', 'f2']);
+    expect(collectImages({ mode: 'thumbnail', thumbnail_url: 'http://x/y.jpg' })).toEqual([]);
+  });
+});
+
+describe('payloadToBlocks', () => {
+  test('screenshot → one image block per upload id', () => {
+    const blocks = payloadToBlocks({ mode: 'screenshot', image: 'B' }, ['fid1']);
+    expect(blocks).toEqual([{ object: 'block', type: 'image', image: { type: 'file_upload', file_upload: { id: 'fid1' } } }]);
+  });
+  test('thumbnail → meta paragraph + external image', () => {
+    const blocks = payloadToBlocks({ mode: 'thumbnail', thumbnail_url: 'http://x/y.jpg', channel: 'Chan', views: '1.2M' }, []);
+    expect(blocks[0].type).toBe('paragraph');
+    expect(blocks[0].paragraph.rich_text[0].text.content).toBe('Chan · 1.2M');
+    expect(blocks[1].image.external.url).toBe('http://x/y.jpg');
+  });
+  test('hook → time range + images + chunked transcript', () => {
+    const blocks = payloadToBlocks(
+      { mode: 'hook', time_range: { start: 0, end: 15 }, transcript: 't'.repeat(2500) }, ['f1']);
+    expect(blocks[0].paragraph.rich_text[0].text.content).toBe('00:00 – 00:15');
+    expect(blocks[1].image.file_upload.id).toBe('f1');
+    expect(blocks.length).toBe(4); // 1 para + 1 img + 2 transcript chunks
+  });
+  test('keyframe → time range + images', () => {
+    const blocks = payloadToBlocks({ mode: 'keyframe', time_range: { start: 60, end: 65 } }, ['f1', 'f2']);
+    expect(blocks.length).toBe(3);
+  });
+});
+
+describe('findSection', () => {
+  const h2 = (blockId, text) => ({ id: blockId, type: 'heading_2', heading_2: { rich_text: [{ type: 'text', text: { content: text }, plain_text: text }] } });
+  const p  = (blockId) => ({ id: blockId, type: 'paragraph', paragraph: { rich_text: [] } });
+
+  test('finds section content between our heading and the next heading', () => {
+    const children = [h2('a', 'Keyframes'), p('b'), p('c'), h2('d', 'Screenshots'), p('e')];
+    expect(findSection(children, 'keyframe')).toEqual({ headingId: 'a', contentIds: ['b', 'c'] });
+  });
+  test('matches the zh_CN variant too', () => {
+    const children = [h2('a', '截图'), p('b')];
+    expect(findSection(children, 'screenshot')).toEqual({ headingId: 'a', contentIds: ['b'] });
+  });
+  test('returns null when the section is absent', () => {
+    expect(findSection([h2('a', 'Hook'), p('b')], 'screenshot')).toBeNull();
   });
 });
