@@ -117,39 +117,39 @@
 
   <div class="header">
     <span class="icon">🎞</span>
-    <h1>视频关键帧</h1>
+    <h1 data-i18n="sp_title"></h1>
   </div>
 
   <!-- No video state -->
   <div id="no-video">
     <div class="icon">🎬</div>
-    请在视频页面使用此功能<br>
+    <span data-i18n="sp_need_video"></span><br>
     （YouTube / Bilibili）
   </div>
 
   <!-- Step 1: mark start -->
   <div id="step1" class="card active">
-    <div class="step-label">第一步</div>
-    <div class="instruction">定位到片段开始位置，点击标记</div>
-    <button class="btn-primary" id="btn-mark-start">标记开始</button>
+    <div class="step-label" data-i18n="sp_step1"></div>
+    <div class="instruction" data-i18n="sp_step1_body"></div>
+    <button class="btn-primary" id="btn-mark-start" data-i18n="sp_mark_start"></button>
     <div class="live-time">
-      当前位置 <span id="current-time-1">--:--</span>
+      <span data-i18n="sp_current_pos"></span> <span id="current-time-1">--:--</span>
     </div>
   </div>
 
   <!-- Step 2: mark end (hidden until start marked) -->
   <div id="step2" class="card" style="display:none">
-    <div class="step-label">第二步</div>
-    <div class="instruction">继续播放到结束位置，点击截取</div>
-    <div class="time-badge" id="start-badge">开始：0:00</div>
-    <button class="btn-primary" id="btn-capture">截取到这里</button>
-    <button class="btn-cancel" id="btn-cancel">取消</button>
+    <div class="step-label" data-i18n="sp_step2"></div>
+    <div class="instruction" data-i18n="sp_step2_body"></div>
+    <div class="time-badge" id="start-badge"></div>
+    <button class="btn-primary" id="btn-capture" data-i18n="sp_capture"></button>
+    <button class="btn-cancel" id="btn-cancel" data-i18n="sp_cancel"></button>
     <div class="live-time">
-      当前位置 <span id="current-time-2">--:--</span>
-      &nbsp;·&nbsp; 时长 <span id="duration">--:--</span>
+      <span data-i18n="sp_current_pos"></span> <span id="current-time-2">--:--</span>
+      &nbsp;·&nbsp; <span data-i18n="sp_duration"></span> <span id="duration">--:--</span>
     </div>
   </div>
 
-  <script src="sidepanel.js"></script>
+  <script type="module" src="sidepanel.js"></script>
 </body>
 </html>

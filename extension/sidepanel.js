@@ -1,3 +1,8 @@
+import { t, localizeDocument } from './modes/i18n.js';
+
+localizeDocument();
+document.getElementById('start-badge').textContent = t('sp_start_badge', ['0:00']);
+
 let tabId = null;
 let inTime = null;
 let tickInterval = null;
@@ -67,7 +72,7 @@ document.getElementById('btn-capture').addEventListener('click', async () => {
 
   const btn = document.getElementById('btn-capture');
   btn.disabled = true;
-  btn.textContent = '处理中...';
+  btn.textContent = t('sp_processing');
 
   // Get current time and tab info in parallel
   const [timeResp, tab] = await Promise.all([
@@ -77,7 +82,7 @@ document.getElementById('btn-capture').addEventListener('click', async () => {
 
   if (timeResp?.currentTime == null || !tab) {
     btn.disabled = false;
-    btn.textContent = '截取到这里';
+    btn.textContent = t('sp_capture');
     return;
   }
 
@@ -104,7 +109,7 @@ function showStep2() {
   document.getElementById('step1').style.display = 'none';
   document.getElementById('step2').style.display = 'block';
   document.getElementById('step2').classList.add('active');
-  document.getElementById('start-badge').textContent = `开始：${fmt(inTime)}`;
+  document.getElementById('start-badge').textContent = t('sp_start_badge', [fmt(inTime)]);
 }
 
 function clearMark() {
@@ -113,7 +118,7 @@ function clearMark() {
   chrome.action.setBadgeText({ text: '' });
   const btn = document.getElementById('btn-capture');
   btn.disabled = false;
-  btn.textContent = '截取到这里';
+  btn.textContent = t('sp_capture');
   document.getElementById('step2').style.display = 'none';
   document.getElementById('step1').style.display = 'block';
 }

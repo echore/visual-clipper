@@ -1,13 +1,16 @@
 // popup.js
 
 import { pingAutopilot } from './modes/utils.js';
+import { t, localizeDocument } from './modes/i18n.js';
+
+localizeDocument();
 
 // ── Connection status light ───────────────────────────────────────────────────
 const connStatus = document.getElementById('conn-status');
 const connText   = document.getElementById('conn-text');
 pingAutopilot().then(({ connected }) => {
   connStatus.classList.add(connected ? 'ok' : 'bad');
-  connText.textContent = connected ? '已连接 Obsidian' : '未连接 · 点击查看原因';
+  connText.textContent = connected ? t('popup_conn_ok') : t('popup_conn_bad');
   if (!connected) {
     connText.addEventListener('click', () => {
       chrome.tabs.create({ url: chrome.runtime.getURL('welcome.html') });
@@ -51,7 +54,7 @@ chrome.storage.local.get(['last_error', 'last_notice', 'keyframe_in_time', 'keyf
   // Show active state if keyframe mark is in progress
   if (stored.keyframe_in_time !== undefined) {
     btnKeyframe.classList.add('active');
-    btnKeyframe.querySelector('.sub').textContent = `已标记 ${formatTime(stored.keyframe_in_time)} · 点击打开`;
+    btnKeyframe.querySelector('.sub').textContent = t('popup_kf_marked', [formatTime(stored.keyframe_in_time)]);
   }
 });
 
@@ -87,10 +90,9 @@ function enableForVideo(tab, resp) {
   btnKeyframe.disabled = false;
   chrome.tabs.sendMessage(tab.id, { action: 'getCurrentTime' }, (timeResp) => {
     if (chrome.runtime.lastError) return;
-    const t = timeResp?.currentTime;
-    if (t != null) {
-      document.getElementById('hook-sub').textContent =
-        `已追踪 0:00 ~ ${formatTime(t)}  点击截取到当前位置`;
+    const cur = timeResp?.currentTime;
+    if (cur != null) {
+      document.getElementById('hook-sub').textContent = t('popup_hook_tracked', [formatTime(cur)]);
     }
   });
 }

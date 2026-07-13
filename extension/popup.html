@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh">
+<html>
 <head>
   <meta charset="utf-8">
   <style>
@@ -62,39 +62,39 @@
 <body>
   <div class="header">
     <h1>Obsidian Visual Clipper</h1>
-    <p id="conn-status"><span id="conn-dot">●</span> <span id="conn-text">检查连接…</span></p>
+    <p id="conn-status"><span id="conn-dot">●</span> <span id="conn-text" data-i18n="popup_conn_checking"></span></p>
   </div>
 
   <div class="modes">
     <button class="mode-btn" id="btn-screenshot">
       <span class="icon">📷</span>
       <span class="label">
-        <span class="title">截图</span>
-        <span class="sub">框选任意区域</span>
+        <span class="title" data-i18n="popup_mode_ss"></span>
+        <span class="sub" data-i18n="popup_mode_ss_sub"></span>
       </span>
     </button>
 
     <button class="mode-btn" id="btn-thumbnail" disabled>
       <span class="icon">🖼️</span>
       <span class="label">
-        <span class="title">收藏封面</span>
-        <span class="sub">封面 + 标题分析存入 Great Videos</span>
+        <span class="title" data-i18n="popup_mode_cover"></span>
+        <span class="sub" data-i18n="popup_mode_cover_sub"></span>
       </span>
     </button>
 
     <button class="mode-btn" id="btn-hook" disabled>
       <span class="icon">🎬</span>
       <span class="label">
-        <span class="title">Hook 分析</span>
-        <span class="sub" id="hook-sub">自动抓取视频开头 15s</span>
+        <span class="title" data-i18n="popup_mode_hook"></span>
+        <span class="sub" id="hook-sub" data-i18n="popup_mode_hook_sub"></span>
       </span>
     </button>
 
     <button class="mode-btn" id="btn-keyframe" disabled>
       <span class="icon">🎞</span>
       <span class="label">
-        <span class="title">视频关键帧</span>
-        <span class="sub">标记 In / Out，采样关键帧</span>
+        <span class="title" data-i18n="popup_mode_kf"></span>
+        <span class="sub" data-i18n="popup_mode_kf_sub"></span>
       </span>
     </button>
   </div>
@@ -102,16 +102,16 @@
   <div class="batch-row">
     <label class="batch-label">
       <input type="checkbox" id="batch-toggle">
-      <span>批量截图</span>
+      <span data-i18n="popup_batch"></span>
     </label>
-    <button id="btn-batch-analyze">分析全部 (<span id="batch-count">0</span>)</button>
+    <button id="btn-batch-analyze"><span data-i18n="popup_batch_analyze"></span> (<span id="batch-count">0</span>)</button>
   </div>
 
   <div id="keyframe-hint"></div>
   <div id="error-msg"></div>
 
   <div class="footer">
-    <a id="open-welcome" href="#">安装说明 / 帮助</a>
+    <a id="open-welcome" href="#" data-i18n="popup_help"></a>
   </div>
 
   <script type="module" src="popup.js"></script>
