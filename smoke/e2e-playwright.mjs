@@ -69,15 +69,15 @@ async function main() {
   const userDataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'sc-smoke-ext-'));
   let context = null;
   let mock = null;
+  const langArg = process.argv.find((a) => a.startsWith('--lang='));
 
   try {
     context = await chromium.launchPersistentContext(userDataDir, {
       headless: false, // MV3 service workers are unreliable under --headless=new + --load-extension
-      locale: 'zh-CN', // TODO(Task 8): remove once popup.js is localized (Task 6)
       args: [
         `--disable-extensions-except=${EXT_PATH}`,
         `--load-extension=${EXT_PATH}`,
-        '--lang=zh-CN', // TODO(Task 8): remove once popup.js is localized (Task 6)
+        ...(langArg ? [langArg] : []),
       ],
     });
 
@@ -91,6 +91,10 @@ async function main() {
     // ── 1. welcome.html: mock DOWN -> red/disconnected state ──────────────────
     await page.goto(`chrome-extension://${extId}/welcome.html`);
     await page.waitForTimeout(1000); // let refreshStatus() finish its fetch
+    {
+      const uiLangReported = await page.evaluate(() => chrome.i18n.getUILanguage());
+      check('ui language resolves', typeof uiLangReported === 'string' && uiLangReported.length > 0, uiLangReported);
+    }
     {
       const cls = await page.getAttribute('#conn-check', 'class');
       const status = await page.textContent('#conn-status');
