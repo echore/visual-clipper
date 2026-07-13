@@ -35,7 +35,7 @@ Capture the same video more than once — cover today, a hook frame tomorrow —
 
 - **Local-first.** Every clip is a direct HTTP request from your browser to a server that only exists on your own machine, running inside your own Obsidian.
 - **No accounts, no telemetry, no external servers.** There is nothing to sign up for and nothing being tracked.
-- **Zero-config onboarding.** Install both pieces and a live welcome page checks the connection for you and lets you send a test clip before you use it for real.
+- **Zero-config onboarding.** Install both pieces and a live welcome page checks the connection for you, then points you at a sample video to make your first real clip.
 - **Actionable errors.** If something's not connected, you get a plain-language explanation of what to check — not a stack trace.
 
 **Requirements:** the companion Obsidian plugin **vault-autopilot** must be installed and enabled for clips to save. The extension will tell you clearly if it can't reach it.
@@ -61,7 +61,7 @@ Capture the same video more than once — cover today, a hook frame tomorrow —
 
 - **本地优先。** 每一次剪藏都是浏览器到你自己电脑上服务的直接请求，这个服务运行在你自己的 Obsidian 里。
 - **无账号、无遥测、无外部服务器。** 不需要注册任何东西，也不会被追踪任何东西。
-- **零配置上手。** 装好两件套后，一个实时自检的引导页会帮你确认连接，还能发一条测试剪藏验证整条链路。
+- **零配置上手。** 装好两件套后，一个实时自检的引导页会帮你确认连接，并给你一个示例视频完成第一条真实剪藏。
 - **人话报错。** 连不上的时候，提示会告诉你该检查什么，而不是一段技术性异常信息。
 
 **使用前提：** 需要同时安装并启用配套的 Obsidian 插件 **vault-autopilot**，剪藏内容才能落地保存。没连上时扩展会明确告诉你。
@@ -72,4 +72,4 @@ Capture the same video more than once — cover today, a hook frame tomorrow —
 2. **Screenshot mode in action** — drag-select overlay mid-selection on a real webpage (e.g. an article or design reference page), showing the crosshair/selection box. Demonstrates the flagship screenshot flow.
 3. **Video cover capture on YouTube or Bilibili** — a video page with the popup open showing the 收藏封面 button, ideally with a toast/notification confirming the save. Demonstrates video-platform support.
 4. **Keyframe side panel** — the Chrome side panel open on a video with Mark In / Mark Out controls and the sampled-frame picker grid visible. Demonstrates the more advanced capture flow.
-5. **Welcome / self-check page** — the welcome page showing the live green connection check and "send test clip" button, optionally with a resulting Obsidian note preview. Demonstrates zero-config onboarding and builds trust that setup is easy to verify.
+5. **Welcome / self-check page** — the welcome page showing the live green connection check and the "Try it now" sample-video block, optionally with a resulting Obsidian note preview. Demonstrates zero-config onboarding and builds trust that setup is easy to verify.

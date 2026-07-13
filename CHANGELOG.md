@@ -12,6 +12,9 @@ Onboarding overhaul — the extension now walks a stranger from "just installed"
 - Human-readable, actionable errors: connection failures now say what to check ("确认 Obsidian 开着、vault-autopilot 插件已启用...") instead of a raw exception
 - Content-script reliability: fixed a first-click failure mode and a duplicate-capture bug so every mode works on the first try, including after SPA navigation
 - Removed the legacy native-messaging host and local Python server — the extension now talks only to vault-autopilot over `localhost:17183`, simplifying install to "two extensions, no CLI setup"
+- Welcome page: install vault-autopilot via GitHub Release zip (with BRAT alternative); "Try it now" sample video replaces the synthetic test clip
+- Full bilingual UI (English + 简体中文), follows the browser language
+- New "how the two pieces work together" explainer
 
 ## [0.2.0] — 2026-05-30 to 2026-06-30
 

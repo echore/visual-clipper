@@ -51,7 +51,9 @@ Every non-trivial decision: privacy/security risk? Still maintainable in a year?
 - `extension/modes/{screenshot,thumbnail,hook,keyframe}.js` — the four capture modes
 - `extension/background.js` — thin service-worker router
 - `extension/content.js` — page overlay (region picker, frame grids)
-- `extension/welcome.html` + `welcome.js` — live self-check onboarding page (connection card, test clip, port escape hatch)
+- `extension/_locales/` — en + zh_CN message catalogs for every user-visible string
+- `extension/modes/i18n.js` — chrome.i18n helper used across popup, welcome, and content scripts
+- `extension/welcome.html` + `welcome.js` — live self-check onboarding page (connection card, zip install guide, try-it sample video, port escape hatch)
 - `docs/examples/处理审美-SOP.md` — example SOP; real SOPs live in the user's vault and are configured in vault-autopilot settings
 
 **How to run tests:**
@@ -61,7 +63,7 @@ cd extension && npm test   # Jest (ESM via --experimental-vm-modules)
 
 **Collaboration rules:**
 1. Vault writes only ever happen through vault-autopilot's HTTP endpoint — the extension never touches the filesystem.
-2. User-facing errors go through `notifyError` / `notifyNotice` in utils.js; error copy is Chinese and actionable (tell the user what to do, not what failed internally).
+2. User-facing errors go through `notifyError` / `notifyNotice` in utils.js; error copy is localized via chrome.i18n (en + zh_CN — every user-visible string lives in extension/_locales/) and actionable (tell the user what to do, not what failed internally).
 3. Any change to the port, `/ping` shape, or `/clip` payload is a cross-repo contract change — update vault-autopilot in the same session and keep both defaults identical.
 4. Never print API keys or tokens.
 
