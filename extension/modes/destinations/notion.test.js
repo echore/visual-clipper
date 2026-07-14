@@ -20,7 +20,7 @@ globalThis.chrome = {
           getUILanguage: () => 'en' },
 };
 
-import { parsePageId, notionRequest, ping, NOTION_VERSION, SECTION_TITLES, sectionTitleFor, chunkText, collectImages, payloadToBlocks, findSection, resolveProps, ensureDataSource, findPageByUrl, createVideoPage, uploadImage, upsertSection, send } from './notion.js';
+import { parsePageId, notionRequest, ping, NOTION_VERSION, SECTION_TITLES, sectionTitleFor, chunkText, collectImages, payloadToBlocks, findSection, resolveProps, videoEmbedUrl, ensureDataSource, findPageByUrl, createVideoPage, uploadImage, upsertSection, send } from './notion.js';
 
 const ok  = (json) => ({ ok: true,  status: 200, json: async () => json });
 const err = (status) => ({ ok: false, status, json: async () => ({ message: 'x' }) });
@@ -401,5 +401,20 @@ describe('findPageByUrl with resolved props', () => {
     const calls = mockFetch(() => ok({ results: [] }));
     await findPageByUrl({ token: 'T' }, 'DS9', 'https://v/9', { title: '标题', url: '网址', select: null, date: null });
     expect(JSON.parse(calls[0].init.body).filter.property).toBe('网址');
+  });
+});
+
+describe('video embeds in hook/keyframe sections', () => {
+  test('hook embeds the video at 0; keyframe embed seeks to clip start', () => {
+    const hook = payloadToBlocks({ mode: 'hook', url: 'https://www.youtube.com/watch?v=abc', time_range: { start: 0, end: 15 } }, []);
+    expect(hook[0]).toEqual({ object: 'block', type: 'embed', embed: { url: 'https://www.youtube.com/watch?v=abc' } });
+    const kf = payloadToBlocks({ mode: 'keyframe', url: 'https://www.youtube.com/watch?v=abc', time_range: { start: 90, end: 95 } }, []);
+    expect(kf[0].type).toBe('embed');
+    expect(kf[0].embed.url).toBe('https://www.youtube.com/watch?v=abc&t=90');
+  });
+  test('videoEmbedUrl: zero start and invalid urls pass through unchanged', () => {
+    expect(videoEmbedUrl('https://www.bilibili.com/video/BV1x', 63.7)).toBe('https://www.bilibili.com/video/BV1x?t=63');
+    expect(videoEmbedUrl('https://x/y', 0)).toBe('https://x/y');
+    expect(videoEmbedUrl('not a url', 30)).toBe('not a url');
   });
 });

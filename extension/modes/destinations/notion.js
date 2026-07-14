@@ -98,6 +98,20 @@ export function collectImages(payload) {
 const para = (content) => ({ object: 'block', type: 'paragraph', paragraph: { rich_text: [{ type: 'text', text: { content } }] } });
 const imgUpload = (fid) => ({ object: 'block', type: 'image', image: { type: 'file_upload', file_upload: { id: fid } } });
 const imgExternal = (url) => ({ object: 'block', type: 'image', image: { type: 'external', external: { url } } });
+const embed = (url) => ({ object: 'block', type: 'embed', embed: { url } });
+
+// Hook / keyframe sections open with the video player, mirroring the
+// vault-autopilot note layout; ?t= seeks keyframe embeds to the clip start.
+// Notion embeds never autoplay, so no guard is needed for that.
+export function videoEmbedUrl(url, startSeconds) {
+  const s = Math.floor(startSeconds || 0);
+  if (!s) return url;
+  try {
+    const u = new URL(url);
+    u.searchParams.set('t', String(s));
+    return u.toString();
+  } catch (_) { return url; }
+}
 
 export function payloadToBlocks(payload, uploadIds = []) {
   const blocks = [];
@@ -114,11 +128,13 @@ export function payloadToBlocks(payload, uploadIds = []) {
       break;
     }
     case 'hook':
+      if (payload.url) blocks.push(embed(payload.url));
       if (range) blocks.push(range);
       blocks.push(...uploadIds.map(imgUpload));
       if (payload.transcript) blocks.push(...chunkText(payload.transcript).map(para));
       break;
     case 'keyframe':
+      if (payload.url) blocks.push(embed(videoEmbedUrl(payload.url, payload.time_range?.start)));
       if (range) blocks.push(range);
       blocks.push(...uploadIds.map(imgUpload));
       break;
