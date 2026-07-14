@@ -1,8 +1,5 @@
 import { t } from './i18n.js';
 
-// TEMP shim：迁移期间保持旧 import 路径可用；popup.js 用到，Task 8 拆除。
-export { pingAutopilot } from './destinations/obsidian.js';
-
 export function sanitize(str) {
   return (str || '').replace(/[/\\:*?"<>|]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 100);
 }

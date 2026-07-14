@@ -70,6 +70,8 @@
   "popup_conn_checking": { "message": "检查连接…" },
   "popup_conn_ok":       { "message": "已连接 Obsidian" },
   "popup_conn_bad":      { "message": "未连接 · 点击查看原因" },
+  "popup_conn_ok_notion":  { "message": "已连接 Notion" },
+  "popup_conn_bad_notion": { "message": "未连接 Notion · 点击查看详情" },
   "popup_mode_ss":       { "message": "截图" },
   "popup_mode_ss_sub":   { "message": "框选任意区域" },
   "popup_mode_cover":    { "message": "收藏封面" },

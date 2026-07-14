@@ -70,6 +70,8 @@
   "popup_conn_checking": { "message": "Checking connection…" },
   "popup_conn_ok":       { "message": "Connected to Obsidian" },
   "popup_conn_bad":      { "message": "Not connected · click for details" },
+  "popup_conn_ok_notion":  { "message": "Connected to Notion" },
+  "popup_conn_bad_notion": { "message": "Notion not connected · click for details" },
   "popup_mode_ss":       { "message": "Screenshot" },
   "popup_mode_ss_sub":   { "message": "Drag-select any region" },
   "popup_mode_cover":    { "message": "Save cover" },
