@@ -15,6 +15,7 @@ Onboarding overhaul — the extension now walks a stranger from "just installed"
 - Welcome page: install vault-autopilot via GitHub Release zip (with BRAT alternative); "Try it now" sample video replaces the synthetic test clip
 - Full bilingual UI (English + 简体中文), follows the browser language
 - New "how the two pieces work together" explainer
+- Notion destination (personal access token) with auto-created "Video Clips" database, per-section upsert, and bilingual setup UI; capture pipeline refactored behind a destinations adapter layer (Obsidian behaviour unchanged)
 
 ## [0.2.0] — 2026-05-30 to 2026-06-30
 

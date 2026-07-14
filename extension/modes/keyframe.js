@@ -1,4 +1,5 @@
-import { buildTimestamps, sanitize, httpPost, notifyError, notifyNotice, ensureSendToContent, detectPlatform, getCoverUrl } from './utils.js';
+import { buildTimestamps, sanitize, notifyError, notifyNotice, ensureSendToContent, detectPlatform, getCoverUrl } from './utils.js';
+import { getActiveDestination } from './destinations/index.js';
 import { t } from './i18n.js';
 
 export function start(tabId) {
@@ -67,7 +68,8 @@ export async function markOut(tabId, outTime, inTime, url, title, platform, vide
 
   let response;
   try {
-    response = await httpPost(payload);
+    const dest = await getActiveDestination();
+    response = await dest.send(payload);
   } catch (err) {
     notifyError(err.message || t('err_no_response'));
     return;

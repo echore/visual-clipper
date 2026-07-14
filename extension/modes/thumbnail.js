@@ -1,4 +1,5 @@
-import { sanitize, httpPost, notifyError, notifyNotice, detectPlatform, sendToContent } from './utils.js';
+import { sanitize, notifyError, notifyNotice, detectPlatform, sendToContent } from './utils.js';
+import { getActiveDestination } from './destinations/index.js';
 import { t } from './i18n.js';
 
 export async function start(tabId) {
@@ -89,7 +90,8 @@ export async function start(tabId) {
 
   let response;
   try {
-    response = await httpPost({
+    const dest = await getActiveDestination();
+    response = await dest.send({
       mode: 'thumbnail',
       platform,
       video_id: meta.video_id,

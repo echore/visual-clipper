@@ -42,12 +42,12 @@ Every non-trivial decision: privacy/security risk? Still maintainable in a year?
 
 **Goal:** Chrome extension (this repo) + Obsidian plugin vault-autopilot (companion repo at `../vault-autopilot`) — a two-piece suite that clips screenshots, video covers, hooks and keyframes into Obsidian notes. One video = one note; sections upsert.
 
-**Architecture:** The extension (Manifest V3, plain JS ES modules, no build step) captures content and POSTs it to `http://localhost:17183/clip`, served by vault-autopilot inside Obsidian. `GET /ping` is the health check the popup status light and welcome self-check page rely on. No native messaging, no Python, no external servers — everything stays on-machine.
+**Architecture:** The extension (Manifest V3, plain JS ES modules, no build step) captures content and POSTs it to `http://localhost:17183/clip`, served by vault-autopilot inside Obsidian. `GET /ping` is the health check the popup status light and welcome self-check page rely on. No native messaging, no Python, no developer-operated servers — data goes only to localhost or, in Notion mode, the user's own Notion workspace. Captures route through `extension/modes/destinations/` — `obsidian.js` POSTs to vault-autopilot at `http://localhost:17183/clip` (unchanged contract), `notion.js` writes directly to the user's Notion workspace via their personal access token (`api.notion.com`, version `2026-03-11`).
 
 **Tech:** Plain JavaScript ES modules / Manifest V3 / Jest. The old Python pipeline (host/, server/, pytest) was removed 2026-07-05; see git history if you need it.
 
 **Key files:**
-- `extension/modes/utils.js` — the single egress: `httpPost`, `pingAutopilot`, `getPort` (port `DEFAULT_PORT = 17183` must match vault-autopilot's default)
+- `extension/modes/destinations/{index,obsidian,notion}.js` — destination adapters; `utils.js` is now pure helpers with no network egress. `obsidian.js` holds `httpPost`, `pingAutopilot`, `getPort` (port `DEFAULT_PORT = 17183` must match vault-autopilot's default)
 - `extension/modes/{screenshot,thumbnail,hook,keyframe}.js` — the four capture modes
 - `extension/background.js` — thin service-worker router
 - `extension/content.js` — page overlay (region picker, frame grids)
@@ -62,7 +62,7 @@ cd extension && npm test   # Jest (ESM via --experimental-vm-modules)
 ```
 
 **Collaboration rules:**
-1. Vault writes only ever happen through vault-autopilot's HTTP endpoint — the extension never touches the filesystem.
+1. Obsidian vault writes only ever happen through vault-autopilot's HTTP endpoint; Notion writes only ever happen through `destinations/notion.js` with the user's own token — the extension never touches the filesystem, and no data leaves the machine except to the user's chosen destination.
 2. User-facing errors go through `notifyError` / `notifyNotice` in utils.js; error copy is localized via chrome.i18n (en + zh_CN — every user-visible string lives in extension/_locales/) and actionable (tell the user what to do, not what failed internally).
 3. Any change to the port, `/ping` shape, or `/clip` payload is a cross-repo contract change — update vault-autopilot in the same session and keep both defaults identical.
 4. Never print API keys or tokens.

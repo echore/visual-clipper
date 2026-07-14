@@ -10,17 +10,17 @@ Productivity
 
 ## Short description (≤132 characters)
 
-> Screenshot regions, video covers, hook frames & keyframes from any page — straight into your local Obsidian vault. No cloud.
+> Screenshot regions, video covers, hook frames & keyframes from any page — into your local Obsidian vault or Notion. No dev servers.
 
-(120 characters)
+(131 characters)
 
 ## Detailed description
 
 ### English
 
-**Obsidian Visual Clipper turns anything on your screen into a structured Obsidian note — with one click, and without your data ever leaving your computer.**
+**Obsidian Visual Clipper turns anything on your screen into a structured note — with one click, and with your data going only where you choose.**
 
-It works together with its companion Obsidian plugin, **vault-autopilot**. The extension captures; vault-autopilot writes the note into your vault. Nothing is uploaded anywhere — the extension talks only to `localhost:17183`, a server that vault-autopilot runs *inside your own Obsidian install*.
+By default it works together with its companion Obsidian plugin, **vault-autopilot**: the extension captures, vault-autopilot writes the note into your vault, and nothing is uploaded anywhere — the extension talks only to `localhost:17183`, a server that vault-autopilot runs *inside your own Obsidian install*. If you'd rather use Notion, you can switch destinations and clip straight into a database in your own Notion workspace using your own personal access token — no server operated by this extension's developer is ever involved, in either mode.
 
 **Four capture modes:**
 
@@ -33,8 +33,8 @@ Capture the same video more than once — cover today, a hook frame tomorrow —
 
 **Why it's different:**
 
-- **Local-first.** Every clip is a direct HTTP request from your browser to a server that only exists on your own machine, running inside your own Obsidian.
-- **No accounts, no telemetry, no external servers.** There is nothing to sign up for and nothing being tracked.
+- **Local-first by default.** In Obsidian mode, every clip is a direct HTTP request from your browser to a server that only exists on your own machine, running inside your own Obsidian; in Notion mode, clips go directly from your browser to your own authorized Notion workspace.
+- **No accounts, no telemetry, no developer-operated servers.** Data is sent only to localhost (Obsidian mode), or your own authorized Notion workspace (Notion mode) — there is nothing to sign up for with us, and nothing being tracked.
 - **Zero-config onboarding.** Install both pieces and a live welcome page checks the connection for you, then points you at a sample video to make your first real clip.
 - **Actionable errors.** If something's not connected, you get a plain-language explanation of what to check — not a stack trace.
 
@@ -44,9 +44,9 @@ Capture the same video more than once — cover today, a hook frame tomorrow —
 
 ### 中文
 
-**Obsidian Visual Clipper 能把网页上的任何内容一键存成结构化的 Obsidian 笔记——全程在你自己的电脑上完成，不经过任何外部服务器。**
+**Obsidian Visual Clipper 能把网页上的任何内容一键存成结构化笔记——数据仅发送到 localhost（Obsidian 模式），或你自己授权的 Notion 工作区（Notion 模式）；无开发者服务器。**
 
-本扩展需要配合 Obsidian 插件 **vault-autopilot** 使用：扩展负责抓取，vault-autopilot 负责把内容写进你的 vault。所有数据只在本机流转——扩展只会请求 `localhost:17183`，这是 vault-autopilot 在你自己的 Obsidian 里启动的本地服务。
+默认配合 Obsidian 插件 **vault-autopilot** 使用：扩展负责抓取，vault-autopilot 负责把内容写进你的 vault，所有数据只在本机流转——扩展只会请求 `localhost:17183`，这是 vault-autopilot 在你自己的 Obsidian 里启动的本地服务。也可以改选 Notion 目的地，用你自己生成的个人访问令牌，直接把内容存进你自己 Notion 工作区里的一个 database——两种模式都不会经过本扩展开发者运营的任何服务器。
 
 **四种模式：**
 
@@ -59,8 +59,8 @@ Capture the same video more than once — cover today, a hook frame tomorrow —
 
 **它的不同之处：**
 
-- **本地优先。** 每一次剪藏都是浏览器到你自己电脑上服务的直接请求，这个服务运行在你自己的 Obsidian 里。
-- **无账号、无遥测、无外部服务器。** 不需要注册任何东西，也不会被追踪任何东西。
+- **默认本地优先。** Obsidian 模式下，每一次剪藏都是浏览器到你自己电脑上服务的直接请求，这个服务运行在你自己的 Obsidian 里；Notion 模式下，剪藏由浏览器直达你自己授权的 Notion 工作区。
+- **无账号、无遥测、无开发者服务器。** 数据仅发送到 localhost（Obsidian 模式），或你自己授权的 Notion 工作区（Notion 模式）；不需要注册任何东西，也不会被追踪任何东西。
 - **零配置上手。** 装好两件套后，一个实时自检的引导页会帮你确认连接，并给你一个示例视频完成第一条真实剪藏。
 - **人话报错。** 连不上的时候，提示会告诉你该检查什么，而不是一段技术性异常信息。
 

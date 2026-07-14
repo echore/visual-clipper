@@ -1,4 +1,5 @@
-import { sanitize, httpPost, notifyError, notifyNotice, sendToContent, injectContentScript, detectPlatform, getCoverUrl } from './utils.js';
+import { sanitize, notifyError, notifyNotice, sendToContent, injectContentScript, detectPlatform, getCoverUrl } from './utils.js';
+import { getActiveDestination } from './destinations/index.js';
 import { t } from './i18n.js';
 
 export async function start(tabId, windowId) {
@@ -44,7 +45,8 @@ async function saveFullCapture(tabId, dataUrl) {
 
   let response;
   try {
-    response = await httpPost({
+    const dest = await getActiveDestination();
+    response = await dest.send({
       mode: 'screenshot',
       url: tab.url || '',
       title: sanitize(tab.title || t('default_title_screenshot')),
@@ -105,7 +107,8 @@ export async function handleRegion(msg, tabId) {
   const cover_url = await getCoverUrl(tabId, detectPlatform(msg.source_url));
   let response;
   try {
-    response = await httpPost({
+    const dest = await getActiveDestination();
+    response = await dest.send({
       mode: 'screenshot',
       url: msg.source_url,
       title: sanitize(msg.title),
@@ -133,7 +136,8 @@ export async function analyzeBatch(queue) {
   if (!queue.length) return;
   let response;
   try {
-    response = await httpPost({
+    const dest = await getActiveDestination();
+    response = await dest.send({
       mode: 'screenshot',
       images: queue.map(item => item.image),
       url: queue[0].url,

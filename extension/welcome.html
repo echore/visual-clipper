@@ -49,6 +49,21 @@
     <div class="detail" id="conn-detail"></div>
   </div>
 
+  <section class="card" id="dest-card">
+    <h2 data-i18n="welcome_dest_title"></h2>
+    <label><input type="radio" name="dest" value="obsidian" id="dest-obsidian"> <span data-i18n="welcome_dest_obsidian"></span></label>
+    <label><input type="radio" name="dest" value="notion" id="dest-notion"> <span data-i18n="welcome_dest_notion"></span></label>
+    <div id="notion-setup" style="display:none">
+      <p data-i18n-html="welcome_notion_pat_help_html"></p>
+      <label data-i18n="welcome_notion_token_label"></label>
+      <input type="password" id="notion-token" autocomplete="off">
+      <label data-i18n="welcome_notion_parent_label"></label>
+      <input type="text" id="notion-parent" placeholder="https://www.notion.so/…">
+      <button id="btn-notion-save" data-i18n="welcome_notion_save_test"></button>
+      <span id="notion-config-status"></span>
+    </div>
+  </section>
+
   <div id="install-guide" style="display:none">
     <h2 data-i18n="welcome_install_title"></h2>
     <div class="step">
@@ -111,7 +126,7 @@
   <p data-i18n-html="welcome_tip2_html"></p>
   <p data-i18n="welcome_tip3"></p>
 
-  <details class="adv">
+  <details class="adv" id="adv-port">
     <summary data-i18n="welcome_adv_summary"></summary>
     <p style="margin-top:8px" data-i18n-html="welcome_adv_body_html"></p>
     <p><span data-i18n="welcome_port_label"></span> <input id="port-input" type="number" min="1025" max="65535">

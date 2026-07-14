@@ -1,6 +1,6 @@
 // popup.js
 
-import { pingAutopilot } from './modes/utils.js';
+import { getActiveDestination } from './modes/destinations/index.js';
 import { t, localizeDocument } from './modes/i18n.js';
 
 localizeDocument();
@@ -8,15 +8,20 @@ localizeDocument();
 // ── Connection status light ───────────────────────────────────────────────────
 const connStatus = document.getElementById('conn-status');
 const connText   = document.getElementById('conn-text');
-pingAutopilot().then(({ connected }) => {
+(async () => {
+  const dest = await getActiveDestination();
+  const { connected } = await dest.ping();
+  const isNotion = dest.id === 'notion';
   connStatus.classList.add(connected ? 'ok' : 'bad');
-  connText.textContent = connected ? t('popup_conn_ok') : t('popup_conn_bad');
+  connText.textContent = connected
+    ? t(isNotion ? 'popup_conn_ok_notion' : 'popup_conn_ok')
+    : t(isNotion ? 'popup_conn_bad_notion' : 'popup_conn_bad');
   if (!connected) {
     connText.addEventListener('click', () => {
       chrome.tabs.create({ url: chrome.runtime.getURL('welcome.html') });
     });
   }
-});
+})();
 
 const btnScreenshot   = document.getElementById('btn-screenshot');
 const btnHook         = document.getElementById('btn-hook');
