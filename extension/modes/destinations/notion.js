@@ -143,3 +143,53 @@ export function findSection(children, mode) {
   }
   return headingId ? { headingId, contentIds } : null;
 }
+
+// ── Database / page management ───────────────────────────────────────────────
+export async function ensureDataSource(cfg) {
+  if (cfg.dataSourceId) return cfg.dataSourceId;
+  const pageId = parsePageId(cfg.parentUrl);
+  if (!pageId) throw new Error(t('err_notion_not_configured'));
+  const db = await notionRequest('/databases', { method: 'POST', token: cfg.token, body: {
+    parent: { type: 'page_id', page_id: pageId },
+    title: [{ type: 'text', text: { content: 'Video Clips' } }],
+    initial_data_source: { properties: {
+      Title:    { title: {} },
+      URL:      { url: {} },
+      Platform: { select: {} },
+      Captured: { date: {} },
+    } },
+  } });
+  let dsId = db.data_sources?.[0]?.id;
+  if (!dsId) {
+    // Older response shape safety net: retrieve the database for its sources.
+    const full = await notionRequest(`/databases/${db.id}`, { token: cfg.token });
+    dsId = full.data_sources?.[0]?.id;
+  }
+  await chrome.storage.local.set({ sc_notion_ds: dsId });
+  return dsId;
+}
+
+export async function findPageByUrl(cfg, dsId, url) {
+  const r = await notionRequest(`/data_sources/${dsId}/query`, { method: 'POST', token: cfg.token, body: {
+    filter: { property: 'URL', url: { equals: url } },
+    page_size: 1,
+  } });
+  return r.results?.[0]?.id || null;
+}
+
+export async function createVideoPage(cfg, dsId, payload) {
+  const url = payload.url || payload.video_url;
+  const body = {
+    parent: { type: 'data_source_id', data_source_id: dsId },
+    properties: {
+      Title:    { title: [{ type: 'text', text: { content: payload.video_title || payload.title || url } }] },
+      URL:      { url },
+      Platform: { select: { name: payload.platform || 'other' } },
+      Captured: { date: { start: payload.captured_at } },
+    },
+  };
+  const cover = payload.cover_url || payload.thumbnail_url;
+  if (cover) body.cover = { type: 'external', external: { url: cover } };
+  const page = await notionRequest('/pages', { method: 'POST', token: cfg.token, body });
+  return page.id;
+}

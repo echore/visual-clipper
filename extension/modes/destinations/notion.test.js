@@ -20,7 +20,7 @@ globalThis.chrome = {
           getUILanguage: () => 'en' },
 };
 
-import { parsePageId, notionRequest, ping, NOTION_VERSION, SECTION_TITLES, sectionTitleFor, chunkText, collectImages, payloadToBlocks, findSection } from './notion.js';
+import { parsePageId, notionRequest, ping, NOTION_VERSION, SECTION_TITLES, sectionTitleFor, chunkText, collectImages, payloadToBlocks, findSection, ensureDataSource, findPageByUrl, createVideoPage } from './notion.js';
 
 const ok  = (json) => ({ ok: true,  status: 200, json: async () => json });
 const err = (status) => ({ ok: false, status, json: async () => ({ message: 'x' }) });
@@ -147,5 +147,58 @@ describe('findSection', () => {
   });
   test('returns null when the section is absent', () => {
     expect(findSection([h2('a', 'Hook'), p('b')], 'screenshot')).toBeNull();
+  });
+});
+
+describe('ensureDataSource', () => {
+  test('returns cached id without network', async () => {
+    const calls = mockFetch(() => ok({}));
+    expect(await ensureDataSource({ token: 'T', dataSourceId: 'DS1' })).toBe('DS1');
+    expect(calls.length).toBe(0);
+  });
+  test('creates database under parent page and caches the data source id', async () => {
+    globalThis.__stored = {};
+    const calls = mockFetch(() => ok({ id: 'DB1', data_sources: [{ id: 'DS9', name: 'Video Clips' }] }));
+    const ds = await ensureDataSource({ token: 'T', dataSourceId: null,
+      parentUrl: 'https://notion.so/p-0123456789abcdef0123456789abcdef' });
+    expect(ds).toBe('DS9');
+    const body = JSON.parse(calls[0].init.body);
+    expect(calls[0].url).toBe('https://api.notion.com/v1/databases');
+    expect(body.parent).toEqual({ type: 'page_id', page_id: '0123456789abcdef0123456789abcdef' });
+    expect(body.initial_data_source.properties.URL).toEqual({ url: {} });
+    expect(globalThis.__stored.sc_notion_ds).toBe('DS9');
+  });
+  test('no parent url → localized not-configured error', async () => {
+    await expect(ensureDataSource({ token: 'T', dataSourceId: null, parentUrl: null })).rejects.toThrow();
+  });
+});
+
+describe('findPageByUrl', () => {
+  test('queries the data source by URL property', async () => {
+    const calls = mockFetch(() => ok({ results: [{ id: 'PG1' }] }));
+    expect(await findPageByUrl({ token: 'T' }, 'DS9', 'https://v/1')).toBe('PG1');
+    expect(calls[0].url).toBe('https://api.notion.com/v1/data_sources/DS9/query');
+    const body = JSON.parse(calls[0].init.body);
+    expect(body.filter).toEqual({ property: 'URL', url: { equals: 'https://v/1' } });
+  });
+  test('miss → null', async () => {
+    mockFetch(() => ok({ results: [] }));
+    expect(await findPageByUrl({ token: 'T' }, 'DS9', 'https://v/2')).toBeNull();
+  });
+});
+
+describe('createVideoPage', () => {
+  test('creates page with properties and external cover', async () => {
+    const calls = mockFetch(() => ok({ id: 'PG2' }));
+    const pageId = await createVideoPage({ token: 'T' }, 'DS9', {
+      mode: 'thumbnail', video_url: 'https://v/1', title: 'T1', platform: 'youtube',
+      captured_at: '2026-07-13T00:00:00.000Z', thumbnail_url: 'https://img/c.jpg',
+    });
+    expect(pageId).toBe('PG2');
+    const body = JSON.parse(calls[0].init.body);
+    expect(body.parent).toEqual({ type: 'data_source_id', data_source_id: 'DS9' });
+    expect(body.properties.URL).toEqual({ url: 'https://v/1' });
+    expect(body.properties.Platform).toEqual({ select: { name: 'youtube' } });
+    expect(body.cover).toEqual({ type: 'external', external: { url: 'https://img/c.jpg' } });
   });
 });
