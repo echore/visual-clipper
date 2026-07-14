@@ -83,11 +83,25 @@ document.getElementById('btn-notion-save').addEventListener('click', async () =>
   const token = document.getElementById('notion-token').value.trim();
   const parent = document.getElementById('notion-parent').value.trim();
   const status = document.getElementById('notion-config-status');
-  if (!parsePageId(parent)) { status.textContent = t('welcome_notion_invalid_parent'); return; }
+  if (!parsePageId(parent)) {
+    status.textContent = t('welcome_notion_invalid_parent');
+    status.classList.add('bad');
+    status.classList.remove('ok');
+    return;
+  }
   const prev = await chrome.storage.local.get('sc_notion_parent');
   if (prev.sc_notion_parent !== parent) await chrome.storage.local.remove('sc_notion_ds'); // 换父页面 → 旧库缓存作废
   await chrome.storage.local.set({ sc_notion_token: token, sc_notion_parent: parent });
   const { connected } = await notionPing();
   status.textContent = t(connected ? 'welcome_notion_ok' : 'welcome_notion_bad');
+  status.classList.toggle('ok', connected);
+  status.classList.toggle('bad', !connected);
   refreshStatus();
 });
+
+// Guide screenshots are optional: slots stay hidden until the image file
+// actually loads, so a missing guide/*.png never shows a broken image.
+for (const img of document.querySelectorAll('img.shot')) {
+  img.addEventListener('load', () => { img.style.display = 'block'; });
+  if (img.complete && img.naturalWidth > 0) img.style.display = 'block';
+}

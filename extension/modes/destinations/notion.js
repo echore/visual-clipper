@@ -145,26 +145,79 @@ export function findSection(children, mode) {
 }
 
 // ── Database / page management ───────────────────────────────────────────────
+// A data source qualifies if its URL property is url-typed — that's what
+// findPageByUrl filters on. Name and locale of the database don't matter,
+// so duplicated templates work whatever they're called (视频库, Video Clips…).
+async function schemaOk(cfg, dsId) {
+  try {
+    const ds = await notionRequest(`/data_sources/${dsId}`, { token: cfg.token });
+    return ds.properties?.URL?.type === 'url';
+  } catch (_) { return false; }
+}
+
+// Is this id a database? Returns its first schema-valid data source id, or
+// { isDatabase: true, dsId: null } when it's a database with the wrong schema.
+async function probeDatabase(cfg, id) {
+  let db;
+  try {
+    db = await notionRequest(`/databases/${id}`, { token: cfg.token });
+  } catch (_) {
+    return { isDatabase: false, dsId: null };
+  }
+  for (const src of db.data_sources || []) {
+    if (await schemaOk(cfg, src.id)) return { isDatabase: true, dsId: src.id };
+  }
+  return { isDatabase: true, dsId: null };
+}
+
+// Page pasted instead: adopt the first schema-valid child database on it
+// (the duplicated-template case), or null so the caller creates one.
+async function adoptChildDatabase(cfg, pageId) {
+  try {
+    for (const b of await listChildren(cfg, pageId)) {
+      if (b.type !== 'child_database') continue;
+      const { dsId } = await probeDatabase(cfg, b.id);
+      if (dsId) return dsId;
+    }
+  } catch (_) {}
+  return null;
+}
+
 export async function ensureDataSource(cfg) {
   if (cfg.dataSourceId) return cfg.dataSourceId;
-  const pageId = parsePageId(cfg.parentUrl);
-  if (!pageId) throw new Error(t('err_notion_not_configured'));
-  const db = await notionRequest('/databases', { method: 'POST', token: cfg.token, body: {
-    parent: { type: 'page_id', page_id: pageId },
-    title: [{ type: 'text', text: { content: 'Video Clips' } }],
-    initial_data_source: { properties: {
-      Title:    { title: {} },
-      URL:      { url: {} },
-      Platform: { select: {} },
-      Captured: { date: {} },
-    } },
-  } });
-  let dsId = db.data_sources?.[0]?.id;
-  if (!dsId) {
-    // Older response shape safety net: retrieve the database for its sources.
-    const full = await notionRequest(`/databases/${db.id}`, { token: cfg.token });
-    dsId = full.data_sources?.[0]?.id;
+  const targetId = parsePageId(cfg.parentUrl);
+  if (!targetId) throw new Error(t('err_notion_not_configured'));
+
+  // The pasted link may be a database itself (a duplicated template).
+  const probe = await probeDatabase(cfg, targetId);
+  let dsId;
+  if (probe.isDatabase) {
+    if (!probe.dsId) throw new Error(t('err_notion_bad_schema'));
+    dsId = probe.dsId;
+  } else {
+    dsId = await adoptChildDatabase(cfg, targetId);
   }
+
+  if (!dsId) {
+    // Plain page with no usable database on it: create our own.
+    const db = await notionRequest('/databases', { method: 'POST', token: cfg.token, body: {
+      parent: { type: 'page_id', page_id: targetId },
+      title: [{ type: 'text', text: { content: 'Video Clips' } }],
+      initial_data_source: { properties: {
+        Title:    { title: {} },
+        URL:      { url: {} },
+        Platform: { select: {} },
+        Captured: { date: {} },
+      } },
+    } });
+    dsId = db.data_sources?.[0]?.id;
+    if (!dsId) {
+      // Older response shape safety net: retrieve the database for its sources.
+      const full = await notionRequest(`/databases/${db.id}`, { token: cfg.token });
+      dsId = full.data_sources?.[0]?.id;
+    }
+  }
+
   await chrome.storage.local.set({ sc_notion_ds: dsId });
   return dsId;
 }

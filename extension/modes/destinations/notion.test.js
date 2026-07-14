@@ -151,23 +151,87 @@ describe('findSection', () => {
 });
 
 describe('ensureDataSource', () => {
+  const PAGE_URL = 'https://notion.so/p-0123456789abcdef0123456789abcdef';
+  const TARGET = '0123456789abcdef0123456789abcdef';
+
   test('returns cached id without network', async () => {
     const calls = mockFetch(() => ok({}));
     expect(await ensureDataSource({ token: 'T', dataSourceId: 'DS1' })).toBe('DS1');
     expect(calls.length).toBe(0);
   });
-  test('creates database under parent page and caches the data source id', async () => {
+
+  test('plain page: creates database under it and caches the data source id', async () => {
     globalThis.__stored = {};
-    const calls = mockFetch(() => ok({ id: 'DB1', data_sources: [{ id: 'DS9', name: 'Video Clips' }] }));
-    const ds = await ensureDataSource({ token: 'T', dataSourceId: null,
-      parentUrl: 'https://notion.so/p-0123456789abcdef0123456789abcdef' });
+    const calls = mockFetch(({ url, init }) => {
+      if (url.endsWith(`/databases/${TARGET}`) && init.method === 'GET') return err(404); // not a database
+      if (url.includes('/blocks/') && init.method === 'GET') return ok({ results: [], has_more: false });
+      if (url.endsWith('/databases') && init.method === 'POST')
+        return ok({ id: 'DB1', data_sources: [{ id: 'DS9', name: 'Video Clips' }] });
+      throw new Error('unhandled ' + url);
+    });
+    const ds = await ensureDataSource({ token: 'T', dataSourceId: null, parentUrl: PAGE_URL });
     expect(ds).toBe('DS9');
-    const body = JSON.parse(calls[0].init.body);
-    expect(calls[0].url).toBe('https://api.notion.com/v1/databases');
-    expect(body.parent).toEqual({ type: 'page_id', page_id: '0123456789abcdef0123456789abcdef' });
+    const create = calls.find((c) => c.init.method === 'POST');
+    const body = JSON.parse(create.init.body);
+    expect(create.url).toBe('https://api.notion.com/v1/databases');
+    expect(body.parent).toEqual({ type: 'page_id', page_id: TARGET });
     expect(body.initial_data_source.properties.URL).toEqual({ url: {} });
     expect(globalThis.__stored.sc_notion_ds).toBe('DS9');
   });
+
+  test('pasted link is a database (duplicated template): adopts its data source, creates nothing', async () => {
+    globalThis.__stored = {};
+    const calls = mockFetch(({ url, init }) => {
+      if (url.endsWith(`/databases/${TARGET}`) && init.method === 'GET')
+        return ok({ id: TARGET, data_sources: [{ id: 'DS_T' }] });
+      if (url.endsWith('/data_sources/DS_T') && init.method === 'GET')
+        return ok({ properties: { URL: { type: 'url' }, Title: { type: 'title' } } });
+      throw new Error('unhandled ' + url);
+    });
+    expect(await ensureDataSource({ token: 'T', dataSourceId: null, parentUrl: PAGE_URL })).toBe('DS_T');
+    expect(calls.some((c) => c.init.method === 'POST')).toBe(false);
+    expect(globalThis.__stored.sc_notion_ds).toBe('DS_T');
+  });
+
+  test('database link with wrong schema → localized bad-schema error, creates nothing', async () => {
+    mockFetch(({ url, init }) => {
+      if (url.endsWith(`/databases/${TARGET}`) && init.method === 'GET')
+        return ok({ id: TARGET, data_sources: [{ id: 'DS_T' }] });
+      if (url.endsWith('/data_sources/DS_T')) return ok({ properties: { URL: { type: 'rich_text' } } });
+      throw new Error('unhandled ' + url);
+    });
+    await expect(ensureDataSource({ token: 'T', dataSourceId: null, parentUrl: PAGE_URL }))
+      .rejects.toThrow(/propert|属性/i);
+  });
+
+  test('page containing a duplicated template: adopts the schema-valid child database, any name', async () => {
+    globalThis.__stored = {};
+    mockFetch(({ url, init }) => {
+      if (url.endsWith(`/databases/${TARGET}`) && init.method === 'GET') return err(404);
+      if (url.includes('/blocks/') && init.method === 'GET')
+        return ok({ results: [{ id: 'CDB', type: 'child_database', child_database: { title: '视频库' } }], has_more: false });
+      if (url.endsWith('/databases/CDB') && init.method === 'GET') return ok({ id: 'CDB', data_sources: [{ id: 'DS_C' }] });
+      if (url.endsWith('/data_sources/DS_C')) return ok({ properties: { URL: { type: 'url' } } });
+      throw new Error('unhandled ' + url);
+    });
+    expect(await ensureDataSource({ token: 'T', dataSourceId: null, parentUrl: PAGE_URL })).toBe('DS_C');
+    expect(globalThis.__stored.sc_notion_ds).toBe('DS_C');
+  });
+
+  test('page whose child database has wrong schema → falls through to creating our own', async () => {
+    globalThis.__stored = {};
+    mockFetch(({ url, init }) => {
+      if (url.endsWith(`/databases/${TARGET}`) && init.method === 'GET') return err(404);
+      if (url.includes('/blocks/') && init.method === 'GET')
+        return ok({ results: [{ id: 'CDB', type: 'child_database', child_database: { title: 'Notes' } }], has_more: false });
+      if (url.endsWith('/databases/CDB') && init.method === 'GET') return ok({ id: 'CDB', data_sources: [{ id: 'DS_C' }] });
+      if (url.endsWith('/data_sources/DS_C')) return ok({ properties: { Name: { type: 'title' } } });
+      if (url.endsWith('/databases') && init.method === 'POST') return ok({ id: 'DB1', data_sources: [{ id: 'DS_NEW' }] });
+      throw new Error('unhandled ' + url);
+    });
+    expect(await ensureDataSource({ token: 'T', dataSourceId: null, parentUrl: PAGE_URL })).toBe('DS_NEW');
+  });
+
   test('no parent url → localized not-configured error', async () => {
     await expect(ensureDataSource({ token: 'T', dataSourceId: null, parentUrl: null })).rejects.toThrow();
   });

@@ -37,6 +37,18 @@
       border-radius: 8px; text-decoration: none; font: 600 13px system-ui; }
     .dl-btn:hover { background: #4f46e5; }
     .alt { font-size: 13px; color: #6b7280; }
+    .dest-choice label { display: block; margin: 4px 0; cursor: pointer; }
+    .setup-panel { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 10px;
+      padding: 4px 18px 14px; margin-top: 12px; }
+    .setup-panel .field { display: block; width: 100%; box-sizing: border-box; padding: 8px 10px;
+      margin: 4px 0 10px; border: 1px solid #d1d5db; border-radius: 6px; font: 13px monospace; }
+    .setup-panel .field:focus { outline: none; border-color: #6366f1; }
+    .setup-panel label { font-size: 13px; color: #374151; }
+    .shot { display: none; width: 100%; border: 1px solid #e5e7eb; border-radius: 8px;
+      margin: 10px 0 2px; }
+    .cfg-status { font-size: 13px; margin-left: 10px; }
+    .cfg-status.ok  { color: #059669; }
+    .cfg-status.bad { color: #dc2626; }
   </style>
 </head>
 <body>
@@ -49,18 +61,45 @@
     <div class="detail" id="conn-detail"></div>
   </div>
 
-  <section class="card" id="dest-card">
+  <section id="dest-card">
     <h2 data-i18n="welcome_dest_title"></h2>
-    <label><input type="radio" name="dest" value="obsidian" id="dest-obsidian"> <span data-i18n="welcome_dest_obsidian"></span></label>
-    <label><input type="radio" name="dest" value="notion" id="dest-notion"> <span data-i18n="welcome_dest_notion"></span></label>
-    <div id="notion-setup" style="display:none">
-      <p data-i18n-html="welcome_notion_pat_help_html"></p>
-      <label data-i18n="welcome_notion_token_label"></label>
-      <input type="password" id="notion-token" autocomplete="off">
-      <label data-i18n="welcome_notion_parent_label"></label>
-      <input type="text" id="notion-parent" placeholder="https://www.notion.so/…">
-      <button id="btn-notion-save" data-i18n="welcome_notion_save_test"></button>
-      <span id="notion-config-status"></span>
+    <div class="dest-choice">
+      <label><input type="radio" name="dest" value="obsidian" id="dest-obsidian"> <span data-i18n="welcome_dest_obsidian"></span></label>
+      <label><input type="radio" name="dest" value="notion" id="dest-notion"> <span data-i18n="welcome_dest_notion"></span></label>
+    </div>
+    <div id="notion-setup" class="setup-panel" style="display:none">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div>
+          <p data-i18n="welcome_notion_s1"></p>
+          <p><a class="dl-btn" target="_blank" rel="noopener"
+                href="https://www.notion.so/profile/integrations"
+                data-i18n="welcome_notion_s1_link"></a></p>
+          <img class="shot" src="guide/notion-step-1.png" alt="">
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div>
+          <p data-i18n="welcome_notion_s2"></p>
+          <p><a class="dl-btn" target="_blank" rel="noopener"
+                data-i18n="welcome_notion_s2_link" data-i18n-href="welcome_notion_tpl_url"></a></p>
+          <p class="alt" data-i18n="welcome_notion_s2_alt"></p>
+          <img class="shot" src="guide/notion-step-2.png" alt="">
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div style="flex:1">
+          <p data-i18n="welcome_notion_s3"></p>
+          <label data-i18n="welcome_notion_token_label"></label>
+          <input type="password" id="notion-token" class="field" autocomplete="off">
+          <label data-i18n="welcome_notion_parent_label"></label>
+          <input type="text" id="notion-parent" class="field" placeholder="https://www.notion.so/…">
+          <p><button class="act" id="btn-notion-save" data-i18n="welcome_notion_save_test"></button>
+          <span id="notion-config-status" class="cfg-status"></span></p>
+        </div>
+      </div>
     </div>
   </section>
 
