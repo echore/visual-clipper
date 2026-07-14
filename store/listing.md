@@ -33,7 +33,7 @@ Capture the same video more than once — cover today, a hook frame tomorrow —
 
 **Why it's different:**
 
-- **Local-first.** Every clip is a direct HTTP request from your browser to a server that only exists on your own machine, running inside your own Obsidian.
+- **Local-first by default.** In Obsidian mode, every clip is a direct HTTP request from your browser to a server that only exists on your own machine, running inside your own Obsidian; in Notion mode, clips go directly from your browser to your own authorized Notion workspace.
 - **No accounts, no telemetry, no developer-operated servers.** Data is sent only to localhost (Obsidian mode), or your own authorized Notion workspace (Notion mode) — there is nothing to sign up for with us, and nothing being tracked.
 - **Zero-config onboarding.** Install both pieces and a live welcome page checks the connection for you, then points you at a sample video to make your first real clip.
 - **Actionable errors.** If something's not connected, you get a plain-language explanation of what to check — not a stack trace.
@@ -59,7 +59,7 @@ Capture the same video more than once — cover today, a hook frame tomorrow —
 
 **它的不同之处：**
 
-- **本地优先。** 每一次剪藏都是浏览器到你自己电脑上服务的直接请求，这个服务运行在你自己的 Obsidian 里。
+- **默认本地优先。** Obsidian 模式下，每一次剪藏都是浏览器到你自己电脑上服务的直接请求，这个服务运行在你自己的 Obsidian 里；Notion 模式下，剪藏由浏览器直达你自己授权的 Notion 工作区。
 - **无账号、无遥测、无开发者服务器。** 数据仅发送到 localhost（Obsidian 模式），或你自己授权的 Notion 工作区（Notion 模式）；不需要注册任何东西，也不会被追踪任何东西。
 - **零配置上手。** 装好两件套后，一个实时自检的引导页会帮你确认连接，并给你一个示例视频完成第一条真实剪藏。
 - **人话报错。** 连不上的时候，提示会告诉你该检查什么，而不是一段技术性异常信息。
