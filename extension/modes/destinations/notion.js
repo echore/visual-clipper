@@ -297,7 +297,7 @@ export async function upsertSection(cfg, pageId, mode, blocks) {
       await notionRequest(`/blocks/${blockId}`, { method: 'DELETE', token: cfg.token });
     }
     await notionRequest(`/blocks/${pageId}/children`, { method: 'PATCH', token: cfg.token,
-      body: { children: blocks, after: section.headingId } });
+      body: { children: blocks, position: { type: 'after_block', after_block: { id: section.headingId } } } });
   } else {
     const heading = { object: 'block', type: 'heading_2',
       heading_2: { rich_text: [{ type: 'text', text: { content: sectionTitleFor(mode) } }] } };

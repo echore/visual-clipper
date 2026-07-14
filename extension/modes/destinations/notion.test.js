@@ -322,7 +322,7 @@ describe('upsertSection', () => {
     const deletes = calls.filter((c) => c.init.method === 'DELETE').map((c) => c.url);
     expect(deletes).toEqual(['https://api.notion.com/v1/blocks/old1', 'https://api.notion.com/v1/blocks/old2']);
     const patch = calls.find((c) => c.init.method === 'PATCH');
-    expect(JSON.parse(patch.init.body).after).toBe('H');
+    expect(JSON.parse(patch.init.body).position).toEqual({ type: 'after_block', after_block: { id: 'H' } });
   });
 
   test('missing section: appends heading + content at page end', async () => {
@@ -333,7 +333,7 @@ describe('upsertSection', () => {
     });
     await upsertSection({ token: 'T' }, 'PG', 'keyframe', []);
     const body = JSON.parse(calls.find((c) => c.init.method === 'PATCH').init.body);
-    expect(body.after).toBeUndefined();
+    expect(body.position).toBeUndefined();
     expect(body.children[0].type).toBe('heading_2');
     expect(body.children[0].heading_2.rich_text[0].text.content).toBe('Keyframes'); // en stub locale
   });
