@@ -1,4 +1,5 @@
-import { pingAutopilot, getPort, DEFAULT_PORT } from './modes/utils.js';
+import { pingAutopilot, getPort, DEFAULT_PORT } from './modes/destinations/obsidian.js';
+import { ping as notionPing, parsePageId } from './modes/destinations/notion.js';
 import { t, localizeDocument } from './modes/i18n.js';
 
 localizeDocument();
@@ -9,7 +10,26 @@ const connDetail   = document.getElementById('conn-detail');
 const installGuide = document.getElementById('install-guide');
 const tryIt        = document.getElementById('try-it');
 
+async function getDest() {
+  const { sc_destination } = await chrome.storage.local.get('sc_destination');
+  return sc_destination === 'notion' ? 'notion' : 'obsidian';
+}
+
 async function refreshStatus() {
+  const dest = await getDest();
+  document.getElementById('notion-setup').style.display = dest === 'notion' ? 'block' : 'none';
+  document.getElementById('adv-port').style.display = dest === 'notion' ? 'none' : '';
+  if (dest === 'notion') {
+    const { connected } = await notionPing();
+    connCheck.classList.toggle('ok', connected);
+    connCheck.classList.toggle('bad', !connected);
+    installGuide.style.display = 'none';
+    tryIt.style.display = connected ? 'block' : 'none';
+    connStatus.textContent = t(connected ? 'welcome_conn_ok_notion' : 'welcome_conn_bad_notion');
+    connDetail.textContent = '';
+    return;
+  }
+  // —— 以下为现有 Obsidian 分支，原样保留 ——
   const { connected, version } = await pingAutopilot();
   connCheck.classList.toggle('ok', connected);
   connCheck.classList.toggle('bad', !connected);
@@ -42,5 +62,32 @@ document.getElementById('btn-save-port').addEventListener('click', async () => {
   if (n === DEFAULT_PORT) await chrome.storage.local.remove('sc_port');
   else await chrome.storage.local.set({ sc_port: n });
   portSaved.textContent = t('welcome_port_saved');
+  refreshStatus();
+});
+
+// Destination radios
+getDest().then((d) => { document.getElementById(`dest-${d}`).checked = true; });
+for (const radio of document.querySelectorAll('input[name="dest"]')) {
+  radio.addEventListener('change', async (e) => {
+    await chrome.storage.local.set({ sc_destination: e.target.value });
+    refreshStatus();
+  });
+}
+
+// Notion config: save & test
+chrome.storage.local.get(['sc_notion_token', 'sc_notion_parent']).then((s) => {
+  if (s.sc_notion_token) document.getElementById('notion-token').value = s.sc_notion_token;
+  if (s.sc_notion_parent) document.getElementById('notion-parent').value = s.sc_notion_parent;
+});
+document.getElementById('btn-notion-save').addEventListener('click', async () => {
+  const token = document.getElementById('notion-token').value.trim();
+  const parent = document.getElementById('notion-parent').value.trim();
+  const status = document.getElementById('notion-config-status');
+  if (!parsePageId(parent)) { status.textContent = t('welcome_notion_invalid_parent'); return; }
+  const prev = await chrome.storage.local.get('sc_notion_parent');
+  if (prev.sc_notion_parent !== parent) await chrome.storage.local.remove('sc_notion_ds'); // 换父页面 → 旧库缓存作废
+  await chrome.storage.local.set({ sc_notion_token: token, sc_notion_parent: parent });
+  const { connected } = await notionPing();
+  status.textContent = t(connected ? 'welcome_notion_ok' : 'welcome_notion_bad');
   refreshStatus();
 });
