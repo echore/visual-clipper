@@ -10,9 +10,9 @@ Productivity
 
 ## Short description (≤132 characters)
 
-> Screenshot regions, video covers, hook frames & keyframes from any page — straight into your local Obsidian vault. No cloud.
+> Screenshot regions, video covers, hook frames & keyframes from any page — into your local Obsidian vault or Notion. No dev servers.
 
-(120 characters)
+(131 characters)
 
 ## Detailed description
 

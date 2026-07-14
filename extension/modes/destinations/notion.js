@@ -185,7 +185,7 @@ export async function createVideoPage(cfg, dsId, payload) {
       Title:    { title: [{ type: 'text', text: { content: payload.video_title || payload.title || url } }] },
       URL:      { url },
       Platform: { select: { name: payload.platform || 'other' } },
-      Captured: { date: { start: payload.captured_at } },
+      ...(payload.captured_at ? { Captured: { date: { start: payload.captured_at } } } : {}),
     },
   };
   const cover = payload.cover_url || payload.thumbnail_url;

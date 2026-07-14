@@ -14,7 +14,7 @@
   "welcome_dest_title":          { "message": "Where to save" },
   "welcome_dest_obsidian":       { "message": "Obsidian (on this computer, via vault-autopilot)" },
   "welcome_dest_notion":         { "message": "Notion (your workspace, using your own token)" },
-  "welcome_notion_pat_help_html":{ "message": "Create a personal access token in Notion (<a href=\"https://developers.notion.com/guides/get-started/personal-access-tokens\" target=\"_blank\">how-to guide</a>), then paste it below together with the link of the Notion page the clips database should live under." },
+  "welcome_notion_pat_help_html":{ "message": "Create a personal access token in Notion (<a href=\"https://developers.notion.com/guides/get-started/personal-access-tokens\" target=\"_blank\" rel=\"noopener\">how-to guide</a>), then paste it below together with the link of the Notion page the clips database should live under." },
   "welcome_notion_token_label":  { "message": "Personal access token:" },
   "welcome_notion_parent_label": { "message": "Notion page link (the “Video Clips” database is created under it):" },
   "welcome_notion_save_test":    { "message": "Save & test" },

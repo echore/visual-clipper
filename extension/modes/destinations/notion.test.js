@@ -201,6 +201,15 @@ describe('createVideoPage', () => {
     expect(body.properties.Platform).toEqual({ select: { name: 'youtube' } });
     expect(body.cover).toEqual({ type: 'external', external: { url: 'https://img/c.jpg' } });
   });
+
+  test('no captured_at → properties has no Captured key', async () => {
+    const calls = mockFetch(() => ok({ id: 'PG3' }));
+    await createVideoPage({ token: 'T' }, 'DS9', {
+      mode: 'thumbnail', video_url: 'https://v/2', title: 'T2', platform: 'youtube',
+    });
+    const body = JSON.parse(calls[0].init.body);
+    expect(body.properties).not.toHaveProperty('Captured');
+  });
 });
 
 describe('uploadImage', () => {
