@@ -90,7 +90,7 @@ document.getElementById('btn-notion-save').addEventListener('click', async () =>
     return;
   }
   const prev = await chrome.storage.local.get('sc_notion_parent');
-  if (prev.sc_notion_parent !== parent) await chrome.storage.local.remove('sc_notion_ds'); // 换父页面 → 旧库缓存作废
+  if (prev.sc_notion_parent !== parent) await chrome.storage.local.remove(['sc_notion_ds', 'sc_notion_props']); // 换父页面 → 旧库缓存作废
   await chrome.storage.local.set({ sc_notion_token: token, sc_notion_parent: parent });
   const { connected } = await notionPing();
   status.textContent = t(connected ? 'welcome_notion_ok' : 'welcome_notion_bad');

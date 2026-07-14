@@ -145,6 +145,6 @@
   "err_notion_target":  { "message": "Notion page or database not found — re-select the page on the guide page and try again." },
   "err_notion_rate":    { "message": "Notion is rate-limiting requests — wait a moment and try again." },
   "err_notion_network": { "message": "Can't reach Notion — check your network connection." },
-  "err_notion_bad_schema": { "message": "That Notion database is missing the required properties — it needs Title, URL (URL type), Platform and Captured. Fix the database's properties, or paste a plain page link instead." },
+  "err_notion_bad_schema": { "message": "That Notion database has no URL-type property — add a column of type URL to it (any name), or paste a plain page link instead." },
   "default_title_screenshot": { "message": "Screenshot" }
 }

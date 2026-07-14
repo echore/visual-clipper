@@ -20,7 +20,7 @@ globalThis.chrome = {
           getUILanguage: () => 'en' },
 };
 
-import { parsePageId, notionRequest, ping, NOTION_VERSION, SECTION_TITLES, sectionTitleFor, chunkText, collectImages, payloadToBlocks, findSection, ensureDataSource, findPageByUrl, createVideoPage, uploadImage, upsertSection, send } from './notion.js';
+import { parsePageId, notionRequest, ping, NOTION_VERSION, SECTION_TITLES, sectionTitleFor, chunkText, collectImages, payloadToBlocks, findSection, resolveProps, ensureDataSource, findPageByUrl, createVideoPage, uploadImage, upsertSection, send } from './notion.js';
 
 const ok  = (json) => ({ ok: true,  status: 200, json: async () => json });
 const err = (status) => ({ ok: false, status, json: async () => ({ message: 'x' }) });
@@ -154,9 +154,17 @@ describe('ensureDataSource', () => {
   const PAGE_URL = 'https://notion.so/p-0123456789abcdef0123456789abcdef';
   const TARGET = '0123456789abcdef0123456789abcdef';
 
-  test('returns cached id without network', async () => {
+  test('returns cached id and props without network', async () => {
     const calls = mockFetch(() => ok({}));
-    expect(await ensureDataSource({ token: 'T', dataSourceId: 'DS1' })).toBe('DS1');
+    const r = await ensureDataSource({ token: 'T', dataSourceId: 'DS1', props: { title: '标题', url: '网址', select: null, date: null } });
+    expect(r).toEqual({ dsId: 'DS1', props: { title: '标题', url: '网址', select: null, date: null } });
+    expect(calls.length).toBe(0);
+  });
+
+  test('cached id without cached props falls back to English defaults (pre-existing users)', async () => {
+    const calls = mockFetch(() => ok({}));
+    const r = await ensureDataSource({ token: 'T', dataSourceId: 'DS1', props: null });
+    expect(r.props).toEqual({ title: 'Title', url: 'URL', select: 'Platform', date: 'Captured' });
     expect(calls.length).toBe(0);
   });
 
@@ -169,8 +177,9 @@ describe('ensureDataSource', () => {
         return ok({ id: 'DB1', data_sources: [{ id: 'DS9', name: 'Video Clips' }] });
       throw new Error('unhandled ' + url);
     });
-    const ds = await ensureDataSource({ token: 'T', dataSourceId: null, parentUrl: PAGE_URL });
-    expect(ds).toBe('DS9');
+    const r = await ensureDataSource({ token: 'T', dataSourceId: null, parentUrl: PAGE_URL });
+    expect(r.dsId).toBe('DS9');
+    expect(r.props).toEqual({ title: 'Title', url: 'URL', select: 'Platform', date: 'Captured' });
     const create = calls.find((c) => c.init.method === 'POST');
     const body = JSON.parse(create.init.body);
     expect(create.url).toBe('https://api.notion.com/v1/databases');
@@ -188,9 +197,11 @@ describe('ensureDataSource', () => {
         return ok({ properties: { URL: { type: 'url' }, Title: { type: 'title' } } });
       throw new Error('unhandled ' + url);
     });
-    expect(await ensureDataSource({ token: 'T', dataSourceId: null, parentUrl: PAGE_URL })).toBe('DS_T');
+    const r = await ensureDataSource({ token: 'T', dataSourceId: null, parentUrl: PAGE_URL });
+    expect(r.dsId).toBe('DS_T');
     expect(calls.some((c) => c.init.method === 'POST')).toBe(false);
     expect(globalThis.__stored.sc_notion_ds).toBe('DS_T');
+    expect(globalThis.__stored.sc_notion_props).toEqual({ title: 'Title', url: 'URL', select: null, date: null });
   });
 
   test('database link with wrong schema → localized bad-schema error, creates nothing', async () => {
@@ -204,18 +215,22 @@ describe('ensureDataSource', () => {
       .rejects.toThrow(/propert|属性/i);
   });
 
-  test('page containing a duplicated template: adopts the schema-valid child database, any name', async () => {
+  test('page containing a duplicated Chinese template: adopts it and resolves Chinese property names', async () => {
     globalThis.__stored = {};
     mockFetch(({ url, init }) => {
       if (url.endsWith(`/databases/${TARGET}`) && init.method === 'GET') return err(404);
       if (url.includes('/blocks/') && init.method === 'GET')
         return ok({ results: [{ id: 'CDB', type: 'child_database', child_database: { title: '视频库' } }], has_more: false });
       if (url.endsWith('/databases/CDB') && init.method === 'GET') return ok({ id: 'CDB', data_sources: [{ id: 'DS_C' }] });
-      if (url.endsWith('/data_sources/DS_C')) return ok({ properties: { URL: { type: 'url' } } });
+      if (url.endsWith('/data_sources/DS_C'))
+        return ok({ properties: { '标题': { type: 'title' }, '平台': { type: 'select' }, '网址': { type: 'url' }, '采集时间': { type: 'date' } } });
       throw new Error('unhandled ' + url);
     });
-    expect(await ensureDataSource({ token: 'T', dataSourceId: null, parentUrl: PAGE_URL })).toBe('DS_C');
+    const r = await ensureDataSource({ token: 'T', dataSourceId: null, parentUrl: PAGE_URL });
+    expect(r.dsId).toBe('DS_C');
+    expect(r.props).toEqual({ title: '标题', url: '网址', select: '平台', date: '采集时间' });
     expect(globalThis.__stored.sc_notion_ds).toBe('DS_C');
+    expect(globalThis.__stored.sc_notion_props).toEqual({ title: '标题', url: '网址', select: '平台', date: '采集时间' });
   });
 
   test('page whose child database has wrong schema → falls through to creating our own', async () => {
@@ -229,7 +244,7 @@ describe('ensureDataSource', () => {
       if (url.endsWith('/databases') && init.method === 'POST') return ok({ id: 'DB1', data_sources: [{ id: 'DS_NEW' }] });
       throw new Error('unhandled ' + url);
     });
-    expect(await ensureDataSource({ token: 'T', dataSourceId: null, parentUrl: PAGE_URL })).toBe('DS_NEW');
+    expect((await ensureDataSource({ token: 'T', dataSourceId: null, parentUrl: PAGE_URL })).dsId).toBe('DS_NEW');
   });
 
   test('no parent url → localized not-configured error', async () => {
@@ -349,5 +364,42 @@ describe('send', () => {
       captured_at: '2026-07-13T00:00:00.000Z', image: 'aGk=' });
     expect(r).toEqual({ success: true });
     expect(calls.some((c) => c.url.endsWith('/pages'))).toBe(false); // page existed, none created
+  });
+});
+
+describe('resolveProps', () => {
+  test('resolves by type regardless of names (Chinese template)', () => {
+    expect(resolveProps({ '标题': { type: 'title' }, '网址': { type: 'url' }, '平台': { type: 'select' }, '采集时间': { type: 'date' } }))
+      .toEqual({ title: '标题', url: '网址', select: '平台', date: '采集时间' });
+  });
+  test('select/date are optional', () => {
+    expect(resolveProps({ Name: { type: 'title' }, Link: { type: 'url' } }))
+      .toEqual({ title: 'Name', url: 'Link', select: null, date: null });
+  });
+  test('no url-typed property → null', () => {
+    expect(resolveProps({ Name: { type: 'title' }, URL: { type: 'rich_text' } })).toBeNull();
+    expect(resolveProps(undefined)).toBeNull();
+  });
+});
+
+describe('createVideoPage with resolved Chinese props', () => {
+  test('writes properties under resolved names and skips absent optional columns', async () => {
+    const calls = mockFetch(() => ok({ id: 'PG9' }));
+    await createVideoPage({ token: 'T' }, 'DS9',
+      { mode: 'screenshot', url: 'https://v/9', title: 'T9', platform: 'youtube', captured_at: '2026-07-13T00:00:00.000Z' },
+      { title: '标题', url: '网址', select: '平台', date: null });
+    const body = JSON.parse(calls[0].init.body);
+    expect(body.properties['标题'].title[0].text.content).toBe('T9');
+    expect(body.properties['网址']).toEqual({ url: 'https://v/9' });
+    expect(body.properties['平台']).toEqual({ select: { name: 'youtube' } });
+    expect(Object.keys(body.properties)).toEqual(['标题', '网址', '平台']); // date column absent → not written
+  });
+});
+
+describe('findPageByUrl with resolved props', () => {
+  test('filters on the resolved url property name', async () => {
+    const calls = mockFetch(() => ok({ results: [] }));
+    await findPageByUrl({ token: 'T' }, 'DS9', 'https://v/9', { title: '标题', url: '网址', select: null, date: null });
+    expect(JSON.parse(calls[0].init.body).filter.property).toBe('网址');
   });
 });

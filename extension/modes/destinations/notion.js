@@ -9,11 +9,12 @@ export const NOTION_API = 'https://api.notion.com/v1';
 export const NOTION_VERSION = '2026-03-11';
 
 export async function getNotionConfig() {
-  const s = await chrome.storage.local.get(['sc_notion_token', 'sc_notion_parent', 'sc_notion_ds']);
+  const s = await chrome.storage.local.get(['sc_notion_token', 'sc_notion_parent', 'sc_notion_ds', 'sc_notion_props']);
   return {
     token: s.sc_notion_token || null,
     parentUrl: s.sc_notion_parent || null,
     dataSourceId: s.sc_notion_ds || null,
+    props: s.sc_notion_props || null,
   };
 }
 
@@ -145,60 +146,74 @@ export function findSection(children, mode) {
 }
 
 // ── Database / page management ───────────────────────────────────────────────
-// A data source qualifies if its URL property is url-typed — that's what
-// findPageByUrl filters on. Name and locale of the database don't matter,
-// so duplicated templates work whatever they're called (视频库, Video Clips…).
-async function schemaOk(cfg, dsId) {
-  try {
-    const ds = await notionRequest(`/data_sources/${dsId}`, { token: cfg.token });
-    return ds.properties?.URL?.type === 'url';
-  } catch (_) { return false; }
+// Properties are resolved by TYPE, never by name, so databases in any language
+// work (标题/网址/平台/采集时间 as happily as Title/URL/Platform/Captured).
+// The only hard requirement is one url-typed property — findPageByUrl's upsert
+// key. Select (platform) and date (captured) are used when present, skipped
+// when not. Resolved names are cached in sc_notion_props next to the ds id.
+export const DEFAULT_PROPS = { title: 'Title', url: 'URL', select: 'Platform', date: 'Captured' };
+
+export function resolveProps(properties) {
+  const byType = (type) => Object.keys(properties || {}).find((k) => properties[k]?.type === type) || null;
+  const title = byType('title');
+  const url = byType('url');
+  if (!title || !url) return null;
+  return { title, url, select: byType('select'), date: byType('date') };
 }
 
-// Is this id a database? Returns its first schema-valid data source id, or
-// { isDatabase: true, dsId: null } when it's a database with the wrong schema.
+// Fetch a data source's schema and resolve its properties; null = unusable.
+async function probeSchema(cfg, dsId) {
+  try {
+    const ds = await notionRequest(`/data_sources/${dsId}`, { token: cfg.token });
+    return resolveProps(ds.properties);
+  } catch (_) { return null; }
+}
+
+// Is this id a database? Returns its first usable data source (+ resolved
+// props), or { isDatabase: true, dsId: null } for a database we can't use.
 async function probeDatabase(cfg, id) {
   let db;
   try {
     db = await notionRequest(`/databases/${id}`, { token: cfg.token });
   } catch (_) {
-    return { isDatabase: false, dsId: null };
+    return { isDatabase: false, dsId: null, props: null };
   }
   for (const src of db.data_sources || []) {
-    if (await schemaOk(cfg, src.id)) return { isDatabase: true, dsId: src.id };
+    const props = await probeSchema(cfg, src.id);
+    if (props) return { isDatabase: true, dsId: src.id, props };
   }
-  return { isDatabase: true, dsId: null };
+  return { isDatabase: true, dsId: null, props: null };
 }
 
-// Page pasted instead: adopt the first schema-valid child database on it
+// Page pasted instead: adopt the first usable child database on it
 // (the duplicated-template case), or null so the caller creates one.
 async function adoptChildDatabase(cfg, pageId) {
   try {
     for (const b of await listChildren(cfg, pageId)) {
       if (b.type !== 'child_database') continue;
-      const { dsId } = await probeDatabase(cfg, b.id);
-      if (dsId) return dsId;
+      const { dsId, props } = await probeDatabase(cfg, b.id);
+      if (dsId) return { dsId, props };
     }
   } catch (_) {}
   return null;
 }
 
 export async function ensureDataSource(cfg) {
-  if (cfg.dataSourceId) return cfg.dataSourceId;
+  if (cfg.dataSourceId) return { dsId: cfg.dataSourceId, props: cfg.props || DEFAULT_PROPS };
   const targetId = parsePageId(cfg.parentUrl);
   if (!targetId) throw new Error(t('err_notion_not_configured'));
 
   // The pasted link may be a database itself (a duplicated template).
   const probe = await probeDatabase(cfg, targetId);
-  let dsId;
+  let adopted;
   if (probe.isDatabase) {
     if (!probe.dsId) throw new Error(t('err_notion_bad_schema'));
-    dsId = probe.dsId;
+    adopted = { dsId: probe.dsId, props: probe.props };
   } else {
-    dsId = await adoptChildDatabase(cfg, targetId);
+    adopted = await adoptChildDatabase(cfg, targetId);
   }
 
-  if (!dsId) {
+  if (!adopted) {
     // Plain page with no usable database on it: create our own.
     const db = await notionRequest('/databases', { method: 'POST', token: cfg.token, body: {
       parent: { type: 'page_id', page_id: targetId },
@@ -210,35 +225,36 @@ export async function ensureDataSource(cfg) {
         Captured: { date: {} },
       } },
     } });
-    dsId = db.data_sources?.[0]?.id;
+    let dsId = db.data_sources?.[0]?.id;
     if (!dsId) {
       // Older response shape safety net: retrieve the database for its sources.
       const full = await notionRequest(`/databases/${db.id}`, { token: cfg.token });
       dsId = full.data_sources?.[0]?.id;
     }
+    adopted = { dsId, props: DEFAULT_PROPS };
   }
 
-  await chrome.storage.local.set({ sc_notion_ds: dsId });
-  return dsId;
+  await chrome.storage.local.set({ sc_notion_ds: adopted.dsId, sc_notion_props: adopted.props });
+  return adopted;
 }
 
-export async function findPageByUrl(cfg, dsId, url) {
+export async function findPageByUrl(cfg, dsId, url, props = DEFAULT_PROPS) {
   const r = await notionRequest(`/data_sources/${dsId}/query`, { method: 'POST', token: cfg.token, body: {
-    filter: { property: 'URL', url: { equals: url } },
+    filter: { property: props.url, url: { equals: url } },
     page_size: 1,
   } });
   return r.results?.[0]?.id || null;
 }
 
-export async function createVideoPage(cfg, dsId, payload) {
+export async function createVideoPage(cfg, dsId, payload, props = DEFAULT_PROPS) {
   const url = payload.url || payload.video_url;
   const body = {
     parent: { type: 'data_source_id', data_source_id: dsId },
     properties: {
-      Title:    { title: [{ type: 'text', text: { content: payload.video_title || payload.title || url } }] },
-      URL:      { url },
-      Platform: { select: { name: payload.platform || 'other' } },
-      ...(payload.captured_at ? { Captured: { date: { start: payload.captured_at } } } : {}),
+      [props.title]: { title: [{ type: 'text', text: { content: payload.video_title || payload.title || url } }] },
+      [props.url]:   { url },
+      ...(props.select ? { [props.select]: { select: { name: payload.platform || 'other' } } } : {}),
+      ...(props.date && payload.captured_at ? { [props.date]: { date: { start: payload.captured_at } } } : {}),
     },
   };
   const cover = payload.cover_url || payload.thumbnail_url;
@@ -297,10 +313,10 @@ export async function send(payload) {
     return { success: false, error: t('err_notion_not_configured') };
   }
   try {
-    const dsId = await ensureDataSource(cfg);
+    const { dsId, props } = await ensureDataSource(cfg);
     const url = payload.url || payload.video_url;
-    let pageId = await findPageByUrl(cfg, dsId, url);
-    if (!pageId) pageId = await createVideoPage(cfg, dsId, payload);
+    let pageId = await findPageByUrl(cfg, dsId, url, props);
+    if (!pageId) pageId = await createVideoPage(cfg, dsId, payload, props);
     const uploadIds = [];
     for (const img of collectImages(payload)) {
       uploadIds.push(await uploadImage(cfg, img));   // serial on purpose: Notion ~3 req/s
