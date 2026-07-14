@@ -151,7 +151,7 @@
       if (!hint) return;
       if (msg.success) {
         if (msg.obsidianUrl) window.location.href = msg.obsidianUrl;
-        hint.textContent = chrome.i18n.getMessage('ct_saved');
+        hint.textContent = chrome.i18n.getMessage(msg.notionUrl ? 'ct_saved_notion' : 'ct_saved');
         hint.style.background = 'rgba(34,197,94,.9)';
         setTimeout(remove, 2000);
       } else {

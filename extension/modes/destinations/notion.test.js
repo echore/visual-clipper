@@ -254,8 +254,8 @@ describe('ensureDataSource', () => {
 
 describe('findPageByUrl', () => {
   test('queries the data source by URL property', async () => {
-    const calls = mockFetch(() => ok({ results: [{ id: 'PG1' }] }));
-    expect(await findPageByUrl({ token: 'T' }, 'DS9', 'https://v/1')).toBe('PG1');
+    const calls = mockFetch(() => ok({ results: [{ id: 'PG1', url: 'https://www.notion.so/PG1' }] }));
+    expect(await findPageByUrl({ token: 'T' }, 'DS9', 'https://v/1')).toEqual({ id: 'PG1', url: 'https://www.notion.so/PG1' });
     expect(calls[0].url).toBe('https://api.notion.com/v1/data_sources/DS9/query');
     const body = JSON.parse(calls[0].init.body);
     expect(body.filter).toEqual({ property: 'URL', url: { equals: 'https://v/1' } });
@@ -268,12 +268,12 @@ describe('findPageByUrl', () => {
 
 describe('createVideoPage', () => {
   test('creates page with properties and external cover', async () => {
-    const calls = mockFetch(() => ok({ id: 'PG2' }));
+    const calls = mockFetch(() => ok({ id: 'PG2', url: 'https://www.notion.so/PG2' }));
     const pageId = await createVideoPage({ token: 'T' }, 'DS9', {
       mode: 'thumbnail', video_url: 'https://v/1', title: 'T1', platform: 'youtube',
       captured_at: '2026-07-13T00:00:00.000Z', thumbnail_url: 'https://img/c.jpg',
     });
-    expect(pageId).toBe('PG2');
+    expect(pageId).toEqual({ id: 'PG2', url: 'https://www.notion.so/PG2' });
     const body = JSON.parse(calls[0].init.body);
     expect(body.parent).toEqual({ type: 'data_source_id', data_source_id: 'DS9' });
     expect(body.properties.URL).toEqual({ url: 'https://v/1' });
@@ -353,7 +353,7 @@ describe('send', () => {
     globalThis.__stored = { sc_notion_token: 'T', sc_notion_ds: 'DS' };
     const calls = mockFetch(({ url, init }) => {
       if (url.startsWith('data:')) return { blob: async () => new Blob([new Uint8Array([1])], { type: 'image/png' }) };
-      if (url.endsWith('/query')) return ok({ results: [{ id: 'PG' }] });
+      if (url.endsWith('/query')) return ok({ results: [{ id: 'PG', url: 'https://www.notion.so/PG' }] });
       if (url.endsWith('/file_uploads')) return ok({ id: 'FU1' });
       if (url.endsWith('/FU1/send')) return ok({ status: 'uploaded' });
       if (url.includes('/blocks/PG/children') && (!init.method || init.method === 'GET')) return ok({ results: [], has_more: false });
@@ -362,7 +362,7 @@ describe('send', () => {
     });
     const r = await send({ mode: 'screenshot', url: 'https://v/1', title: 'T', platform: 'other',
       captured_at: '2026-07-13T00:00:00.000Z', image: 'aGk=' });
-    expect(r).toEqual({ success: true });
+    expect(r).toEqual({ success: true, notionUrl: 'https://www.notion.so/PG' });
     expect(calls.some((c) => c.url.endsWith('/pages'))).toBe(false); // page existed, none created
   });
 });

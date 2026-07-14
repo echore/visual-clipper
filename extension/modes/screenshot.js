@@ -70,6 +70,8 @@ async function saveFullCapture(tabId, dataUrl) {
   // dialog as normal pages, just initiated via the extension API instead of page JS.
   if (response.obsidianUrl) {
     chrome.tabs.update(tabId, { url: response.obsidianUrl }).catch(() => {});
+  } else if (response.notionUrl) {
+    chrome.tabs.create({ url: response.notionUrl });
   }
 }
 
@@ -127,6 +129,7 @@ export async function handleRegion(msg, tabId) {
   chrome.tabs.sendMessage(tabId, { action: 'captureResult', ...response });
   if (response.success) {
     chrome.action.setBadgeText({ text: '' });
+    if (response.notionUrl) chrome.tabs.create({ url: response.notionUrl });
   } else {
     notifyError(response.error || t('err_ss_failed'));
   }
@@ -157,6 +160,8 @@ export async function analyzeBatch(queue) {
       if (tab?.id != null) {
         sendToContent(tab.id, { action: 'openObsidian', url: response.obsidianUrl }).catch(() => {});
       }
+    } else if (response.notionUrl) {
+      chrome.tabs.create({ url: response.notionUrl });
     }
   } else {
     notifyError(response.error || t('err_ss_failed'));

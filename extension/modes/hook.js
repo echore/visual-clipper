@@ -83,6 +83,8 @@ export async function start(tabId) {
     setTimeout(() => chrome.action.setBadgeText({ text: '' }), 3000);
     if (response.obsidianUrl) {
       ensureSendToContent(tabId, { action: 'openObsidian', url: response.obsidianUrl }).catch(() => {});
+    } else if (response.notionUrl) {
+      chrome.tabs.create({ url: response.notionUrl });
     }
     if (response.notice) notifyNotice(response.notice);
   } else {

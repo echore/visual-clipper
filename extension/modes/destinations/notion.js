@@ -243,7 +243,8 @@ export async function findPageByUrl(cfg, dsId, url, props = DEFAULT_PROPS) {
     filter: { property: props.url, url: { equals: url } },
     page_size: 1,
   } });
-  return r.results?.[0]?.id || null;
+  const page = r.results?.[0];
+  return page ? { id: page.id, url: page.url } : null;
 }
 
 export async function createVideoPage(cfg, dsId, payload, props = DEFAULT_PROPS) {
@@ -260,7 +261,7 @@ export async function createVideoPage(cfg, dsId, payload, props = DEFAULT_PROPS)
   const cover = payload.cover_url || payload.thumbnail_url;
   if (cover) body.cover = { type: 'external', external: { url: cover } };
   const page = await notionRequest('/pages', { method: 'POST', token: cfg.token, body });
-  return page.id;
+  return { id: page.id, url: page.url };
 }
 
 // ── Image upload (Direct Upload API; ≤20MB single-part, plenty for clips) ────
@@ -315,14 +316,16 @@ export async function send(payload) {
   try {
     const { dsId, props } = await ensureDataSource(cfg);
     const url = payload.url || payload.video_url;
-    let pageId = await findPageByUrl(cfg, dsId, url, props);
-    if (!pageId) pageId = await createVideoPage(cfg, dsId, payload, props);
+    let page = await findPageByUrl(cfg, dsId, url, props);
+    if (!page) page = await createVideoPage(cfg, dsId, payload, props);
     const uploadIds = [];
     for (const img of collectImages(payload)) {
       uploadIds.push(await uploadImage(cfg, img));   // serial on purpose: Notion ~3 req/s
     }
-    await upsertSection(cfg, pageId, payload.mode, payloadToBlocks(payload, uploadIds));
-    return { success: true };
+    await upsertSection(cfg, page.id, payload.mode, payloadToBlocks(payload, uploadIds));
+    // notionUrl is the Notion-mode counterpart of vault-autopilot's obsidianUrl:
+    // modes open it so the user lands on the note they just saved to.
+    return { success: true, ...(page.url ? { notionUrl: page.url } : {}) };
   } catch (err) {
     return { success: false, error: err.message };
   }
