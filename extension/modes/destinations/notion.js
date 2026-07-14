@@ -193,3 +193,68 @@ export async function createVideoPage(cfg, dsId, payload) {
   const page = await notionRequest('/pages', { method: 'POST', token: cfg.token, body });
   return page.id;
 }
+
+// ── Image upload (Direct Upload API; ≤20MB single-part, plenty for clips) ────
+export async function uploadImage(cfg, imageData) {
+  const dataUrl = imageData.startsWith('data:') ? imageData : `data:image/png;base64,${imageData}`;
+  const blob = await (await fetch(dataUrl)).blob();
+  const fu = await notionRequest('/file_uploads', { method: 'POST', token: cfg.token, body: {
+    mode: 'single_part', filename: 'clip.png', content_type: blob.type || 'image/png',
+  } });
+  const form = new FormData();
+  form.append('file', blob, 'clip.png');
+  await notionRequest(`/file_uploads/${fu.id}/send`, { method: 'POST', token: cfg.token, form });
+  return fu.id;
+}
+
+async function listChildren(cfg, pageId) {
+  const all = [];
+  let cursor = null;
+  do {
+    const q = cursor ? `?page_size=100&start_cursor=${cursor}` : '?page_size=100';
+    const r = await notionRequest(`/blocks/${pageId}/children${q}`, { token: cfg.token });
+    all.push(...(r.results || []));
+    cursor = r.has_more ? r.next_cursor : null;
+  } while (cursor);
+  return all;
+}
+
+export async function upsertSection(cfg, pageId, mode, blocks) {
+  const children = await listChildren(cfg, pageId);
+  const section = findSection(children, mode);
+  if (section) {
+    for (const blockId of section.contentIds) {
+      await notionRequest(`/blocks/${blockId}`, { method: 'DELETE', token: cfg.token });
+    }
+    await notionRequest(`/blocks/${pageId}/children`, { method: 'PATCH', token: cfg.token,
+      body: { children: blocks, after: section.headingId } });
+  } else {
+    const heading = { object: 'block', type: 'heading_2',
+      heading_2: { rich_text: [{ type: 'text', text: { content: sectionTitleFor(mode) } }] } };
+    await notionRequest(`/blocks/${pageId}/children`, { method: 'PATCH', token: cfg.token,
+      body: { children: [heading, ...blocks] } });
+  }
+}
+
+// The adapter entry point: same response contract as obsidian's httpPost —
+// resolves { success, error? } so mode files can keep their handling as-is.
+export async function send(payload) {
+  const cfg = await getNotionConfig();
+  if (!cfg.token || (!cfg.dataSourceId && !cfg.parentUrl)) {
+    return { success: false, error: t('err_notion_not_configured') };
+  }
+  try {
+    const dsId = await ensureDataSource(cfg);
+    const url = payload.url || payload.video_url;
+    let pageId = await findPageByUrl(cfg, dsId, url);
+    if (!pageId) pageId = await createVideoPage(cfg, dsId, payload);
+    const uploadIds = [];
+    for (const img of collectImages(payload)) {
+      uploadIds.push(await uploadImage(cfg, img));   // serial on purpose: Notion ~3 req/s
+    }
+    await upsertSection(cfg, pageId, payload.mode, payloadToBlocks(payload, uploadIds));
+    return { success: true };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+}

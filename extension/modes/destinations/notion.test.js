@@ -20,7 +20,7 @@ globalThis.chrome = {
           getUILanguage: () => 'en' },
 };
 
-import { parsePageId, notionRequest, ping, NOTION_VERSION, SECTION_TITLES, sectionTitleFor, chunkText, collectImages, payloadToBlocks, findSection, ensureDataSource, findPageByUrl, createVideoPage } from './notion.js';
+import { parsePageId, notionRequest, ping, NOTION_VERSION, SECTION_TITLES, sectionTitleFor, chunkText, collectImages, payloadToBlocks, findSection, ensureDataSource, findPageByUrl, createVideoPage, uploadImage, upsertSection, send } from './notion.js';
 
 const ok  = (json) => ({ ok: true,  status: 200, json: async () => json });
 const err = (status) => ({ ok: false, status, json: async () => ({ message: 'x' }) });
@@ -200,5 +200,79 @@ describe('createVideoPage', () => {
     expect(body.properties.URL).toEqual({ url: 'https://v/1' });
     expect(body.properties.Platform).toEqual({ select: { name: 'youtube' } });
     expect(body.cover).toEqual({ type: 'external', external: { url: 'https://img/c.jpg' } });
+  });
+});
+
+describe('uploadImage', () => {
+  test('create → send → returns file upload id', async () => {
+    const calls = mockFetch(({ url }) => {
+      if (url.startsWith('data:')) return { blob: async () => new Blob([new Uint8Array([1, 2])], { type: 'image/png' }) };
+      if (url.endsWith('/file_uploads')) return ok({ id: 'FU1', upload_url: 'x' });
+      if (url.endsWith('/file_uploads/FU1/send')) return ok({ id: 'FU1', status: 'uploaded' });
+      throw new Error('unhandled ' + url);
+    });
+    expect(await uploadImage({ token: 'T' }, 'aGVsbG8=')).toBe('FU1');
+    const sendCall = calls.find((c) => c.url.endsWith('/send'));
+    expect(sendCall.init.body).toBeInstanceOf(FormData);
+    expect(sendCall.init.headers['Content-Type']).toBeUndefined(); // FormData sets its own boundary
+  });
+});
+
+describe('upsertSection', () => {
+  const h2 = (blockId, text) => ({ id: blockId, type: 'heading_2', heading_2: { rich_text: [{ plain_text: text, type: 'text', text: { content: text } }] } });
+  const p  = (blockId) => ({ id: blockId, type: 'paragraph', paragraph: { rich_text: [] } });
+
+  test('existing section: deletes old content, appends after heading', async () => {
+    const calls = mockFetch(({ url, init }) => {
+      if (url.includes('/blocks/PG/children') && (!init.method || init.method === 'GET'))
+        return ok({ results: [h2('H', 'Screenshots'), p('old1'), p('old2')], has_more: false });
+      if (init.method === 'DELETE') return ok({});
+      if (init.method === 'PATCH') return ok({});
+      throw new Error('unhandled ' + url);
+    });
+    await upsertSection({ token: 'T' }, 'PG', 'screenshot', [{ object: 'block', type: 'paragraph', paragraph: { rich_text: [] } }]);
+    const deletes = calls.filter((c) => c.init.method === 'DELETE').map((c) => c.url);
+    expect(deletes).toEqual(['https://api.notion.com/v1/blocks/old1', 'https://api.notion.com/v1/blocks/old2']);
+    const patch = calls.find((c) => c.init.method === 'PATCH');
+    expect(JSON.parse(patch.init.body).after).toBe('H');
+  });
+
+  test('missing section: appends heading + content at page end', async () => {
+    const calls = mockFetch(({ init }) => {
+      if (!init.method || init.method === 'GET') return ok({ results: [], has_more: false });
+      if (init.method === 'PATCH') return ok({});
+      throw new Error('unhandled');
+    });
+    await upsertSection({ token: 'T' }, 'PG', 'keyframe', []);
+    const body = JSON.parse(calls.find((c) => c.init.method === 'PATCH').init.body);
+    expect(body.after).toBeUndefined();
+    expect(body.children[0].type).toBe('heading_2');
+    expect(body.children[0].heading_2.rich_text[0].text.content).toBe('Keyframes'); // en stub locale
+  });
+});
+
+describe('send', () => {
+  test('not configured → { success: false, error }, no throw', async () => {
+    globalThis.__stored = {};
+    const r = await send({ mode: 'screenshot', url: 'https://v/1', image: 'x' });
+    expect(r.success).toBe(false);
+    expect(typeof r.error).toBe('string');
+  });
+
+  test('full happy path: ensure ds → find page → upload → upsert', async () => {
+    globalThis.__stored = { sc_notion_token: 'T', sc_notion_ds: 'DS' };
+    const calls = mockFetch(({ url, init }) => {
+      if (url.startsWith('data:')) return { blob: async () => new Blob([new Uint8Array([1])], { type: 'image/png' }) };
+      if (url.endsWith('/query')) return ok({ results: [{ id: 'PG' }] });
+      if (url.endsWith('/file_uploads')) return ok({ id: 'FU1' });
+      if (url.endsWith('/FU1/send')) return ok({ status: 'uploaded' });
+      if (url.includes('/blocks/PG/children') && (!init.method || init.method === 'GET')) return ok({ results: [], has_more: false });
+      if (init.method === 'PATCH') return ok({});
+      throw new Error('unhandled ' + url);
+    });
+    const r = await send({ mode: 'screenshot', url: 'https://v/1', title: 'T', platform: 'other',
+      captured_at: '2026-07-13T00:00:00.000Z', image: 'aGk=' });
+    expect(r).toEqual({ success: true });
+    expect(calls.some((c) => c.url.endsWith('/pages'))).toBe(false); // page existed, none created
   });
 });
