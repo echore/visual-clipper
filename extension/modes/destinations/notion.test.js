@@ -254,9 +254,11 @@ describe('upsertSection', () => {
 describe('send', () => {
   test('not configured → { success: false, error }, no throw', async () => {
     globalThis.__stored = {};
+    const calls = mockFetch(() => { throw new Error('must not fetch'); });
     const r = await send({ mode: 'screenshot', url: 'https://v/1', image: 'x' });
     expect(r.success).toBe(false);
     expect(typeof r.error).toBe('string');
+    expect(calls.length).toBe(0);
   });
 
   test('full happy path: ensure ds → find page → upload → upsert', async () => {
