@@ -1,7 +1,9 @@
 # Guide screenshots
 
-Drop the Notion onboarding screenshots here — the welcome page picks them up
-automatically (slots stay hidden while a file is missing):
+The welcome page packages these four Notion onboarding references. Image slots
+stay hidden if a file cannot load.
 
-- `notion-step-1.png` — Notion integrations page: creating the integration and copying its token
-- `notion-step-2.png` — the duplicated template page: ⋯ menu → Connections → add the integration, and copying the page link
+- `notion-create-connection.png`: Connections list and New connection button
+- `notion-create-connection-dialog.png`: connection name, Access token method, workspace, and Create connection button
+- `notion-copy-token.png`: connection Configuration page and access-token copy button
+- `notion-connect-template.png`: copied template page, Connections menu, and connection-name search

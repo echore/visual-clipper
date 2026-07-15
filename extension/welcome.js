@@ -1,6 +1,7 @@
 import { pingAutopilot, getPort, DEFAULT_PORT } from './modes/destinations/obsidian.js';
 import { ping as notionPing, parsePageId } from './modes/destinations/notion.js';
 import { t, localizeDocument } from './modes/i18n.js';
+import { applyDestinationView, normalizeDestination } from './welcome-ui.js';
 
 localizeDocument();
 
@@ -8,23 +9,31 @@ const connCheck    = document.getElementById('conn-check');
 const connStatus   = document.getElementById('conn-status');
 const connDetail   = document.getElementById('conn-detail');
 const installGuide = document.getElementById('install-guide');
-const tryIt        = document.getElementById('try-it');
+const tryItObsidian = document.getElementById('try-it');
+const tryItNotion   = document.getElementById('try-it-notion');
+let renderedDest = null;
 
 async function getDest() {
   const { sc_destination } = await chrome.storage.local.get('sc_destination');
-  return sc_destination === 'notion' ? 'notion' : 'obsidian';
+  return normalizeDestination(sc_destination);
 }
 
 async function refreshStatus() {
   const dest = await getDest();
-  document.getElementById('notion-setup').style.display = dest === 'notion' ? 'block' : 'none';
-  document.getElementById('adv-port').style.display = dest === 'notion' ? 'none' : '';
+  applyDestinationView(document, dest);
+  if (renderedDest !== dest) {
+    connCheck.classList.remove('ok', 'bad');
+    connStatus.textContent = t(dest === 'notion' ? 'welcome_conn_checking_notion' : 'welcome_conn_checking');
+    connDetail.textContent = '';
+    renderedDest = dest;
+  }
   if (dest === 'notion') {
     const { connected } = await notionPing();
     connCheck.classList.toggle('ok', connected);
     connCheck.classList.toggle('bad', !connected);
-    installGuide.style.display = 'none';
-    tryIt.style.display = connected ? 'block' : 'none';
+    installGuide.hidden = true;
+    tryItObsidian.hidden = true;
+    tryItNotion.hidden = !connected;
     connStatus.textContent = t(connected ? 'welcome_conn_ok_notion' : 'welcome_conn_bad_notion');
     connDetail.textContent = '';
     return;
@@ -33,8 +42,9 @@ async function refreshStatus() {
   const { connected, version } = await pingAutopilot();
   connCheck.classList.toggle('ok', connected);
   connCheck.classList.toggle('bad', !connected);
-  installGuide.style.display = connected ? 'none' : 'block';
-  tryIt.style.display = connected ? 'block' : 'none';
+  installGuide.hidden = connected;
+  tryItObsidian.hidden = !connected;
+  tryItNotion.hidden = true;
   if (connected) {
     connStatus.textContent = t('welcome_conn_ok', [version]);
     connDetail.textContent = t('welcome_conn_ok_detail');
@@ -102,6 +112,8 @@ document.getElementById('btn-notion-save').addEventListener('click', async () =>
 // Guide screenshots are optional: slots stay hidden until the image file
 // actually loads, so a missing guide/*.png never shows a broken image.
 for (const img of document.querySelectorAll('img.shot')) {
+  const altKey = img.dataset.i18nAlt;
+  if (altKey) img.alt = t(altKey);
   img.addEventListener('load', () => { img.style.display = 'block'; });
   if (img.complete && img.naturalWidth > 0) img.style.display = 'block';
 }

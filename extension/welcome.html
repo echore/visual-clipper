@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="zh">
+<html lang="zh" data-destination="obsidian">
 <head>
   <meta charset="utf-8">
   <title data-i18n="welcome_tab_title"></title>
   <style>
-    body { max-width: 640px; margin: 60px auto; font: 15px/1.7 system-ui,sans-serif;
+    body { max-width: 780px; margin: 60px auto; font: 15px/1.7 system-ui,sans-serif;
       color: #1f2937; padding: 0 24px; }
     h1 { font-size: 22px; font-weight: 700; margin-bottom: 4px; }
     .sub { color: #6b7280; margin-bottom: 32px; }
@@ -38,22 +38,50 @@
     .dl-btn:hover { background: #4f46e5; }
     .alt { font-size: 13px; color: #6b7280; }
     .dest-choice label { display: block; margin: 4px 0; cursor: pointer; }
+    [data-dest-only] { display: none; }
+    html[data-destination="obsidian"] [data-dest-only="obsidian"]:not([hidden]),
+    html[data-destination="notion"] [data-dest-only="notion"]:not([hidden]) { display: block; }
+    [hidden] { display: none !important; }
     .setup-panel { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 10px;
-      padding: 4px 18px 14px; margin-top: 12px; }
+      padding: 4px 20px 14px; margin-top: 12px; }
+    .stage { border-top: 1px solid #e5e7eb; padding: 22px 0; }
+    .stage:first-child { border-top: 0; }
+    .stage-head { display: flex; gap: 12px; align-items: flex-start; margin-bottom: 12px; }
+    .stage-title { margin: 0; font-size: 16px; line-height: 1.45; }
+    .stage-outcome, .helper, figcaption { color: #6b7280; font-size: 13px; }
+    .stage-outcome { margin: 2px 0 0; }
+    .setup-steps { margin: 12px 0; padding-left: 22px; }
+    .setup-steps li { margin: 7px 0; padding-left: 4px; }
     .setup-panel .field { display: block; width: 100%; box-sizing: border-box; padding: 8px 10px;
-      margin: 4px 0 10px; border: 1px solid #d1d5db; border-radius: 6px; font: 13px monospace; }
-    .setup-panel .field:focus { outline: none; border-color: #6366f1; }
-    .setup-panel label { font-size: 13px; color: #374151; }
-    .shot { display: none; width: 100%; border: 1px solid #e5e7eb; border-radius: 8px;
-      margin: 10px 0 2px; }
+      margin: 4px 0 2px; border: 1px solid #9ca3af; border-radius: 6px; font: 13px monospace; }
+    .setup-panel label { display: block; font-size: 13px; font-weight: 600; color: #374151; }
+    .helper { margin: 0 0 12px; }
+    .guide-shot { margin: 14px 0 0; }
+    .guide-shot a { display: block; }
+    .shot { display: none; width: 100%; border: 1px solid #e5e7eb; border-radius: 10px; }
+    .guide-shot figcaption { margin-top: 6px; }
+    .url-copy { overflow-wrap: anywhere; }
+    .fact-list { margin: 8px 0 20px; padding-left: 22px; }
+    .fact-list li { margin: 6px 0; }
     .cfg-status { font-size: 13px; margin-left: 10px; }
     .cfg-status.ok  { color: #059669; }
     .cfg-status.bad { color: #dc2626; }
+    button.act:active, .dl-btn:active { transform: translateY(1px); }
+    button.act:focus-visible, .dl-btn:focus-visible, a:focus-visible, input:focus-visible {
+      outline: 2px solid #4f46e5; outline-offset: 2px; }
+    @media (max-width: 640px) {
+      body { margin: 28px auto; padding: 0 16px; }
+      .setup-panel { padding-inline: 14px; }
+      .stage-head { display: block; }
+      .stage-head .step-num { margin-bottom: 8px; }
+      .cfg-status { display: block; margin: 8px 0 0; }
+    }
   </style>
 </head>
 <body>
-  <h1>Obsidian Visual Clipper</h1>
-  <p class="sub" data-i18n="welcome_sub"></p>
+  <h1 data-i18n="ext_name"></h1>
+  <p class="sub" data-dest-only="obsidian" data-i18n="welcome_sub_obsidian"></p>
+  <p class="sub" data-dest-only="notion" data-i18n="welcome_sub_notion"></p>
 
   <h2 data-i18n="welcome_conn_title"></h2>
   <div class="check" id="conn-check">
@@ -67,111 +95,218 @@
       <label><input type="radio" name="dest" value="obsidian" id="dest-obsidian"> <span data-i18n="welcome_dest_obsidian"></span></label>
       <label><input type="radio" name="dest" value="notion" id="dest-notion"> <span data-i18n="welcome_dest_notion"></span></label>
     </div>
-    <div id="notion-setup" class="setup-panel" style="display:none">
+  </section>
+
+  <div id="notion-content" data-dest-only="notion">
+    <div id="notion-setup" class="setup-panel">
+      <section class="stage">
+        <div class="stage-head">
+          <div class="step-num">1</div>
+          <div>
+            <h3 class="stage-title" data-i18n="welcome_notion_stage1_title"></h3>
+            <p class="stage-outcome" data-i18n="welcome_notion_stage1_outcome"></p>
+          </div>
+        </div>
+        <p><a class="dl-btn" target="_blank" rel="noopener"
+              href="https://www.notion.so/profile/integrations"
+              data-i18n="welcome_notion_s1_link"></a></p>
+        <p class="url-copy"><code>https://www.notion.so/profile/integrations</code></p>
+        <ol class="setup-steps">
+          <li data-i18n="welcome_notion_stage1_step1"></li>
+          <li data-i18n="welcome_notion_stage1_step2"></li>
+          <li data-i18n="welcome_notion_stage1_step3"></li>
+          <li data-i18n="welcome_notion_stage1_step4"></li>
+          <li data-i18n="welcome_notion_stage1_step5"></li>
+          <li data-i18n="welcome_notion_stage1_step6"></li>
+          <li data-i18n="welcome_notion_stage1_step7"></li>
+        </ol>
+        <figure class="guide-shot">
+          <a href="guide/notion-create-connection.png" target="_blank" rel="noopener">
+            <img class="shot" src="guide/notion-create-connection.png"
+                 data-i18n-alt="welcome_notion_img1_alt" alt="">
+          </a>
+          <figcaption data-i18n="welcome_notion_img1_caption"></figcaption>
+        </figure>
+        <figure class="guide-shot">
+          <a href="guide/notion-create-connection-dialog.png" target="_blank" rel="noopener">
+            <img class="shot" src="guide/notion-create-connection-dialog.png"
+                 data-i18n-alt="welcome_notion_img2_alt" alt="">
+          </a>
+          <figcaption data-i18n="welcome_notion_img2_caption"></figcaption>
+        </figure>
+        <figure class="guide-shot">
+          <a href="guide/notion-copy-token.png" target="_blank" rel="noopener">
+            <img class="shot" src="guide/notion-copy-token.png"
+                 data-i18n-alt="welcome_notion_img3_alt" alt="">
+          </a>
+          <figcaption data-i18n="welcome_notion_img3_caption"></figcaption>
+        </figure>
+        <p class="note" data-i18n="welcome_notion_token_warning"></p>
+      </section>
+
+      <section class="stage">
+        <div class="stage-head">
+          <div class="step-num">2</div>
+          <div>
+            <h3 class="stage-title" data-i18n="welcome_notion_stage2_title"></h3>
+            <p class="stage-outcome" data-i18n="welcome_notion_stage2_outcome"></p>
+          </div>
+        </div>
+        <p><a class="dl-btn" target="_blank" rel="noopener"
+              data-i18n="welcome_notion_s2_link" data-i18n-href="welcome_notion_tpl_url"></a></p>
+        <ol class="setup-steps">
+          <li data-i18n="welcome_notion_stage2_step1"></li>
+          <li data-i18n="welcome_notion_stage2_step2"></li>
+          <li data-i18n="welcome_notion_stage2_step3"></li>
+          <li data-i18n="welcome_notion_stage2_step4"></li>
+          <li data-i18n="welcome_notion_stage2_step5"></li>
+          <li data-i18n="welcome_notion_stage2_step6"></li>
+          <li data-i18n="welcome_notion_stage2_step7"></li>
+        </ol>
+        <figure class="guide-shot">
+          <a href="guide/notion-connect-template.png" target="_blank" rel="noopener">
+            <img class="shot" src="guide/notion-connect-template.png"
+                 data-i18n-alt="welcome_notion_img4_alt" alt="">
+          </a>
+          <figcaption data-i18n="welcome_notion_img4_caption"></figcaption>
+        </figure>
+        <p class="alt" data-i18n="welcome_notion_s2_alt"></p>
+      </section>
+
+      <section class="stage">
+        <div class="stage-head">
+          <div class="step-num">3</div>
+          <div>
+            <h3 class="stage-title" data-i18n="welcome_notion_stage3_title"></h3>
+            <p class="stage-outcome" data-i18n="welcome_notion_stage3_outcome"></p>
+          </div>
+        </div>
+        <label for="notion-token" data-i18n="welcome_notion_token_label"></label>
+        <input type="password" id="notion-token" class="field" autocomplete="off">
+        <p class="helper" data-i18n="welcome_notion_token_helper"></p>
+        <label for="notion-parent" data-i18n="welcome_notion_parent_label"></label>
+        <input type="text" id="notion-parent" class="field" placeholder="https://www.notion.so/…">
+        <p class="helper" data-i18n="welcome_notion_parent_helper"></p>
+        <p><button class="act" id="btn-notion-save" data-i18n="welcome_notion_save_test"></button>
+        <span id="notion-config-status" class="cfg-status" aria-live="polite"></span></p>
+      </section>
+    </div>
+
+    <section id="try-it-notion" hidden>
+      <h2 data-i18n="welcome_notion_tryit_title"></h2>
+      <p data-i18n="welcome_notion_tryit_body"></p>
+      <p><a target="_blank" rel="noopener"
+            data-i18n="welcome_notion_tryit_link_text"
+            data-i18n-href="welcome_notion_tryit_url"></a></p>
+    </section>
+
+    <section>
+      <h2 data-i18n="welcome_notion_workflow_title"></h2>
+      <p data-i18n="welcome_notion_workflow_body"></p>
+    </section>
+
+    <section>
+      <h2 data-i18n="welcome_notion_storage_title"></h2>
+      <p data-i18n="welcome_notion_storage_body"></p>
+      <ul class="fact-list">
+        <li data-i18n="welcome_notion_storage_fact1"></li>
+        <li data-i18n="welcome_notion_storage_fact2"></li>
+        <li data-i18n="welcome_notion_storage_fact3"></li>
+        <li data-i18n="welcome_notion_storage_fact4"></li>
+        <li data-i18n="welcome_notion_storage_fact5"></li>
+      </ul>
+    </section>
+
+    <section>
+      <h2 data-i18n="welcome_notion_modes_title"></h2>
+      <div class="step"><div class="step-num" style="background:#ee8d83" data-i18n="welcome_mode_ss_badge"></div><div><p data-i18n="welcome_notion_mode_ss"></p></div></div>
+      <div class="step"><div class="step-num" style="background:#f7de83" data-i18n="welcome_mode_cover_badge"></div><div><p data-i18n="welcome_notion_mode_cover"></p></div></div>
+      <div class="step"><div class="step-num" style="background:#a8c8f9" data-i18n="welcome_mode_hook_badge"></div><div><p data-i18n="welcome_notion_mode_hook"></p></div></div>
+      <div class="step"><div class="step-num" style="background:#c4efe0" data-i18n="welcome_mode_kf_badge"></div><div><p data-i18n="welcome_notion_mode_kf"></p></div></div>
+    </section>
+
+    <section>
+      <h2 data-i18n="welcome_notion_tips_title"></h2>
+      <ul class="fact-list">
+        <li data-i18n="welcome_notion_tip1"></li>
+        <li data-i18n="welcome_notion_tip2"></li>
+        <li data-i18n="welcome_notion_tip3"></li>
+        <li data-i18n="welcome_notion_tip4"></li>
+      </ul>
+    </section>
+  </div>
+
+  <div id="obsidian-content" data-dest-only="obsidian">
+    <div id="install-guide" hidden>
+      <h2 data-i18n="welcome_install_title"></h2>
       <div class="step">
         <div class="step-num">1</div>
-        <div>
-          <p data-i18n="welcome_notion_s1"></p>
-          <p><a class="dl-btn" target="_blank" rel="noopener"
-                href="https://www.notion.so/profile/integrations"
-                data-i18n="welcome_notion_s1_link"></a></p>
-          <img class="shot" src="guide/notion-step-1.png" alt="">
-        </div>
+        <div><p data-i18n="welcome_install_s1"></p>
+        <p><a class="dl-btn" id="btn-download-zip"
+              href="https://github.com/echore/vault-autopilot/releases/latest/download/vault-autopilot.zip"
+              data-i18n="welcome_install_s1_btn"></a></p></div>
       </div>
       <div class="step">
         <div class="step-num">2</div>
-        <div>
-          <p data-i18n="welcome_notion_s2"></p>
-          <p><a class="dl-btn" target="_blank" rel="noopener"
-                data-i18n="welcome_notion_s2_link" data-i18n-href="welcome_notion_tpl_url"></a></p>
-          <p class="alt" data-i18n="welcome_notion_s2_alt"></p>
-          <img class="shot" src="guide/notion-step-2.png" alt="">
-        </div>
+        <div><p data-i18n-html="welcome_install_s2_html"></p></div>
       </div>
       <div class="step">
         <div class="step-num">3</div>
-        <div style="flex:1">
-          <p data-i18n="welcome_notion_s3"></p>
-          <label data-i18n="welcome_notion_token_label"></label>
-          <input type="password" id="notion-token" class="field" autocomplete="off">
-          <label data-i18n="welcome_notion_parent_label"></label>
-          <input type="text" id="notion-parent" class="field" placeholder="https://www.notion.so/…">
-          <p><button class="act" id="btn-notion-save" data-i18n="welcome_notion_save_test"></button>
-          <span id="notion-config-status" class="cfg-status"></span></p>
-        </div>
+        <div><p data-i18n-html="welcome_install_s3_html"></p></div>
       </div>
+      <div class="step">
+        <div class="step-num">4</div>
+        <div><p data-i18n="welcome_install_s4"></p></div>
+      </div>
+      <p class="alt" data-i18n="welcome_install_brat"></p>
     </div>
-  </section>
 
-  <div id="install-guide" style="display:none">
-    <h2 data-i18n="welcome_install_title"></h2>
+    <div id="try-it" hidden>
+      <h2 data-i18n="welcome_tryit_title"></h2>
+      <p data-i18n="welcome_tryit_body"></p>
+      <p><a id="tryit-link" target="_blank" rel="noopener"
+            data-i18n="welcome_tryit_link_text" data-i18n-href="welcome_tryit_url"></a></p>
+    </div>
+
+    <h2 data-i18n="welcome_coop_title"></h2>
+    <p data-i18n="welcome_coop_body"></p>
+    <p data-i18n="welcome_config_hint"></p>
+
+    <h2 data-i18n="welcome_storage_title"></h2>
+    <p data-i18n-html="welcome_storage_body_html"></p>
+    <pre class="tree" data-i18n="welcome_tree"></pre>
+
+    <h2 data-i18n="welcome_modes_title"></h2>
     <div class="step">
-      <div class="step-num">1</div>
-      <div><p data-i18n="welcome_install_s1"></p>
-      <p><a class="dl-btn" id="btn-download-zip"
-            href="https://github.com/echore/vault-autopilot/releases/latest/download/vault-autopilot.zip"
-            data-i18n="welcome_install_s1_btn"></a></p></div>
+      <div class="step-num" style="background:#ee8d83" data-i18n="welcome_mode_ss_badge"></div>
+      <div><p data-i18n-html="welcome_mode_ss_html"></p></div>
     </div>
     <div class="step">
-      <div class="step-num">2</div>
-      <div><p data-i18n-html="welcome_install_s2_html"></p></div>
+      <div class="step-num" style="background:#f7de83" data-i18n="welcome_mode_cover_badge"></div>
+      <div><p data-i18n-html="welcome_mode_cover_html"></p></div>
     </div>
     <div class="step">
-      <div class="step-num">3</div>
-      <div><p data-i18n-html="welcome_install_s3_html"></p></div>
+      <div class="step-num" style="background:#a8c8f9" data-i18n="welcome_mode_hook_badge"></div>
+      <div><p data-i18n-html="welcome_mode_hook_html"></p></div>
     </div>
     <div class="step">
-      <div class="step-num">4</div>
-      <div><p data-i18n="welcome_install_s4"></p></div>
+      <div class="step-num" style="background:#c4efe0" data-i18n="welcome_mode_kf_badge"></div>
+      <div><p data-i18n-html="welcome_mode_kf_html"></p></div>
     </div>
-    <p class="alt" data-i18n="welcome_install_brat"></p>
-  </div>
 
-  <div id="try-it" style="display:none">
-    <h2 data-i18n="welcome_tryit_title"></h2>
-    <p data-i18n="welcome_tryit_body"></p>
-    <p><a id="tryit-link" target="_blank" rel="noopener"
-          data-i18n="welcome_tryit_link_text" data-i18n-href="welcome_tryit_url"></a></p>
-  </div>
+    <h2 data-i18n="welcome_tips_title"></h2>
+    <p data-i18n="welcome_tip1"></p>
+    <p data-i18n-html="welcome_tip2_html"></p>
+    <p data-i18n="welcome_tip3"></p>
 
-  <h2 data-i18n="welcome_coop_title"></h2>
-  <p data-i18n="welcome_coop_body"></p>
-  <p data-i18n="welcome_config_hint"></p>
-
-  <h2 data-i18n="welcome_storage_title"></h2>
-  <p data-i18n-html="welcome_storage_body_html"></p>
-  <pre class="tree" data-i18n="welcome_tree"></pre>
-
-  <h2 data-i18n="welcome_modes_title"></h2>
-  <div class="step">
-    <div class="step-num" style="background:#ee8d83" data-i18n="welcome_mode_ss_badge"></div>
-    <div><p data-i18n-html="welcome_mode_ss_html"></p></div>
+    <details class="adv" id="adv-port">
+      <summary data-i18n="welcome_adv_summary"></summary>
+      <p style="margin-top:8px" data-i18n-html="welcome_adv_body_html"></p>
+      <p><span data-i18n="welcome_port_label"></span> <input id="port-input" type="number" min="1025" max="65535">
+         <button class="act" id="btn-save-port" data-i18n="welcome_port_save"></button>
+         <span class="detail" id="port-saved"></span></p>
+    </details>
   </div>
-  <div class="step">
-    <div class="step-num" style="background:#f7de83" data-i18n="welcome_mode_cover_badge"></div>
-    <div><p data-i18n-html="welcome_mode_cover_html"></p></div>
-  </div>
-  <div class="step">
-    <div class="step-num" style="background:#a8c8f9" data-i18n="welcome_mode_hook_badge"></div>
-    <div><p data-i18n-html="welcome_mode_hook_html"></p></div>
-  </div>
-  <div class="step">
-    <div class="step-num" style="background:#c4efe0" data-i18n="welcome_mode_kf_badge"></div>
-    <div><p data-i18n-html="welcome_mode_kf_html"></p></div>
-  </div>
-
-  <h2 data-i18n="welcome_tips_title"></h2>
-  <p data-i18n="welcome_tip1"></p>
-  <p data-i18n-html="welcome_tip2_html"></p>
-  <p data-i18n="welcome_tip3"></p>
-
-  <details class="adv" id="adv-port">
-    <summary data-i18n="welcome_adv_summary"></summary>
-    <p style="margin-top:8px" data-i18n-html="welcome_adv_body_html"></p>
-    <p><span data-i18n="welcome_port_label"></span> <input id="port-input" type="number" min="1025" max="65535">
-       <button class="act" id="btn-save-port" data-i18n="welcome_port_save"></button>
-       <span class="detail" id="port-saved"></span></p>
-  </details>
 
   <script type="module" src="welcome.js"></script>
 </body>
