@@ -43,7 +43,11 @@ describe('detailed destination-aware Welcome content', () => {
     .join('\n');
 
   test('packages the complete three-stage Notion workflow', () => {
-    expect(html).toContain('https://www.notion.so/profile/integrations');
+    expect(html).toContain('href="https://www.notion.so/profile/integrations"');
+    expect(html).toContain('data-i18n="welcome_notion_s1_link"');
+    expect(html).not.toContain('<code>https://www.notion.so/profile/integrations</code>');
+    expect(html).not.toContain('class="url-copy"');
+    expect(html).not.toContain('data-i18n="welcome_notion_s2_alt"');
     expect(html).toContain('data-i18n="welcome_notion_stage1_title"');
     expect(html).toContain('data-i18n="welcome_notion_stage2_title"');
     expect(html).toContain('data-i18n="welcome_notion_stage3_title"');
@@ -59,6 +63,27 @@ describe('detailed destination-aware Welcome content', () => {
   test('uses the exact locale-specific template URLs', () => {
     expect(en.welcome_notion_tpl_url.message).toBe('https://fifree.notion.site/39d942e6a592804fa800fbd2cad47162?v=39d942e6a59280f99050000c23d10303&source=copy_link');
     expect(zh.welcome_notion_tpl_url.message).toBe('https://fifree.notion.site/39d942e6a59280459785f6bba9073209?v=39d942e6a592812b8a42000ce890d8ea&source=copy_link');
+  });
+
+  test('gives direct bilingual instructions for the provided template and its page link', () => {
+    expect(en.welcome_notion_stage2_outcome.message).toBe('We have prepared a ready-to-use Notion template for you. Click the button below to copy it to your Notion.');
+    expect(zh.welcome_notion_stage2_outcome.message).toBe('我们已经为你准备好了可以直接使用的 Notion 模板。点击下方按钮，把它复制到你的 Notion。');
+    expect(en.welcome_notion_parent_label.message).toBe('Notion template page link');
+    expect(zh.welcome_notion_parent_label.message).toBe('Notion 模板页面链接');
+    expect(en.welcome_notion_parent_helper.message).toBe("Open the template you just copied, copy the link from your browser's address bar, and paste it here.");
+    expect(zh.welcome_notion_parent_helper.message).toBe('打开刚刚复制的模板页面，复制浏览器地址栏中的链接，然后粘贴到这里。');
+  });
+
+  test.each([en, zh])('uses plain-language Notion setup copy', (catalog) => {
+    expect(notionMessages(catalog)).not.toMatch(/compatible database|plain page|Video Clips|兼容数据库|普通页面/i);
+  });
+
+  test('renders exactly three plain-language save outcomes', () => {
+    expect(html).toContain('data-i18n="welcome_notion_storage_fact1"');
+    expect(html).toContain('data-i18n="welcome_notion_storage_fact2"');
+    expect(html).toContain('data-i18n="welcome_notion_storage_fact3"');
+    expect(html).not.toContain('data-i18n="welcome_notion_storage_fact4"');
+    expect(html).not.toContain('data-i18n="welcome_notion_storage_fact5"');
   });
 
   test.each([en, zh])('Notion-specific copy excludes Obsidian-only concepts', (catalog) => {
