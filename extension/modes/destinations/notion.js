@@ -152,7 +152,9 @@ export function videoEmbedUrl(url, startSeconds) {
       const id = (u.pathname.match(/\/video\/(BV\w+)/) || [])[1];
       // autoplay=0: several embeds in one page would all start at once;
       // danmaku=0 keeps replays clean. (Same params as vault-autopilot.)
-      if (id) return `https://player.bilibili.com/player.html?bvid=${id}&page=1&t=${s}&autoplay=0&danmaku=0`;
+      // t is floored at 1: the player treats t=0 as "not set" and a logged-in
+      // viewer then resumes from watch history instead of the video opening.
+      if (id) return `https://player.bilibili.com/player.html?bvid=${id}&page=1&t=${Math.max(s, 1)}&autoplay=0&danmaku=0`;
     }
     if (!s) return canonical;
     u.searchParams.set('t', String(s));

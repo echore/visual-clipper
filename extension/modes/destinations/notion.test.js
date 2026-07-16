@@ -571,8 +571,9 @@ describe('video embeds in hook/keyframe sections', () => {
     // Raw tab URL junk (spm/vd_source) must not leak into the player URL.
     expect(videoEmbedUrl('https://www.bilibili.com/video/BV1x/?spm_id_from=333&vd_source=f06', 63.7))
       .toBe('https://player.bilibili.com/player.html?bvid=BV1x&page=1&t=63&autoplay=0&danmaku=0');
+    // t=0 reads as "not set" and logged-in 续播 takes over — hooks pin t=1.
     expect(videoEmbedUrl('https://www.bilibili.com/video/BV1x', 0))
-      .toBe('https://player.bilibili.com/player.html?bvid=BV1x&page=1&t=0&autoplay=0&danmaku=0');
+      .toBe('https://player.bilibili.com/player.html?bvid=BV1x&page=1&t=1&autoplay=0&danmaku=0');
   });
   test('videoEmbedUrl: unknown platforms keep the ?t= form; invalid urls pass through', () => {
     expect(videoEmbedUrl('https://x/y', 0)).toBe('https://x/y');
