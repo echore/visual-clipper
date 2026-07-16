@@ -156,6 +156,7 @@ export async function analyzeBatch(queue) {
     return;
   }
   if (response.success) {
+    chrome.storage.local.remove('screenshot_queue'); // saved for real — safe to drop
     chrome.action.setBadgeText({ text: '✓' });
     chrome.action.setBadgeBackgroundColor({ color: '#22c55e' });
     setTimeout(() => chrome.action.setBadgeText({ text: '' }), 3000);

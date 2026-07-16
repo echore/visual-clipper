@@ -113,8 +113,8 @@ btnBatchAnalyze.addEventListener('click', async () => {
   const queue = stored.screenshot_queue || [];
   if (!queue.length) return;
   await chrome.runtime.sendMessage({ action: 'analyzeBatch', queue }).catch(() => {});
-  chrome.storage.local.remove('screenshot_queue');
-  chrome.action.setBadgeText({ text: '' });
+  // The queue is cleared by analyzeBatch only after the save succeeds —
+  // a failed save keeps the shots so 分析 can simply be clicked again.
   window.close();
 });
 

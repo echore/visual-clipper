@@ -10,7 +10,7 @@
     "48": "icons/icon48.png",
     "128": "icons/icon128.png"
   },
-  "permissions": ["storage", "activeTab", "notifications", "tabs", "scripting", "sidePanel"],
+  "permissions": ["storage", "unlimitedStorage", "activeTab", "notifications", "tabs", "scripting", "sidePanel"],
   "host_permissions": ["<all_urls>"],
   "background": {
     "service_worker": "background.js",
