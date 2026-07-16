@@ -14,7 +14,7 @@ globalThis.chrome = {
           getUILanguage: () => 'en' },
 };
 
-import { DEFAULT_PORT, clipUrl, pingUrl, getPort, httpPost, CONNECT_FAIL_MSG } from './obsidian.js';
+import { DEFAULT_PORT, clipUrl, pingUrl, getPort, httpPost, pingAutopilot, CONNECT_FAIL_MSG } from './obsidian.js';
 
 describe('port handling', () => {
   beforeEach(() => { globalThis.__stored = {}; });
@@ -50,5 +50,20 @@ describe('httpPost error mapping', () => {
       json: async () => ({ success: false, error: 'Error: disk full' }),
     });
     await expect(httpPost({ mode: 'screenshot' })).rejects.toThrow('Save failed: Error: disk full');
+  });
+});
+
+describe('connection memory', () => {
+  test('successful ping records sc_ever_connected', async () => {
+    delete globalThis.__stored.sc_ever_connected;
+    globalThis.fetch = async () => ({ ok: true, json: async () => ({ app: 'vault-autopilot', version: '1.0' }) });
+    await pingAutopilot();
+    expect(globalThis.__stored.sc_ever_connected).toBe(true);
+  });
+  test('failed ping leaves the flag untouched', async () => {
+    delete globalThis.__stored.sc_ever_connected;
+    globalThis.fetch = async () => { throw new Error('refused'); };
+    await pingAutopilot();
+    expect(globalThis.__stored.sc_ever_connected).toBeUndefined();
   });
 });

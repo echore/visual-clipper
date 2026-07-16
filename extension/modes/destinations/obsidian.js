@@ -39,9 +39,13 @@ export async function pingAutopilot() {
     const resp = await fetch(pingUrl(port), { signal: AbortSignal.timeout(1500) });
     if (!resp.ok) return { connected: false };
     const body = await resp.json();
-    return body?.app === 'vault-autopilot'
-      ? { connected: true, version: body.version }
-      : { connected: false };
+    if (body?.app === 'vault-autopilot') {
+      // Once we have ever reached the plugin, "not detected" can no longer
+      // mean "not installed"; the welcome page routes to troubleshooting.
+      chrome.storage.local.set({ sc_ever_connected: true });
+      return { connected: true, version: body.version };
+    }
+    return { connected: false };
   } catch (_) {
     return { connected: false };
   }
