@@ -1,5 +1,5 @@
 import fs from 'node:fs';
-import { normalizeDestination, applyDestinationView } from './welcome-ui.js';
+import { normalizeDestination, applyDestinationView, resolveConnView } from './welcome-ui.js';
 
 const read = (path) => fs.readFileSync(new URL(path, import.meta.url), 'utf8');
 const en = JSON.parse(read('./_locales/en/messages.json'));
@@ -98,5 +98,25 @@ describe('detailed destination-aware Welcome content', () => {
 
   test.each([en, zh])('has a destination-specific Notion checking state', (catalog) => {
     expect(catalog.welcome_conn_checking_notion.message).toMatch(/Notion/i);
+  });
+});
+
+describe('resolveConnView', () => {
+  test('connected always wins', () => {
+    expect(resolveConnView({ connected: true, everConnected: false, choice: undefined })).toBe('green');
+    expect(resolveConnView({ connected: true, everConnected: true, choice: 'install' })).toBe('green');
+  });
+  test('explicit user choice is honored when disconnected', () => {
+    expect(resolveConnView({ connected: false, everConnected: true, choice: 'install' })).toBe('install');
+    expect(resolveConnView({ connected: false, everConnected: false, choice: 'troubleshoot' })).toBe('troubleshoot');
+  });
+  test('past success without a choice means troubleshoot, not install', () => {
+    expect(resolveConnView({ connected: false, everConnected: true, choice: undefined })).toBe('troubleshoot');
+  });
+  test('never connected and no choice asks the triage question', () => {
+    expect(resolveConnView({ connected: false, everConnected: false, choice: undefined })).toBe('triage');
+  });
+  test('garbage choice values fall back to memory-based routing', () => {
+    expect(resolveConnView({ connected: false, everConnected: false, choice: 'bogus' })).toBe('triage');
   });
 });
