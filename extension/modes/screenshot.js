@@ -1,4 +1,4 @@
-import { sanitize, notifyError, notifyNotice, notifySavedNotion, sendToContent, injectContentScript, detectPlatform, getCoverUrl } from './utils.js';
+import { sanitize, notifyError, notifyNotice, notifySavedNotion, notifySavedNotionInPage, sendToContent, injectContentScript, detectPlatform, getCoverUrl } from './utils.js';
 import { getActiveDestination } from './destinations/index.js';
 import { t } from './i18n.js';
 
@@ -132,7 +132,7 @@ export async function handleRegion(msg, tabId) {
   chrome.tabs.sendMessage(tabId, { action: 'captureResult', ...response });
   if (response.success) {
     chrome.action.setBadgeText({ text: '' });
-    if (response.notionUrl) notifySavedNotion(response.notionUrl);
+    if (response.notionUrl) notifySavedNotionInPage(tabId, response.notionUrl);
   } else {
     notifyError(response.error || t('err_ss_failed'));
   }
@@ -165,7 +165,9 @@ export async function analyzeBatch(queue) {
         sendToContent(tab.id, { action: 'openObsidian', url: response.obsidianUrl }).catch(() => {});
       }
     } else if (response.notionUrl) {
-      notifySavedNotion(response.notionUrl);
+      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+      if (tab?.id != null) notifySavedNotionInPage(tab.id, response.notionUrl);
+      else notifySavedNotion(response.notionUrl);
     }
   } else {
     notifyError(response.error || t('err_ss_failed'));

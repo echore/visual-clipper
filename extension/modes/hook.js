@@ -1,4 +1,4 @@
-import { buildTimestamps, sanitize, notifyError, notifyNotice, notifySavedNotion, ensureSendToContent, detectPlatform, getCoverUrl, normalizeTranscript } from './utils.js';
+import { buildTimestamps, sanitize, notifyError, notifyNotice, notifySavedNotionInPage, ensureSendToContent, detectPlatform, getCoverUrl, normalizeTranscript } from './utils.js';
 import { getActiveDestination } from './destinations/index.js';
 import { t } from './i18n.js';
 
@@ -84,7 +84,7 @@ export async function start(tabId) {
     if (response.obsidianUrl) {
       ensureSendToContent(tabId, { action: 'openObsidian', url: response.obsidianUrl }).catch(() => {});
     } else if (response.notionUrl) {
-      notifySavedNotion(response.notionUrl);
+      notifySavedNotionInPage(tabId, response.notionUrl);
     }
     if (response.notice) notifyNotice(response.notice);
   } else {

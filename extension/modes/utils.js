@@ -146,3 +146,14 @@ export function notifySavedNotion(notionUrl) {
     message: t('notif_notion_saved_body'),
   });
 }
+
+// Preferred surface: an in-page toast with an "open in Notion" link — OS-level
+// notification settings routinely swallow chrome.notifications, so those are
+// only the fallback for pages that can't host a content script.
+export async function notifySavedNotionInPage(tabId, notionUrl) {
+  try {
+    await ensureSendToContent(tabId, { action: 'notionSaved', url: notionUrl });
+  } catch (_) {
+    notifySavedNotion(notionUrl);
+  }
+}

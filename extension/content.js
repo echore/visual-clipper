@@ -138,6 +138,27 @@
   // ── Video detection & frame capture ──────────────────────────────────────────
   // Remove any listener left by a previous injection so a re-inject never doubles
   // up handlers (which made captures run twice → "select again" / Seek timeout).
+  // Bottom-right "saved to Notion" toast: the jump is a link the user can
+  // take or ignore. One toast at a time; rapid captures refresh it.
+  function showNotionToast(url) {
+    document.getElementById('ovc-notion-toast')?.remove();
+    const box = document.createElement('div');
+    box.id = 'ovc-notion-toast';
+    box.style.cssText = 'position:fixed;right:16px;bottom:16px;z-index:2147483647;background:rgba(17,24,39,.92);color:#fff;padding:10px 14px;border-radius:10px;font:13px/1.5 -apple-system,BlinkMacSystemFont,sans-serif;box-shadow:0 4px 12px rgba(0,0,0,.3);display:flex;gap:12px;align-items:center;';
+    const label = document.createElement('span');
+    label.textContent = chrome.i18n.getMessage('ct_saved_notion');
+    const link = document.createElement('a');
+    link.href = url;
+    link.target = '_blank';
+    link.rel = 'noopener';
+    link.textContent = chrome.i18n.getMessage('ct_open_notion');
+    link.style.cssText = 'color:#8ab4ff;text-decoration:none;font-weight:600;white-space:nowrap;';
+    link.addEventListener('click', () => box.remove());
+    box.append(label, link);
+    document.body.appendChild(box);
+    setTimeout(() => box.remove(), 8000);
+  }
+
   if (window.__SC_MSG_LISTENER__) { try { chrome.runtime.onMessage.removeListener(window.__SC_MSG_LISTENER__); } catch (_) {} }
   const __scMsgListener = (msg, _sender, sendResponse) => {
     if (msg.action === 'showOverlay') { show(msg.dataUrl); sendResponse({ ok: true }); return; }
@@ -146,6 +167,9 @@
     // dialog (same as Obsidian Web Clipper); the page itself stays put because
     // the OS handles the custom protocol. Used by hook/keyframe/batch success.
     if (msg.action === 'openObsidian') { sendResponse({ ok: true }); if (msg.url) window.location.href = msg.url; return; }
+    // Notion saves stay on the page: a small toast offers the jump as a link
+    // the user can take or ignore (auto-opening tabs piled up duplicates).
+    if (msg.action === 'notionSaved') { sendResponse({ ok: true }); if (msg.url) showNotionToast(msg.url); return; }
     if (msg.action === 'captureResult') {
       sendResponse({ ok: true });
       if (!hint) return;
