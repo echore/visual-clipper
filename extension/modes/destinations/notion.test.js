@@ -13,6 +13,7 @@ globalThis.chrome = {
       for (const k of keys) out[k] = src[k];
       return out;
     },
+    remove: async (keys) => { for (const k of [].concat(keys)) delete globalThis.__stored[k]; },
   } },
   action: { setBadgeText: () => {}, setBadgeBackgroundColor: () => {} },
   notifications: { create: () => {} },
@@ -66,6 +67,17 @@ describe('notionRequest', () => {
     const r = await notionRequest('/pages', { method: 'POST', token: 'T', body: {} });
     expect(r).toEqual({ done: 1 });
     expect(calls.length).toBe(2);
+  });
+  test('429 honors Retry-After across several hits, then gives up with the rate error', async () => {
+    const limited = { ok: false, status: 429, json: async () => ({}), headers: { get: (h) => h === 'Retry-After' ? '0.01' : null } };
+    // Recovers on the last allowed attempt…
+    let calls = mockFetch(({ n }) => n <= 3 ? limited : ok({ done: 1 }));
+    expect(await notionRequest('/pages', { method: 'POST', token: 'T', body: {} })).toEqual({ done: 1 });
+    expect(calls.length).toBe(4);
+    // …and stops after the retry budget when the limit persists.
+    calls = mockFetch(() => limited);
+    await expect(notionRequest('/pages', { method: 'POST', token: 'T', body: {} })).rejects.toThrow(/rate|wait/i);
+    expect(calls.length).toBe(4);
   });
   test('network failure → localized network error', async () => {
     globalThis.fetch = async () => { throw new Error('boom'); };
@@ -495,6 +507,36 @@ describe('send', () => {
     const body = JSON.parse(patchPage.init.body);
     expect(body.cover).toEqual({ type: 'external', external: { url: 'https://img/new.jpg' } });
     expect(body.properties.Title.title[0].text.content).toBe('Real Title');
+  });
+
+  test('stale data-source cache self-heals: 404 → re-derive from the pasted link → save lands', async () => {
+    const PAGE_URL = 'https://notion.so/p-0123456789abcdef0123456789abcdef';
+    const TARGET = '0123456789abcdef0123456789abcdef';
+    globalThis.__stored = { sc_notion_token: 'T', sc_notion_ds: 'DEAD', sc_notion_parent: PAGE_URL };
+    const calls = mockFetch(({ url, init }) => {
+      if (url.includes('/data_sources/DEAD/query')) return err(404); // cached ds is gone
+      if (url.endsWith(`/databases/${TARGET}`) && init.method === 'GET') return err(404); // pasted link is a plain page
+      if (url.includes(`/blocks/${TARGET}/children`)) return ok({ results: [], has_more: false }); // no child db → create one
+      if (url.endsWith('/databases') && init.method === 'POST') return ok({ id: 'DB2', data_sources: [{ id: 'DS_NEW' }] });
+      if (url.includes('/data_sources/DS_NEW/query')) return ok({ results: [] });
+      if (url.endsWith('/pages') && init.method === 'POST') return ok({ id: 'PG', url: 'https://www.notion.so/PG' });
+      if (url.includes('/blocks/PG/children') && (!init.method || init.method === 'GET')) return ok({ results: [], has_more: false });
+      if (init.method === 'PATCH') return ok({});
+      throw new Error('unhandled ' + url);
+    });
+    const r = await send({ mode: 'screenshot', url: 'https://v/1', title: 'T' });
+    expect(r.success).toBe(true);
+    expect(globalThis.__stored.sc_notion_ds).toBe('DS_NEW'); // cache rebuilt
+    expect(calls.some((c) => c.url.includes('/data_sources/DEAD/query'))).toBe(true);
+  });
+
+  test('pasted link gone too → actionable error, no infinite retry', async () => {
+    const PAGE_URL = 'https://notion.so/p-0123456789abcdef0123456789abcdef';
+    globalThis.__stored = { sc_notion_token: 'T', sc_notion_ds: 'DEAD', sc_notion_parent: PAGE_URL };
+    mockFetch(() => err(404)); // everything is gone
+    const r = await send({ mode: 'screenshot', url: 'https://v/1', title: 'T' });
+    expect(r.success).toBe(false);
+    expect(r.error).toMatch(/welcome|paste/i); // en stub locale copy
   });
 
   test('saves run one at a time: the second waits for the first to finish', async () => {

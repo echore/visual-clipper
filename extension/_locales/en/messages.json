@@ -198,7 +198,7 @@
   "err_kf_failed":      { "message": "Keyframe capture failed — try again" },
   "err_notion_not_configured": { "message": "Notion isn't set up yet — open the extension guide page to add your token and page link." },
   "err_notion_auth":    { "message": "Notion rejected the token — generate a new one in Notion, then update it on the guide page." },
-  "err_notion_target":  { "message": "Notion page or database not found — re-select the page on the guide page and try again." },
+  "err_notion_target":  { "message": "Your Notion video library can't be found — it may have been deleted or replaced. Open the extension's welcome page and paste your Notion page link again." },
   "err_notion_rate":    { "message": "Notion is rate-limiting requests — wait a moment and try again." },
   "err_notion_network": { "message": "Can't reach Notion — check your network connection." },
   "err_notion_bad_schema": { "message": "That Notion database has no URL-type property — add a column of type URL to it (any name), or paste a plain page link instead." },

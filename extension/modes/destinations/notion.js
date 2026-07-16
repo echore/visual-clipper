@@ -51,8 +51,8 @@ export function canonicalVideoUrl(url) {
   } catch (_) { return url; }
 }
 
-// Single fetch wrapper: auth headers, JSON, localized errors, one 429 retry.
-export async function notionRequest(path, { method = 'GET', token, body, form } = {}, _retried = false) {
+// Single fetch wrapper: auth headers, JSON, localized errors, 429 backoff.
+export async function notionRequest(path, { method = 'GET', token, body, form } = {}, _retried = 0) {
   let resp;
   try {
     resp = await fetch(`${NOTION_API}${path}`, {
@@ -68,11 +68,22 @@ export async function notionRequest(path, { method = 'GET', token, body, form } 
     throw new Error(t('err_notion_network'));
   }
   if (resp.status === 401 || resp.status === 403) throw new Error(t('err_notion_auth'));
-  if (resp.status === 404) throw new Error(t('err_notion_target'));
+  if (resp.status === 404) {
+    // code lets send() distinguish "target gone" (stale cache → self-heal)
+    // from other failures.
+    const e = new Error(t('err_notion_target'));
+    e.code = 404;
+    throw e;
+  }
   if (resp.status === 429) {
-    if (_retried) throw new Error(t('err_notion_rate'));
-    await new Promise((r) => setTimeout(r, 1200));
-    return notionRequest(path, { method, token, body, form }, true);
+    if (_retried >= 3) throw new Error(t('err_notion_rate'));
+    // Notion says how long to back off (Retry-After, seconds); fall back to a
+    // growing delay. Capped — a long timer risks the service worker being
+    // torn down mid-wait.
+    const hinted = parseFloat(resp.headers?.get?.('Retry-After'));
+    const waitMs = Math.min(hinted > 0 ? hinted * 1000 : 1200 * (_retried + 1), 15000);
+    await new Promise((r) => setTimeout(r, waitMs));
+    return notionRequest(path, { method, token, body, form }, _retried + 1);
   }
   if (!resp.ok) {
     const errBody = await resp.json().catch(() => null);
@@ -474,28 +485,44 @@ export function send(payload) {
   return run;
 }
 
+async function clipOnce(cfg, payload) {
+  const { dsId, props } = await ensureDataSource(cfg);
+  const rawUrl = payload.url || payload.video_url;
+  const url = canonicalVideoUrl(rawUrl);
+  let page = await findPageByUrl(cfg, dsId, [url, rawUrl], props);
+  if (!page) page = await createVideoPage(cfg, dsId, { ...payload, url }, props);
+  else await refreshPageMeta(cfg, page, payload, props);
+  const uploadIds = [];
+  for (const img of collectImages(payload)) {
+    uploadIds.push(await uploadImage(cfg, img));   // serial on purpose: Notion ~3 req/s
+  }
+  await upsertSection(cfg, page.id, payload.mode, payloadToBlocks(payload, uploadIds),
+    Math.floor(payload.time_range?.start || 0));
+  // notionUrl is the Notion-mode counterpart of vault-autopilot's obsidianUrl:
+  // modes surface it so the user can jump to the note they just saved to.
+  return { success: true, ...(page.url ? { notionUrl: page.url } : {}) };
+}
+
 async function doSend(payload) {
   const cfg = await getNotionConfig();
   if (!cfg.token || (!cfg.dataSourceId && !cfg.parentUrl)) {
     return { success: false, error: t('err_notion_not_configured') };
   }
   try {
-    const { dsId, props } = await ensureDataSource(cfg);
-    const rawUrl = payload.url || payload.video_url;
-    const url = canonicalVideoUrl(rawUrl);
-    let page = await findPageByUrl(cfg, dsId, [url, rawUrl], props);
-    if (!page) page = await createVideoPage(cfg, dsId, { ...payload, url }, props);
-    else await refreshPageMeta(cfg, page, payload, props);
-    const uploadIds = [];
-    for (const img of collectImages(payload)) {
-      uploadIds.push(await uploadImage(cfg, img));   // serial on purpose: Notion ~3 req/s
-    }
-    await upsertSection(cfg, page.id, payload.mode, payloadToBlocks(payload, uploadIds),
-      Math.floor(payload.time_range?.start || 0));
-    // notionUrl is the Notion-mode counterpart of vault-autopilot's obsidianUrl:
-    // modes surface it so the user can jump to the note they just saved to.
-    return { success: true, ...(page.url ? { notionUrl: page.url } : {}) };
+    return await clipOnce(cfg, payload);
   } catch (err) {
+    // 404 with a cached data source id: the library that id points at is gone
+    // (deleted, or the user switched templates). The pasted page link is still
+    // the source of truth — drop the stale cache and re-derive from it once,
+    // invisibly. Only when that also fails does the user see the error.
+    if (err.code === 404 && cfg.dataSourceId && cfg.parentUrl) {
+      await chrome.storage.local.remove(['sc_notion_ds', 'sc_notion_props']);
+      try {
+        return await clipOnce({ ...cfg, dataSourceId: null, props: null }, payload);
+      } catch (err2) {
+        return { success: false, error: err2.message };
+      }
+    }
     return { success: false, error: err.message };
   }
 }

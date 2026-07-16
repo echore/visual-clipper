@@ -198,7 +198,7 @@
   "err_kf_failed":      { "message": "关键帧捕获失败，请重试" },
   "err_notion_not_configured": { "message": "还未配置 Notion——请打开扩展引导页填写 token 和页面链接。" },
   "err_notion_auth":    { "message": "Notion 拒绝了这个 token——请在 Notion 重新生成后到引导页更新。" },
-  "err_notion_target":  { "message": "找不到 Notion 页面或数据库——请到引导页重新指定页面后重试。" },
+  "err_notion_target":  { "message": "找不到你的 Notion 视频库——它可能已被删除或更换。请打开扩展的欢迎页，重新粘贴一次 Notion 页面链接。" },
   "err_notion_rate":    { "message": "Notion 正在限流——请稍候再试。" },
   "err_notion_network": { "message": "无法连接 Notion——请检查网络。" },
   "err_notion_bad_schema": { "message": "这个 Notion 数据库没有「网址 URL」类型的列——请给它加一列网址类型的属性（列名随意），或改贴一个普通页面链接。" },
