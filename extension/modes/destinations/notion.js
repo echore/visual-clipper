@@ -133,14 +133,28 @@ const imgUpload = (fid) => ({ object: 'block', type: 'image', image: { type: 'fi
 const imgExternal = (url) => ({ object: 'block', type: 'image', image: { type: 'external', external: { url } } });
 const embed = (url) => ({ object: 'block', type: 'embed', embed: { url } });
 
-// Hook / keyframe sections open with the video player, mirroring the
-// vault-autopilot note layout; ?t= seeks keyframe embeds to the clip start.
-// Notion embeds never autoplay, so no guard is needed for that.
+// Hook / keyframe sections open with the video player, mirroring
+// vault-autopilot's buildVideoEmbed. Platform embed players take the start
+// time as their own parameter — a plain video URL with ?t= gets unfurled by
+// Notion into its player and the seek is dropped (bilibili's 记忆续播 then
+// resumes wherever the user last watched instead of the clip start).
 export function videoEmbedUrl(url, startSeconds) {
   const s = Math.floor(startSeconds || 0);
-  if (!s) return url;
+  const canonical = canonicalVideoUrl(url);
   try {
-    const u = new URL(url);
+    const u = new URL(canonical);
+    const host = u.hostname.replace(/^www\./, '');
+    if (host.endsWith('youtube.com')) {
+      const id = u.searchParams.get('v');
+      if (id) return `https://www.youtube.com/embed/${id}?start=${s}`;
+    }
+    if (host.endsWith('bilibili.com')) {
+      const id = (u.pathname.match(/\/video\/(BV\w+)/) || [])[1];
+      // autoplay=0: several embeds in one page would all start at once;
+      // danmaku=0 keeps replays clean. (Same params as vault-autopilot.)
+      if (id) return `https://player.bilibili.com/player.html?bvid=${id}&page=1&t=${s}&autoplay=0&danmaku=0`;
+    }
+    if (!s) return canonical;
     u.searchParams.set('t', String(s));
     return u.toString();
   } catch (_) { return url; }
@@ -161,7 +175,7 @@ export function payloadToBlocks(payload, uploadIds = []) {
       break;
     }
     case 'hook':
-      if (payload.url) blocks.push(embed(payload.url));
+      if (payload.url) blocks.push(embed(videoEmbedUrl(payload.url, 0)));
       if (range) blocks.push(range);
       blocks.push(...uploadIds.map(imgUpload));
       if (payload.transcript) blocks.push(...chunkText(payload.transcript).map(para));
@@ -232,7 +246,11 @@ function insertPositionFor(children, mode) {
 // vault-autopilot sorting motion sections by startSeconds).
 function keyframeStart(block) {
   if (block.type !== 'embed') return null;
-  try { return parseInt(new URL(block.embed?.url || '').searchParams.get('t') || '0', 10) || 0; } catch (_) { return null; }
+  try {
+    const q = new URL(block.embed?.url || '').searchParams;
+    // t= on bilibili player / legacy plain URLs, start= on youtube embeds.
+    return parseInt(q.get('t') ?? q.get('start') ?? '0', 10) || 0;
+  } catch (_) { return null; }
 }
 
 function keyframeAnchor(section, startSeconds) {

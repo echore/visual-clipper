@@ -560,16 +560,23 @@ describe('findPageByUrl with resolved props', () => {
 });
 
 describe('video embeds in hook/keyframe sections', () => {
-  test('hook embeds the video at 0; keyframe embed seeks to clip start', () => {
-    const hook = payloadToBlocks({ mode: 'hook', url: 'https://www.youtube.com/watch?v=abc', time_range: { start: 0, end: 15 } }, []);
-    expect(hook[0]).toEqual({ object: 'block', type: 'embed', embed: { url: 'https://www.youtube.com/watch?v=abc' } });
+  test('hook embeds the player at 0; keyframe player seeks to clip start', () => {
+    const hook = payloadToBlocks({ mode: 'hook', url: 'https://www.youtube.com/watch?v=abc&t=49s', time_range: { start: 0, end: 15 } }, []);
+    expect(hook[0]).toEqual({ object: 'block', type: 'embed', embed: { url: 'https://www.youtube.com/embed/abc?start=0' } });
     const kf = payloadToBlocks({ mode: 'keyframe', url: 'https://www.youtube.com/watch?v=abc', time_range: { start: 90, end: 95 } }, []);
     expect(kf[0].type).toBe('embed');
-    expect(kf[0].embed.url).toBe('https://www.youtube.com/watch?v=abc&t=90');
+    expect(kf[0].embed.url).toBe('https://www.youtube.com/embed/abc?start=90');
   });
-  test('videoEmbedUrl: zero start and invalid urls pass through unchanged', () => {
-    expect(videoEmbedUrl('https://www.bilibili.com/video/BV1x', 63.7)).toBe('https://www.bilibili.com/video/BV1x?t=63');
+  test('bilibili uses the external player so the seek survives Notion unfurling and 续播', () => {
+    // Raw tab URL junk (spm/vd_source) must not leak into the player URL.
+    expect(videoEmbedUrl('https://www.bilibili.com/video/BV1x/?spm_id_from=333&vd_source=f06', 63.7))
+      .toBe('https://player.bilibili.com/player.html?bvid=BV1x&page=1&t=63&autoplay=0&danmaku=0');
+    expect(videoEmbedUrl('https://www.bilibili.com/video/BV1x', 0))
+      .toBe('https://player.bilibili.com/player.html?bvid=BV1x&page=1&t=0&autoplay=0&danmaku=0');
+  });
+  test('videoEmbedUrl: unknown platforms keep the ?t= form; invalid urls pass through', () => {
     expect(videoEmbedUrl('https://x/y', 0)).toBe('https://x/y');
+    expect(videoEmbedUrl('https://x/y', 30)).toBe('https://x/y?t=30');
     expect(videoEmbedUrl('not a url', 30)).toBe('not a url');
   });
 });
