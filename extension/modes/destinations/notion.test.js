@@ -20,7 +20,7 @@ globalThis.chrome = {
           getUILanguage: () => 'en' },
 };
 
-import { parsePageId, notionRequest, ping, NOTION_VERSION, SECTION_TITLES, sectionTitleFor, chunkText, collectImages, payloadToBlocks, findSection, resolveProps, videoEmbedUrl, ensureDataSource, findPageByUrl, createVideoPage, uploadImage, upsertSection, send } from './notion.js';
+import { parsePageId, canonicalVideoUrl, notionRequest, ping, NOTION_VERSION, SECTION_TITLES, sectionTitleFor, chunkText, collectImages, payloadToBlocks, findSection, scanSections, resolveProps, videoEmbedUrl, ensureDataSource, findPageByUrl, createVideoPage, uploadImage, upsertSection, send } from './notion.js';
 
 const ok  = (json) => ({ ok: true,  status: 200, json: async () => json });
 const err = (status) => ({ ok: false, status, json: async () => ({ message: 'x' }) });
@@ -255,7 +255,7 @@ describe('ensureDataSource', () => {
 describe('findPageByUrl', () => {
   test('queries the data source by URL property', async () => {
     const calls = mockFetch(() => ok({ results: [{ id: 'PG1', url: 'https://www.notion.so/PG1' }] }));
-    expect(await findPageByUrl({ token: 'T' }, 'DS9', 'https://v/1')).toEqual({ id: 'PG1', url: 'https://www.notion.so/PG1' });
+    expect(await findPageByUrl({ token: 'T' }, 'DS9', 'https://v/1')).toEqual({ id: 'PG1', url: 'https://www.notion.so/PG1', hasCover: false });
     expect(calls[0].url).toBe('https://api.notion.com/v1/data_sources/DS9/query');
     const body = JSON.parse(calls[0].init.body);
     expect(body.filter).toEqual({ property: 'URL', url: { equals: 'https://v/1' } });
@@ -263,6 +263,34 @@ describe('findPageByUrl', () => {
   test('miss → null', async () => {
     mockFetch(() => ok({ results: [] }));
     expect(await findPageByUrl({ token: 'T' }, 'DS9', 'https://v/2')).toBeNull();
+  });
+  test('multiple url variants → or filter; duplicates collapse', async () => {
+    const calls = mockFetch(() => ok({ results: [{ id: 'PG1', url: 'u', cover: { type: 'external' } }] }));
+    const r = await findPageByUrl({ token: 'T' }, 'DS9', ['https://v/1', 'https://v/1?t=42', 'https://v/1']);
+    expect(r.hasCover).toBe(true);
+    expect(JSON.parse(calls[0].init.body).filter).toEqual({ or: [
+      { property: 'URL', url: { equals: 'https://v/1' } },
+      { property: 'URL', url: { equals: 'https://v/1?t=42' } },
+    ] });
+  });
+});
+
+describe('canonicalVideoUrl', () => {
+  test('youtube variants collapse to watch?v=', () => {
+    expect(canonicalVideoUrl('https://www.youtube.com/watch?v=abc&t=42s&list=PL1')).toBe('https://www.youtube.com/watch?v=abc');
+    expect(canonicalVideoUrl('https://youtu.be/abc?si=xyz')).toBe('https://www.youtube.com/watch?v=abc');
+    expect(canonicalVideoUrl('https://www.youtube.com/shorts/abc')).toBe('https://www.youtube.com/watch?v=abc');
+  });
+  test('bilibili keeps only the BV path', () => {
+    expect(canonicalVideoUrl('https://www.bilibili.com/video/BV1xx?p=2&t=30')).toBe('https://www.bilibili.com/video/BV1xx');
+  });
+  test('xiaohongshu drops query; other urls only drop the hash', () => {
+    expect(canonicalVideoUrl('https://www.xiaohongshu.com/explore/n1?xsec=q')).toBe('https://www.xiaohongshu.com/explore/n1');
+    expect(canonicalVideoUrl('https://example.com/v?id=1#frag')).toBe('https://example.com/v?id=1');
+  });
+  test('garbage passes through', () => {
+    expect(canonicalVideoUrl('not a url')).toBe('not a url');
+    expect(canonicalVideoUrl(null)).toBeNull();
   });
 });
 
@@ -309,33 +337,83 @@ describe('uploadImage', () => {
 describe('upsertSection', () => {
   const h2 = (blockId, text) => ({ id: blockId, type: 'heading_2', heading_2: { rich_text: [{ plain_text: text, type: 'text', text: { content: text } }] } });
   const p  = (blockId) => ({ id: blockId, type: 'paragraph', paragraph: { rich_text: [] } });
+  const e  = (blockId, t) => ({ id: blockId, type: 'embed', embed: { url: t ? `https://v/1?t=${t}` : 'https://v/1' } });
+  const mockChildren = (children) => mockFetch(({ url, init }) => {
+    if (url.includes('/blocks/PG/children') && (!init.method || init.method === 'GET'))
+      return ok({ results: children, has_more: false });
+    if (init.method === 'DELETE' || init.method === 'PATCH') return ok({});
+    throw new Error('unhandled ' + url);
+  });
 
-  test('existing section: deletes old content, appends after heading', async () => {
-    const calls = mockFetch(({ url, init }) => {
-      if (url.includes('/blocks/PG/children') && (!init.method || init.method === 'GET'))
-        return ok({ results: [h2('H', 'Screenshots'), p('old1'), p('old2')], has_more: false });
-      if (init.method === 'DELETE') return ok({});
-      if (init.method === 'PATCH') return ok({});
-      throw new Error('unhandled ' + url);
-    });
-    await upsertSection({ token: 'T' }, 'PG', 'screenshot', [{ object: 'block', type: 'paragraph', paragraph: { rich_text: [] } }]);
+  test('replace mode (hook): deletes old content, inserts after heading', async () => {
+    const calls = mockChildren([h2('H', 'Hook'), p('old1'), p('old2')]);
+    await upsertSection({ token: 'T' }, 'PG', 'hook', [p('new')]);
     const deletes = calls.filter((c) => c.init.method === 'DELETE').map((c) => c.url);
     expect(deletes).toEqual(['https://api.notion.com/v1/blocks/old1', 'https://api.notion.com/v1/blocks/old2']);
     const patch = calls.find((c) => c.init.method === 'PATCH');
     expect(JSON.parse(patch.init.body).position).toEqual({ type: 'after_block', after_block: { id: 'H' } });
   });
 
-  test('missing section: appends heading + content at page end', async () => {
-    const calls = mockFetch(({ init }) => {
-      if (!init.method || init.method === 'GET') return ok({ results: [], has_more: false });
-      if (init.method === 'PATCH') return ok({});
-      throw new Error('unhandled');
-    });
+  test('missing section on an empty page: appends heading + content at page end', async () => {
+    const calls = mockChildren([]);
     await upsertSection({ token: 'T' }, 'PG', 'keyframe', []);
     const body = JSON.parse(calls.find((c) => c.init.method === 'PATCH').init.body);
     expect(body.position).toBeUndefined();
     expect(body.children[0].type).toBe('heading_2');
     expect(body.children[0].heading_2.rich_text[0].text.content).toBe('Keyframes'); // en stub locale
+  });
+
+  test('screenshots accumulate: appended after the last block, nothing deleted', async () => {
+    const calls = mockChildren([h2('H', '截图'), p('c1'), p('c2')]);
+    await upsertSection({ token: 'T' }, 'PG', 'screenshot', [p('new')]);
+    expect(calls.filter((c) => c.init.method === 'DELETE')).toHaveLength(0);
+    const patch = calls.find((c) => c.init.method === 'PATCH');
+    expect(JSON.parse(patch.init.body).position).toEqual({ type: 'after_block', after_block: { id: 'c2' } });
+  });
+
+  test('keyframes accumulate in clip-time order via the embed ?t= key', async () => {
+    // Existing groups at t=10 and t=60; a t=30 capture lands between them.
+    const calls = mockChildren([h2('H', 'Keyframes'), e('e10', 10), p('r10'), p('i10'), e('e60', 60), p('r60')]);
+    await upsertSection({ token: 'T' }, 'PG', 'keyframe', [p('new')], 30);
+    const patch = calls.find((c) => c.init.method === 'PATCH');
+    expect(JSON.parse(patch.init.body).position).toEqual({ type: 'after_block', after_block: { id: 'i10' } });
+  });
+
+  test('keyframe later than every existing group appends at the section end', async () => {
+    const calls = mockChildren([h2('H', 'Keyframes'), e('e10', 10), p('r10')]);
+    await upsertSection({ token: 'T' }, 'PG', 'keyframe', [p('new')], 90);
+    const patch = calls.find((c) => c.init.method === 'PATCH');
+    expect(JSON.parse(patch.init.body).position).toEqual({ type: 'after_block', after_block: { id: 'r10' } });
+  });
+
+  test('new section ranks below an existing one: inserted after its last block', async () => {
+    // Page has Cover; a screenshot section belongs after it.
+    const calls = mockChildren([h2('H', 'Cover'), p('c1')]);
+    await upsertSection({ token: 'T' }, 'PG', 'screenshot', [p('new')]);
+    const body = JSON.parse(calls.find((c) => c.init.method === 'PATCH').init.body);
+    expect(body.children[0].heading_2.rich_text[0].text.content).toBe('Screenshots');
+    expect(body.position).toEqual({ type: 'after_block', after_block: { id: 'c1' } });
+  });
+
+  test('new section ranks above every existing one: inserted before them', async () => {
+    // Keyframes exist; a hook section goes in front — after the page head
+    // when there is one, at the very start when not.
+    let calls = mockChildren([p('head'), h2('H', 'Keyframes'), p('k1')]);
+    await upsertSection({ token: 'T' }, 'PG', 'hook', [p('new')]);
+    let body = JSON.parse(calls.find((c) => c.init.method === 'PATCH').init.body);
+    expect(body.position).toEqual({ type: 'after_block', after_block: { id: 'head' } });
+
+    calls = mockChildren([h2('H', 'Keyframes'), p('k1')]);
+    await upsertSection({ token: 'T' }, 'PG', 'hook', [p('new')]);
+    body = JSON.parse(calls.find((c) => c.init.method === 'PATCH').init.body);
+    expect(body.position).toEqual({ type: 'start' });
+  });
+
+  test('ordering anchors only on sections we own, not the user\'s own headings', async () => {
+    const calls = mockChildren([h2('H1', 'Hook'), p('hk1'), h2('U1', 'My Notes'), p('n1'), h2('H2', 'Screenshots'), p('s1')]);
+    await upsertSection({ token: 'T' }, 'PG', 'keyframe', [p('new')]);
+    const body = JSON.parse(calls.find((c) => c.init.method === 'PATCH').init.body);
+    expect(body.position).toEqual({ type: 'after_block', after_block: { id: 'hk1' } });
   });
 });
 
@@ -364,6 +442,83 @@ describe('send', () => {
       captured_at: '2026-07-13T00:00:00.000Z', image: 'aGk=' });
     expect(r).toEqual({ success: true, notionUrl: 'https://www.notion.so/PG' });
     expect(calls.some((c) => c.url.endsWith('/pages'))).toBe(false); // page existed, none created
+  });
+
+  test('looks up canonical + raw URL together; a created page stores the canonical form', async () => {
+    globalThis.__stored = { sc_notion_token: 'T', sc_notion_ds: 'DS' };
+    const calls = mockFetch(({ url, init }) => {
+      if (url.endsWith('/query')) return ok({ results: [] });
+      if (url.endsWith('/pages') && init.method === 'POST') return ok({ id: 'PG', url: 'https://www.notion.so/PG' });
+      if (url.includes('/blocks/PG/children') && (!init.method || init.method === 'GET')) return ok({ results: [], has_more: false });
+      if (init.method === 'PATCH') return ok({});
+      throw new Error('unhandled ' + url);
+    });
+    const raw = 'https://www.youtube.com/watch?v=abc&t=42s';
+    const r = await send({ mode: 'thumbnail', video_url: raw, thumbnail_url: 'https://img/c.jpg', title: 'T', platform: 'youtube' });
+    expect(r.success).toBe(true);
+    const query = JSON.parse(calls.find((c) => c.url.endsWith('/query')).init.body);
+    expect(query.filter).toEqual({ or: [
+      { property: 'URL', url: { equals: 'https://www.youtube.com/watch?v=abc' } },
+      { property: 'URL', url: { equals: raw } },
+    ] });
+    const create = JSON.parse(calls.find((c) => c.url.endsWith('/pages')).init.body);
+    expect(create.properties.URL).toEqual({ url: 'https://www.youtube.com/watch?v=abc' });
+  });
+
+  test('existing page without a cover gets one backfilled from the capture', async () => {
+    globalThis.__stored = { sc_notion_token: 'T', sc_notion_ds: 'DS' };
+    const calls = mockFetch(({ url, init }) => {
+      if (url.startsWith('data:')) return { blob: async () => new Blob([new Uint8Array([1])], { type: 'image/png' }) };
+      if (url.endsWith('/query')) return ok({ results: [{ id: 'PG', url: 'https://www.notion.so/PG', cover: null }] });
+      if (url.endsWith('/file_uploads')) return ok({ id: 'FU1' });
+      if (url.endsWith('/FU1/send')) return ok({ status: 'uploaded' });
+      if (url.includes('/blocks/PG/children') && (!init.method || init.method === 'GET')) return ok({ results: [], has_more: false });
+      if (init.method === 'PATCH') return ok({});
+      throw new Error('unhandled ' + url);
+    });
+    await send({ mode: 'screenshot', url: 'https://v/1', title: 'T', image: 'aGk=', cover_url: 'https://img/c.jpg' });
+    const patchPage = calls.find((c) => c.url.endsWith('/pages/PG') && c.init.method === 'PATCH');
+    expect(JSON.parse(patchPage.init.body).cover).toEqual({ type: 'external', external: { url: 'https://img/c.jpg' } });
+    expect(JSON.parse(patchPage.init.body).properties).toBeUndefined(); // cover only, title untouched
+  });
+
+  test('收藏封面 on an existing page refreshes its cover and title', async () => {
+    globalThis.__stored = { sc_notion_token: 'T', sc_notion_ds: 'DS' };
+    const calls = mockFetch(({ url, init }) => {
+      if (url.endsWith('/query')) return ok({ results: [{ id: 'PG', url: 'https://www.notion.so/PG', cover: { type: 'external' } }] });
+      if (url.includes('/blocks/PG/children') && (!init.method || init.method === 'GET')) return ok({ results: [], has_more: false });
+      if (init.method === 'PATCH') return ok({});
+      throw new Error('unhandled ' + url);
+    });
+    await send({ mode: 'thumbnail', video_url: 'https://v/1', thumbnail_url: 'https://img/new.jpg', title: 'Tab Title', video_title: 'Real Title' });
+    const patchPage = calls.find((c) => c.url.endsWith('/pages/PG') && c.init.method === 'PATCH');
+    const body = JSON.parse(patchPage.init.body);
+    expect(body.cover).toEqual({ type: 'external', external: { url: 'https://img/new.jpg' } });
+    expect(body.properties.Title.title[0].text.content).toBe('Real Title');
+  });
+
+  test('saves run one at a time: the second waits for the first to finish', async () => {
+    globalThis.__stored = { sc_notion_token: 'T', sc_notion_ds: 'DS' };
+    let release;
+    const gate = new Promise((r) => { release = r; });
+    const events = [];
+    let queries = 0;
+    mockFetch(async ({ url, init }) => {
+      if (url.endsWith('/query')) {
+        events.push(`query${++queries}`);
+        if (queries === 1) await gate;
+        return ok({ results: [{ id: 'PG', url: 'https://www.notion.so/PG' }] });
+      }
+      if (url.includes('/blocks/PG/children') && (!init.method || init.method === 'GET')) return ok({ results: [], has_more: false });
+      if (init.method === 'PATCH') { events.push('write'); return ok({}); }
+      throw new Error('unhandled ' + url);
+    });
+    const p1 = send({ mode: 'screenshot', url: 'https://v/1', title: 'T' });
+    const p2 = send({ mode: 'screenshot', url: 'https://v/1', title: 'T' });
+    release();
+    await Promise.all([p1, p2]);
+    // Without the mutex, query2 fires while save 1 is still gated (before its write).
+    expect(events.indexOf('query2')).toBeGreaterThan(events.indexOf('write'));
   });
 });
 

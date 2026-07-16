@@ -24,6 +24,33 @@ export function parsePageId(url) {
   return m ? m[1].toLowerCase() : null;
 }
 
+// One video = one Notion page, but the modes reach send() with slightly
+// different URLs for the same video (raw tab URL with &t=/&list=, cleaned
+// og:url, …). The upsert key is this canonical form — the same idea as
+// vault-autopilot's videoKey().
+export function canonicalVideoUrl(url) {
+  if (!url) return url;
+  try {
+    const u = new URL(url);
+    const host = u.hostname.replace(/^www\./, '');
+    if (host === 'youtu.be') {
+      const id = u.pathname.split('/')[1];
+      if (id) return `https://www.youtube.com/watch?v=${id}`;
+    }
+    if (host.endsWith('youtube.com')) {
+      const id = u.searchParams.get('v') || (u.pathname.match(/^\/shorts\/([\w-]+)/) || [])[1];
+      if (id) return `https://www.youtube.com/watch?v=${id}`;
+    }
+    if (host.endsWith('bilibili.com')) {
+      const bv = (u.pathname.match(/\/video\/(BV\w+)/) || [])[1];
+      if (bv) return `https://www.bilibili.com/video/${bv}`;
+    }
+    if (host.endsWith('xiaohongshu.com')) return u.origin + u.pathname;
+    u.hash = '';
+    return u.toString();
+  } catch (_) { return url; }
+}
+
 // Single fetch wrapper: auth headers, JSON, localized errors, one 429 retry.
 export async function notionRequest(path, { method = 'GET', token, body, form } = {}, _retried = false) {
   let resp;
@@ -76,6 +103,12 @@ export const SECTION_TITLES = {
   hook:       ['Hook', '开场 Hook'],
   keyframe:   ['Keyframes', '关键帧'],
 };
+
+// Canonical order of sections in the page, whatever order they're captured in
+// (mirrors vault-autopilot's KINDS rank). Keyframes and screenshots accumulate
+// across captures; cover and hook hold one current version.
+export const SECTION_ORDER = ['thumbnail', 'hook', 'keyframe', 'screenshot'];
+const APPEND_MODES = ['keyframe', 'screenshot'];
 
 export function sectionTitleFor(mode) {
   const lang = globalThis.chrome?.i18n?.getUILanguage?.() || 'en';
@@ -144,21 +177,72 @@ export function payloadToBlocks(payload, uploadIds = []) {
 
 const headingText = (b) => (b[b.type]?.rich_text || []).map((r) => r.plain_text ?? r.text?.content ?? '').join('').trim();
 
-// Scan the page's top-level blocks for our mode's heading (either locale);
-// content = every block after it until the next heading_2.
-export function findSection(children, mode) {
-  const titles = SECTION_TITLES[mode];
-  let headingId = null;
-  const contentIds = [];
+function modeOfHeading(text) {
+  for (const m of SECTION_ORDER) if (SECTION_TITLES[m].includes(text)) return m;
+  return null;
+}
+
+// Group the page's top-level blocks into sections: a heading_2 starts one,
+// everything until the next heading_2 is its content. mode = null for headings
+// we don't own (user content) — kept so ordering can insert around them.
+export function scanSections(children) {
+  const sections = [];
+  let cur = null;
   for (const b of children) {
     if (b.type === 'heading_2') {
-      if (headingId) break;
-      if (titles.includes(headingText(b))) headingId = b.id;
-      continue;
+      cur = { mode: modeOfHeading(headingText(b)), headingId: b.id, blocks: [] };
+      sections.push(cur);
+    } else if (cur) {
+      cur.blocks.push(b);
     }
-    if (headingId) contentIds.push(b.id);
   }
-  return headingId ? { headingId, contentIds } : null;
+  return sections;
+}
+
+// Our mode's heading (either locale) + its content block ids.
+export function findSection(children, mode) {
+  const s = scanSections(children).find((x) => x.mode === mode);
+  return s ? { headingId: s.headingId, contentIds: s.blocks.map((b) => b.id) } : null;
+}
+
+// Where a NEW section belongs: after the last block of the closest
+// lower-ranked section we own, else before the first section we own, else at
+// the page end (null → no position parameter, Notion's default).
+function insertPositionFor(children, mode) {
+  const ours = scanSections(children).filter((s) => s.mode !== null);
+  if (!ours.length) return null;
+  const rank = SECTION_ORDER.indexOf(mode);
+  let prev = null;
+  for (const s of ours) {
+    const r = SECTION_ORDER.indexOf(s.mode);
+    if (r < rank && (!prev || r >= SECTION_ORDER.indexOf(prev.mode))) prev = s;
+  }
+  if (prev) {
+    const last = prev.blocks.length ? prev.blocks[prev.blocks.length - 1] : { id: prev.headingId };
+    return { type: 'after_block', after_block: { id: last.id } };
+  }
+  const idx = children.findIndex((b) => b.id === ours[0].headingId);
+  if (idx <= 0) return { type: 'start' };
+  return { type: 'after_block', after_block: { id: children[idx - 1].id } };
+}
+
+// Each keyframe group opens with the video embed seeked via ?t= — that query
+// param doubles as the machine-readable sort key, so accumulated keyframes
+// stay in clip-time order no matter when they were captured (same as
+// vault-autopilot sorting motion sections by startSeconds).
+function keyframeStart(block) {
+  if (block.type !== 'embed') return null;
+  try { return parseInt(new URL(block.embed?.url || '').searchParams.get('t') || '0', 10) || 0; } catch (_) { return null; }
+}
+
+function keyframeAnchor(section, startSeconds) {
+  let anchor = section.headingId;
+  for (const b of section.blocks) {
+    const s = keyframeStart(b);
+    if (s !== null && s > startSeconds) break;
+    anchor = b.id;
+  }
+  return anchor;
 }
 
 // ── Database / page management ───────────────────────────────────────────────
@@ -254,13 +338,17 @@ export async function ensureDataSource(cfg) {
   return adopted;
 }
 
+// `url` may be a single URL or an array (canonical + raw) — pages saved before
+// canonicalization store the raw form, and they must keep matching.
 export async function findPageByUrl(cfg, dsId, url, props = DEFAULT_PROPS) {
+  const urls = [...new Set([].concat(url).filter(Boolean))];
+  const filters = urls.map((u) => ({ property: props.url, url: { equals: u } }));
   const r = await notionRequest(`/data_sources/${dsId}/query`, { method: 'POST', token: cfg.token, body: {
-    filter: { property: props.url, url: { equals: url } },
+    filter: filters.length === 1 ? filters[0] : { or: filters },
     page_size: 1,
   } });
   const page = r.results?.[0];
-  return page ? { id: page.id, url: page.url } : null;
+  return page ? { id: page.id, url: page.url, hasCover: !!page.cover } : null;
 }
 
 export async function createVideoPage(cfg, dsId, payload, props = DEFAULT_PROPS) {
@@ -305,42 +393,87 @@ async function listChildren(cfg, pageId) {
   return all;
 }
 
-export async function upsertSection(cfg, pageId, mode, blocks) {
+export async function upsertSection(cfg, pageId, mode, blocks, startSeconds = 0) {
   const children = await listChildren(cfg, pageId);
-  const section = findSection(children, mode);
+  const section = scanSections(children).find((s) => s.mode === mode);
+
+  if (section && APPEND_MODES.includes(mode)) {
+    // Accumulate: screenshots append at the end, keyframes keep clip-time order.
+    const anchor = mode === 'keyframe'
+      ? keyframeAnchor(section, startSeconds)
+      : (section.blocks.length ? section.blocks[section.blocks.length - 1].id : section.headingId);
+    await notionRequest(`/blocks/${pageId}/children`, { method: 'PATCH', token: cfg.token,
+      body: { children: blocks, position: { type: 'after_block', after_block: { id: anchor } } } });
+    return;
+  }
+
   if (section) {
-    for (const blockId of section.contentIds) {
-      await notionRequest(`/blocks/${blockId}`, { method: 'DELETE', token: cfg.token });
+    // Replace: cover/hook hold one current version.
+    for (const b of section.blocks) {
+      await notionRequest(`/blocks/${b.id}`, { method: 'DELETE', token: cfg.token });
     }
     await notionRequest(`/blocks/${pageId}/children`, { method: 'PATCH', token: cfg.token,
       body: { children: blocks, position: { type: 'after_block', after_block: { id: section.headingId } } } });
-  } else {
-    const heading = { object: 'block', type: 'heading_2',
-      heading_2: { rich_text: [{ type: 'text', text: { content: sectionTitleFor(mode) } }] } };
-    await notionRequest(`/blocks/${pageId}/children`, { method: 'PATCH', token: cfg.token,
-      body: { children: [heading, ...blocks] } });
+    return;
   }
+
+  const heading = { object: 'block', type: 'heading_2',
+    heading_2: { rich_text: [{ type: 'text', text: { content: sectionTitleFor(mode) } }] } };
+  const position = insertPositionFor(children, mode);
+  await notionRequest(`/blocks/${pageId}/children`, { method: 'PATCH', token: cfg.token,
+    body: { children: [heading, ...blocks], ...(position ? { position } : {}) } });
+}
+
+// Existing pages: 收藏封面 explicitly refreshes the gallery cover + title; any
+// other capture backfills a missing cover (vault-autopilot's ensureCover
+// equivalent). Best-effort — a failed refresh never fails the clip.
+async function refreshPageMeta(cfg, page, payload, props) {
+  const cover = payload.thumbnail_url || payload.cover_url;
+  const body = {};
+  if (payload.mode === 'thumbnail') {
+    if (cover) body.cover = { type: 'external', external: { url: cover } };
+    const title = payload.video_title || payload.title;
+    if (title) body.properties = { [props.title]: { title: [{ type: 'text', text: { content: title } }] } };
+  } else if (!page.hasCover && cover) {
+    body.cover = { type: 'external', external: { url: cover } };
+  }
+  if (!Object.keys(body).length) return;
+  try {
+    await notionRequest(`/pages/${page.id}`, { method: 'PATCH', token: cfg.token, body });
+  } catch (_) {}
 }
 
 // The adapter entry point: same response contract as obsidian's httpPost —
 // resolves { success, error? } so mode files can keep their handling as-is.
-export async function send(payload) {
+// Saves run one at a time: two concurrent saves of the same video would both
+// miss findPageByUrl and both create a page, breaking "one video = one page".
+let sendChain = Promise.resolve();
+export function send(payload) {
+  const run = sendChain.then(() => doSend(payload));
+  sendChain = run.then(() => {}, () => {});
+  return run;
+}
+
+async function doSend(payload) {
   const cfg = await getNotionConfig();
   if (!cfg.token || (!cfg.dataSourceId && !cfg.parentUrl)) {
     return { success: false, error: t('err_notion_not_configured') };
   }
   try {
     const { dsId, props } = await ensureDataSource(cfg);
-    const url = payload.url || payload.video_url;
-    let page = await findPageByUrl(cfg, dsId, url, props);
-    if (!page) page = await createVideoPage(cfg, dsId, payload, props);
+    const rawUrl = payload.url || payload.video_url;
+    const url = canonicalVideoUrl(rawUrl);
+    let page = await findPageByUrl(cfg, dsId, [url, rawUrl], props);
+    if (!page) page = await createVideoPage(cfg, dsId, { ...payload, url }, props);
+    else await refreshPageMeta(cfg, page, payload, props);
     const uploadIds = [];
     for (const img of collectImages(payload)) {
       uploadIds.push(await uploadImage(cfg, img));   // serial on purpose: Notion ~3 req/s
     }
-    await upsertSection(cfg, page.id, payload.mode, payloadToBlocks(payload, uploadIds));
+    await upsertSection(cfg, page.id, payload.mode, payloadToBlocks(payload, uploadIds),
+      Math.floor(payload.time_range?.start || 0));
     // notionUrl is the Notion-mode counterpart of vault-autopilot's obsidianUrl:
-    // modes open it so the user lands on the note they just saved to.
+    // modes surface it so the user can jump to the note they just saved to.
     return { success: true, ...(page.url ? { notionUrl: page.url } : {}) };
   } catch (err) {
     return { success: false, error: err.message };
