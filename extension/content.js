@@ -138,13 +138,13 @@
   // ── Video detection & frame capture ──────────────────────────────────────────
   // Remove any listener left by a previous injection so a re-inject never doubles
   // up handlers (which made captures run twice → "select again" / Seek timeout).
-  // Bottom-right "saved to Notion" toast: the jump is a link the user can
+  // Top-right "saved to Notion" toast: the jump is a link the user can
   // take or ignore. One toast at a time; rapid captures refresh it.
   function showNotionToast(url) {
     document.getElementById('ovc-notion-toast')?.remove();
     const box = document.createElement('div');
     box.id = 'ovc-notion-toast';
-    box.style.cssText = 'position:fixed;right:16px;bottom:16px;z-index:2147483647;background:rgba(17,24,39,.92);color:#fff;padding:10px 14px;border-radius:10px;font:13px/1.5 -apple-system,BlinkMacSystemFont,sans-serif;box-shadow:0 4px 12px rgba(0,0,0,.3);display:flex;gap:12px;align-items:center;';
+    box.style.cssText = 'position:fixed;right:16px;top:16px;z-index:2147483647;background:rgba(17,24,39,.92);color:#fff;padding:10px 14px;border-radius:10px;font:13px/1.5 -apple-system,BlinkMacSystemFont,sans-serif;box-shadow:0 4px 12px rgba(0,0,0,.3);display:flex;gap:12px;align-items:center;';
     const label = document.createElement('span');
     label.textContent = chrome.i18n.getMessage('ct_saved_notion');
     const link = document.createElement('a');
