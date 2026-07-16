@@ -16,6 +16,17 @@ chrome.runtime.onConnect.addListener((port) => {
   if (port.name === 'sc-keepalive') port.onMessage.addListener(() => {});
 });
 
+// Notion saves show a "click to open" notification instead of auto-opening a
+// tab; the click lands here. The URL lives in storage, not memory — the
+// worker may have restarted since the save.
+chrome.notifications.onClicked.addListener((id) => {
+  if (id !== 'ovc-notion-saved') return;
+  chrome.storage.local.get(['last_saved_notion_url'], ({ last_saved_notion_url }) => {
+    if (last_saved_notion_url) chrome.tabs.create({ url: last_saved_notion_url });
+    chrome.notifications.clear('ovc-notion-saved');
+  });
+});
+
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   const tabId = sender.tab?.id;
 

@@ -133,3 +133,16 @@ export function notifyNotice(message) {
   chrome.action.setBadgeText({ text: '✓' });
   chrome.action.setBadgeBackgroundColor({ color: '#6366f1' });
 }
+
+// Notion saves never auto-open the page (that stacked up duplicate tabs);
+// clicking this notification opens it, ignoring it costs nothing. Fixed id →
+// rapid captures refresh one notification instead of piling up.
+export function notifySavedNotion(notionUrl) {
+  chrome.storage.local.set({ last_saved_notion_url: notionUrl });
+  chrome.notifications.create('ovc-notion-saved', {
+    type: 'basic',
+    iconUrl: 'icons/icon48.png',
+    title: t('notif_notion_saved_title'),
+    message: t('notif_notion_saved_body'),
+  });
+}

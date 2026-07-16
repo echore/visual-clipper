@@ -1,4 +1,4 @@
-import { sanitize, notifyError, notifyNotice, sendToContent, injectContentScript, detectPlatform, getCoverUrl } from './utils.js';
+import { sanitize, notifyError, notifyNotice, notifySavedNotion, sendToContent, injectContentScript, detectPlatform, getCoverUrl } from './utils.js';
 import { getActiveDestination } from './destinations/index.js';
 import { t } from './i18n.js';
 
@@ -71,7 +71,7 @@ async function saveFullCapture(tabId, dataUrl) {
   if (response.obsidianUrl) {
     chrome.tabs.update(tabId, { url: response.obsidianUrl }).catch(() => {});
   } else if (response.notionUrl) {
-    chrome.tabs.create({ url: response.notionUrl });
+    notifySavedNotion(response.notionUrl);
   }
 }
 
@@ -97,11 +97,14 @@ export async function handleRegion(msg, tabId) {
   );
   if (stored.screenshot_batch_mode) {
     const queue = stored.screenshot_queue || [];
-    queue.push({ image: croppedB64, url: msg.source_url, title: sanitize(msg.title) });
+    // Cover captured per shot: the batch may be analyzed from another tab later,
+    // and the page it creates should still get its gallery cover.
+    const cover_url = await getCoverUrl(tabId, detectPlatform(msg.source_url));
+    queue.push({ image: croppedB64, url: msg.source_url, title: sanitize(msg.title), ...(cover_url ? { cover_url } : {}) });
     await new Promise(r => chrome.storage.local.set({ screenshot_queue: queue }, r));
     chrome.action.setBadgeText({ text: String(queue.length) });
     chrome.action.setBadgeBackgroundColor({ color: '#6366f1' });
-    chrome.tabs.sendMessage(tabId, { action: 'captureResult', success: true });
+    chrome.tabs.sendMessage(tabId, { action: 'captureResult', success: true, queued: queue.length });
     return;
   }
 
@@ -129,7 +132,7 @@ export async function handleRegion(msg, tabId) {
   chrome.tabs.sendMessage(tabId, { action: 'captureResult', ...response });
   if (response.success) {
     chrome.action.setBadgeText({ text: '' });
-    if (response.notionUrl) chrome.tabs.create({ url: response.notionUrl });
+    if (response.notionUrl) notifySavedNotion(response.notionUrl);
   } else {
     notifyError(response.error || t('err_ss_failed'));
   }
@@ -146,6 +149,7 @@ export async function analyzeBatch(queue) {
       url: queue[0].url,
       title: queue[0].title,
       captured_at: new Date().toISOString(),
+      ...(queue[0].cover_url ? { cover_url: queue[0].cover_url } : {}),
     });
   } catch (err) {
     notifyError(err.message || t('err_no_response'));
@@ -161,7 +165,7 @@ export async function analyzeBatch(queue) {
         sendToContent(tab.id, { action: 'openObsidian', url: response.obsidianUrl }).catch(() => {});
       }
     } else if (response.notionUrl) {
-      chrome.tabs.create({ url: response.notionUrl });
+      notifySavedNotion(response.notionUrl);
     }
   } else {
     notifyError(response.error || t('err_ss_failed'));

@@ -1,4 +1,4 @@
-import { buildTimestamps, sanitize, notifyError, notifyNotice, ensureSendToContent, detectPlatform, getCoverUrl } from './utils.js';
+import { buildTimestamps, sanitize, notifyError, notifyNotice, notifySavedNotion, ensureSendToContent, detectPlatform, getCoverUrl } from './utils.js';
 import { getActiveDestination } from './destinations/index.js';
 import { t } from './i18n.js';
 
@@ -82,7 +82,7 @@ export async function markOut(tabId, outTime, inTime, url, title, platform, vide
     if (response.obsidianUrl) {
       ensureSendToContent(tabId, { action: 'openObsidian', url: response.obsidianUrl }).catch(() => {});
     } else if (response.notionUrl) {
-      chrome.tabs.create({ url: response.notionUrl });
+      notifySavedNotion(response.notionUrl);
     }
     if (response.notice) notifyNotice(response.notice);
   } else {

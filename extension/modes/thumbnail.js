@@ -1,4 +1,4 @@
-import { sanitize, notifyError, notifyNotice, detectPlatform, sendToContent } from './utils.js';
+import { sanitize, notifyError, notifyNotice, notifySavedNotion, detectPlatform, sendToContent } from './utils.js';
 import { getActiveDestination } from './destinations/index.js';
 import { t } from './i18n.js';
 
@@ -118,7 +118,7 @@ export async function start(tabId) {
     if (response.obsidianUrl) {
       sendToContent(tabId, { action: 'openObsidian', url: response.obsidianUrl }).catch(() => {});
     } else if (response.notionUrl) {
-      chrome.tabs.create({ url: response.notionUrl });
+      notifySavedNotion(response.notionUrl);
     }
     if (response.notice) notifyNotice(response.notice);
   } else {
