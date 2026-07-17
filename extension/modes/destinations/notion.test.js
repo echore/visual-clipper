@@ -176,7 +176,7 @@ describe('ensureDataSource', () => {
   test('cached id without cached props falls back to English defaults (pre-existing users)', async () => {
     const calls = mockFetch(() => ok({}));
     const r = await ensureDataSource({ token: 'T', dataSourceId: 'DS1', props: null });
-    expect(r.props).toEqual({ title: 'Title', url: 'URL', select: 'Platform', date: 'Captured' });
+    expect(r.props).toEqual({ title: 'Title', url: 'URL', select: 'Platform', date: 'Captured', published: 'Published' });
     expect(calls.length).toBe(0);
   });
 
@@ -191,7 +191,7 @@ describe('ensureDataSource', () => {
     });
     const r = await ensureDataSource({ token: 'T', dataSourceId: null, parentUrl: PAGE_URL });
     expect(r.dsId).toBe('DS9');
-    expect(r.props).toEqual({ title: 'Title', url: 'URL', select: 'Platform', date: 'Captured' });
+    expect(r.props).toEqual({ title: 'Title', url: 'URL', select: 'Platform', date: 'Captured', published: 'Published' });
     const create = calls.find((c) => c.init.method === 'POST');
     const body = JSON.parse(create.init.body);
     expect(create.url).toBe('https://api.notion.com/v1/databases');
@@ -213,7 +213,7 @@ describe('ensureDataSource', () => {
     expect(r.dsId).toBe('DS_T');
     expect(calls.some((c) => c.init.method === 'POST')).toBe(false);
     expect(globalThis.__stored.sc_notion_ds).toBe('DS_T');
-    expect(globalThis.__stored.sc_notion_props).toEqual({ title: 'Title', url: 'URL', select: null, date: null });
+    expect(globalThis.__stored.sc_notion_props).toEqual({ title: 'Title', url: 'URL', select: null, date: null, published: null });
   });
 
   test('database link with wrong schema → localized bad-schema error, creates nothing', async () => {
@@ -240,9 +240,9 @@ describe('ensureDataSource', () => {
     });
     const r = await ensureDataSource({ token: 'T', dataSourceId: null, parentUrl: PAGE_URL });
     expect(r.dsId).toBe('DS_C');
-    expect(r.props).toEqual({ title: '标题', url: '网址', select: '平台', date: '采集时间' });
+    expect(r.props).toEqual({ title: '标题', url: '网址', select: '平台', date: '采集时间', published: null });
     expect(globalThis.__stored.sc_notion_ds).toBe('DS_C');
-    expect(globalThis.__stored.sc_notion_props).toEqual({ title: '标题', url: '网址', select: '平台', date: '采集时间' });
+    expect(globalThis.__stored.sc_notion_props).toEqual({ title: '标题', url: '网址', select: '平台', date: '采集时间', published: null });
   });
 
   test('page whose child database has wrong schema → falls through to creating our own', async () => {
@@ -567,15 +567,37 @@ describe('send', () => {
 describe('resolveProps', () => {
   test('resolves by type regardless of names (Chinese template)', () => {
     expect(resolveProps({ '标题': { type: 'title' }, '网址': { type: 'url' }, '平台': { type: 'select' }, '采集时间': { type: 'date' } }))
-      .toEqual({ title: '标题', url: '网址', select: '平台', date: '采集时间' });
+      .toEqual({ title: '标题', url: '网址', select: '平台', date: '采集时间', published: null });
   });
   test('select/date are optional', () => {
     expect(resolveProps({ Name: { type: 'title' }, Link: { type: 'url' } }))
-      .toEqual({ title: 'Name', url: 'Link', select: null, date: null });
+      .toEqual({ title: 'Name', url: 'Link', select: null, date: null, published: null });
   });
   test('no url-typed property → null', () => {
     expect(resolveProps({ Name: { type: 'title' }, URL: { type: 'rich_text' } })).toBeNull();
     expect(resolveProps(undefined)).toBeNull();
+  });
+});
+
+describe('resolveProps with Published', () => {
+  const dateProp = { type: 'date' };
+
+  test('resolves Published by exact name and keeps Captured by type', () => {
+    const p = resolveProps({ Title: { type: 'title' }, URL: { type: 'url' }, Captured: dateProp, Published: dateProp });
+    expect(p.published).toBe('Published');
+    expect(p.date).toBe('Captured');
+  });
+
+  test('non-English database keeps its own date column as captured', () => {
+    const p = resolveProps({ 标题: { type: 'title' }, 网址: { type: 'url' }, 采集时间: dateProp });
+    expect(p.date).toBe('采集时间');
+    expect(p.published).toBeNull();
+  });
+
+  test('Published never doubles as captured', () => {
+    const p = resolveProps({ Title: { type: 'title' }, URL: { type: 'url' }, Published: dateProp });
+    expect(p.published).toBe('Published');
+    expect(p.date).toBeNull();
   });
 });
 

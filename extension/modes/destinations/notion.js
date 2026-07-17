@@ -282,14 +282,19 @@ function keyframeAnchor(section, startSeconds) {
 // The only hard requirement is one url-typed property — findPageByUrl's upsert
 // key. Select (platform) and date (captured) are used when present, skipped
 // when not. Resolved names are cached in sc_notion_props next to the ds id.
-export const DEFAULT_PROPS = { title: 'Title', url: 'URL', select: 'Platform', date: 'Captured' };
+export const DEFAULT_PROPS = { title: 'Title', url: 'URL', select: 'Platform', date: 'Captured', published: 'Published' };
 
 export function resolveProps(properties) {
-  const byType = (type) => Object.keys(properties || {}).find((k) => properties[k]?.type === type) || null;
+  const keys = Object.keys(properties || {});
+  // `Published` is the one column we create ourselves, so it alone resolves by
+  // exact name; everything else stays type-resolved so non-English databases
+  // keep working (and Published never doubles as the captured-date column).
+  const published = keys.find((k) => k === DEFAULT_PROPS.published && properties[k]?.type === 'date') || null;
+  const byType = (type) => keys.find((k) => properties[k]?.type === type && k !== published) || null;
   const title = byType('title');
   const url = byType('url');
   if (!title || !url) return null;
-  return { title, url, select: byType('select'), date: byType('date') };
+  return { title, url, select: byType('select'), date: byType('date'), published };
 }
 
 // Fetch a data source's schema and resolve its properties; null = unusable.
@@ -298,6 +303,27 @@ async function probeSchema(cfg, dsId) {
     const ds = await notionRequest(`/data_sources/${dsId}`, { token: cfg.token });
     return resolveProps(ds.properties);
   } catch (_) { return null; }
+}
+
+// Databases adopted before the Published column existed (or cached props from
+// an older version): add the column once, best-effort, and refresh the cache.
+// A clip must never fail because this couldn't run.
+async function ensurePublishedProp(cfg, dsId, props) {
+  if (props.published) return props;
+  try {
+    let next = await probeSchema(cfg, dsId);
+    if (next && !next.published) {
+      await notionRequest(`/data_sources/${dsId}`, { method: 'PATCH', token: cfg.token,
+        body: { properties: { [DEFAULT_PROPS.published]: { date: {} } } } });
+      next = await probeSchema(cfg, dsId);
+    }
+    if (next?.published) {
+      const merged = { ...props, published: next.published };
+      await chrome.storage.local.set({ sc_notion_props: merged });
+      return merged;
+    }
+  } catch (_) {}
+  return props;
 }
 
 // Is this id a database? Returns its first usable data source (+ resolved
@@ -354,6 +380,7 @@ export async function ensureDataSource(cfg) {
         URL:      { url: {} },
         Platform: { select: {} },
         Captured: { date: {} },
+        Published: { date: {} },
       } },
     } });
     let dsId = db.data_sources?.[0]?.id;
@@ -391,6 +418,7 @@ export async function createVideoPage(cfg, dsId, payload, props = DEFAULT_PROPS)
       [props.url]:   { url },
       ...(props.select ? { [props.select]: { select: { name: payload.platform || 'other' } } } : {}),
       ...(props.date && payload.captured_at ? { [props.date]: { date: { start: payload.captured_at } } } : {}),
+      ...(props.published && payload.published_at ? { [props.published]: { date: { start: payload.published_at } } } : {}),
     },
   };
   const cover = payload.cover_url || payload.thumbnail_url;
@@ -465,6 +493,9 @@ async function refreshPageMeta(cfg, page, payload, props) {
     if (cover) body.cover = { type: 'external', external: { url: cover } };
     const title = payload.video_title || payload.title;
     if (title) body.properties = { [props.title]: { title: [{ type: 'text', text: { content: title } }] } };
+    if (payload.published_at && props.published) {
+      body.properties = { ...(body.properties || {}), [props.published]: { date: { start: payload.published_at } } };
+    }
   } else if (!page.hasCover && cover) {
     body.cover = { type: 'external', external: { url: cover } };
   }
@@ -486,7 +517,8 @@ export function send(payload) {
 }
 
 async function clipOnce(cfg, payload) {
-  const { dsId, props } = await ensureDataSource(cfg);
+  let { dsId, props } = await ensureDataSource(cfg);
+  if (payload.published_at) props = await ensurePublishedProp(cfg, dsId, props);
   const rawUrl = payload.url || payload.video_url;
   const url = canonicalVideoUrl(rawUrl);
   let page = await findPageByUrl(cfg, dsId, [url, rawUrl], props);
