@@ -120,3 +120,31 @@ describe('resolveConnView', () => {
     expect(resolveConnView({ connected: false, everConnected: false, choice: 'bogus' })).toBe('triage');
   });
 });
+
+describe('Obsidian triage markup and copy', () => {
+  const html = read('./welcome.html');
+  test('declares triage and troubleshoot blocks inside the Obsidian view', () => {
+    expect(html).toContain('id="setup-triage"');
+    expect(html).toContain('id="troubleshoot-guide"');
+    expect(html).toContain('id="btn-triage-first"');
+    expect(html).toContain('id="btn-triage-installed"');
+    expect(html).toContain('id="btn-open-obsidian"');
+    expect(html).toContain('id="lnk-show-install"');
+    expect(html).toContain('id="lnk-show-trouble"');
+  });
+  test('triage and troubleshoot copy exists in both locales', () => {
+    for (const cat of [en, zh]) {
+      for (const k of ['welcome_triage_q', 'welcome_triage_first', 'welcome_triage_installed',
+        'welcome_trouble_title', 'welcome_trouble_known', 'welcome_trouble_s1',
+        'welcome_trouble_s2_html', 'welcome_trouble_s3', 'welcome_open_obsidian',
+        'welcome_trouble_to_install', 'welcome_install_to_trouble', 'welcome_conn_waiting']) {
+        expect({ key: k, present: typeof cat[k]?.message === 'string' && cat[k].message.length > 0 })
+          .toEqual({ key: k, present: true });
+      }
+    }
+  });
+  test('the cramped ①②③ detail line is retired', () => {
+    expect(en.welcome_conn_bad_detail).toBeUndefined();
+    expect(zh.welcome_conn_bad_detail).toBeUndefined();
+  });
+});

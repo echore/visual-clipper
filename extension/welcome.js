@@ -1,7 +1,7 @@
 import { pingAutopilot, getPort, DEFAULT_PORT } from './modes/destinations/obsidian.js';
 import { ping as notionPing, parsePageId } from './modes/destinations/notion.js';
 import { t, localizeDocument } from './modes/i18n.js';
-import { applyDestinationView, normalizeDestination } from './welcome-ui.js';
+import { applyDestinationView, normalizeDestination, resolveConnView } from './welcome-ui.js';
 
 localizeDocument();
 
@@ -11,6 +11,10 @@ const connDetail   = document.getElementById('conn-detail');
 const installGuide = document.getElementById('install-guide');
 const tryItObsidian = document.getElementById('try-it');
 const tryItNotion   = document.getElementById('try-it-notion');
+const setupTriage  = document.getElementById('setup-triage');
+const troubleGuide = document.getElementById('troubleshoot-guide');
+const troubleKnown = document.getElementById('trouble-known');
+const troublePort  = document.getElementById('trouble-port');
 let renderedDest = null;
 
 async function getDest() {
@@ -38,20 +42,34 @@ async function refreshStatus() {
     connDetail.textContent = '';
     return;
   }
-  // —— 以下为现有 Obsidian 分支，原样保留 ——
   const { connected, version } = await pingAutopilot();
   connCheck.classList.toggle('ok', connected);
   connCheck.classList.toggle('bad', !connected);
-  installGuide.hidden = connected;
-  tryItObsidian.hidden = !connected;
   tryItNotion.hidden = true;
   if (connected) {
+    // A later disconnect should route straight to troubleshooting.
+    await chrome.storage.local.remove('sc_setup_choice');
+    setObsidianView('green');
     connStatus.textContent = t('welcome_conn_ok', [version]);
     connDetail.textContent = t('welcome_conn_ok_detail');
-  } else {
-    const port = await getPort();
-    connStatus.textContent = t('welcome_conn_bad');
-    connDetail.textContent = t('welcome_conn_bad_detail', [String(port)]);
+    return;
+  }
+  const port = await getPort();
+  const { sc_ever_connected, sc_setup_choice } = await chrome.storage.local.get(['sc_ever_connected', 'sc_setup_choice']);
+  const view = resolveConnView({ connected, everConnected: !!sc_ever_connected, choice: sc_setup_choice });
+  setObsidianView(view, { everConnected: !!sc_ever_connected, port });
+  connStatus.textContent = t('welcome_conn_bad');
+  connDetail.textContent = t('welcome_conn_waiting', [String(port)]);
+}
+
+function setObsidianView(view, opts = {}) {
+  setupTriage.hidden   = view !== 'triage';
+  troubleGuide.hidden  = view !== 'troubleshoot';
+  installGuide.hidden  = view !== 'install';
+  tryItObsidian.hidden = view !== 'green';
+  if (view === 'troubleshoot') {
+    troubleKnown.hidden = !opts.everConnected;
+    troublePort.textContent = t('welcome_trouble_s3', [String(opts.port)]);
   }
 }
 refreshStatus();
@@ -74,6 +92,18 @@ document.getElementById('btn-save-port').addEventListener('click', async () => {
   portSaved.textContent = t('welcome_port_saved');
   refreshStatus();
 });
+
+// Triage: the user tells us which situation they are in; we remember it.
+async function chooseSetupPath(choice) {
+  await chrome.storage.local.set({ sc_setup_choice: choice });
+  refreshStatus();
+}
+document.getElementById('btn-triage-first').addEventListener('click', () => chooseSetupPath('install'));
+document.getElementById('btn-triage-installed').addEventListener('click', () => chooseSetupPath('troubleshoot'));
+document.getElementById('lnk-show-install').addEventListener('click', (e) => { e.preventDefault(); chooseSetupPath('install'); });
+document.getElementById('lnk-show-trouble').addEventListener('click', (e) => { e.preventDefault(); chooseSetupPath('troubleshoot'); });
+// External-protocol navigation launches the app and leaves this page in place.
+document.getElementById('btn-open-obsidian').addEventListener('click', () => { window.location.href = 'obsidian://'; });
 
 // Destination radios
 getDest().then((d) => { document.getElementById(`dest-${d}`).checked = true; });

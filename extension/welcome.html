@@ -232,6 +232,33 @@
   </div>
 
   <div id="obsidian-content" data-dest-only="obsidian">
+    <div id="setup-triage" hidden>
+      <h2 data-i18n="welcome_triage_q"></h2>
+      <p>
+        <button class="act" id="btn-triage-first" data-i18n="welcome_triage_first"></button>
+        <button class="act" id="btn-triage-installed" data-i18n="welcome_triage_installed"></button>
+      </p>
+    </div>
+
+    <div id="troubleshoot-guide" hidden>
+      <h2 data-i18n="welcome_trouble_title"></h2>
+      <p id="trouble-known" hidden data-i18n="welcome_trouble_known"></p>
+      <div class="step">
+        <div class="step-num">1</div>
+        <div><p data-i18n="welcome_trouble_s1"></p>
+        <p><button class="act" id="btn-open-obsidian" data-i18n="welcome_open_obsidian"></button></p></div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div><p data-i18n-html="welcome_trouble_s2_html"></p></div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div><p id="trouble-port"></p></div>
+      </div>
+      <p class="alt"><a href="#" id="lnk-show-install" data-i18n="welcome_trouble_to_install"></a></p>
+    </div>
+
     <div id="install-guide" hidden>
       <h2 data-i18n="welcome_install_title"></h2>
       <div class="step">
@@ -254,6 +281,7 @@
         <div><p data-i18n="welcome_install_s4"></p></div>
       </div>
       <p class="alt" data-i18n="welcome_install_brat"></p>
+      <p class="alt"><a href="#" id="lnk-show-trouble" data-i18n="welcome_install_to_trouble"></a></p>
     </div>
 
     <div id="try-it" hidden>
