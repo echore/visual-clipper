@@ -111,7 +111,7 @@
 
   "welcome_coop_title": { "message": "两件套如何配合" },
   "welcome_coop_body":  { "message": "扩展负责「抓」——在浏览器里截图、抽帧、拿字幕；vault-autopilot 插件负责「存」——在 Obsidian 里监听本地端口 17183，把内容写进库并排版成笔记。全程都在你自己的电脑上，内容不经过任何外部服务器。" },
-  "welcome_config_hint": { "message": "同一个设置页里还有内置分析 SOP（一键安装）、存储文件夹和端口：Obsidian → 设置 → Vault Autopilot。" },
+  "welcome_config_hint": { "message": "内置分析 SOP 默认已启用：每条保存的 clip 已自动带上分析提示。想调整它、存储文件夹或端口：Obsidian → 设置 → Vault Autopilot。" },
 
   "welcome_storage_title": { "message": "东西存在哪" },
   "welcome_storage_body_html": { "message": "零配置即可用。<strong>一个视频 = 一条笔记</strong>：对同一个视频先后存封面、Hook、关键帧，内容都进同一条笔记，顺序随意。默认全部存进 <code>Clips/</code>：" },

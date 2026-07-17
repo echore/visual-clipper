@@ -111,7 +111,7 @@
 
   "welcome_coop_title": { "message": "How the two pieces work together" },
   "welcome_coop_body":  { "message": "The extension captures: screenshots, video frames, and subtitles, inside your browser. The vault-autopilot plugin stores: it listens on local port 17183 inside Obsidian, writes the files into your vault, and formats the note. Everything runs on your own machine; your content never passes through an external server." },
-  "welcome_config_hint": { "message": "The same settings page holds bundled analysis SOPs (one click to install), the storage folders, and the port: Obsidian → Settings → Vault Autopilot." },
+  "welcome_config_hint": { "message": "Built-in analysis SOPs are on by default: every saved clip already carries its analysis prompt. Tweak them, the storage folders, or the port in Obsidian → Settings → Vault Autopilot." },
 
   "welcome_storage_title": { "message": "Where things go" },
   "welcome_storage_body_html": { "message": "Zero configuration needed. <strong>One video = one note</strong>: save the cover, hooks, and keyframes of the same video and everything lands in the same note, in any order. By default it all goes into <code>Clips/</code>:" },
