@@ -21,4 +21,9 @@ describe('locale catalogs', () => {
         expect({ key: `${loc}/${k}`, empty: v.message.trim().length === 0 })
           .toEqual({ key: `${loc}/${k}`, empty: false });
   });
+  test('en messages never use em or en dashes', () => {
+    for (const [k, v] of Object.entries(load('en')))
+      expect({ key: k, hasDash: /[—–]/.test(v.message) })
+        .toEqual({ key: k, hasDash: false });
+  });
 });
