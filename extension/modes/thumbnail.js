@@ -30,7 +30,18 @@ export async function start(tabId) {
       const source_name = og('og:site_name') || location.hostname;
 
       // ── Platform enrichment layer ──
-      let video_id = null, channel = null, channel_handle = null, views = null;
+      let video_id = null, channel = null, channel_handle = null, views = null, published_at = null;
+      // "2009-10-24T23:57:33-07:00" keeps its literal date; bare numbers are
+      // unix seconds (Bilibili) or milliseconds (Xiaohongshu).
+      const toDay = (v) => {
+        if (v == null) return null;
+        const s = String(v).match(/^\d{4}-\d{2}-\d{2}/);
+        if (s) return s[0];
+        const n = Number(v);
+        if (!Number.isFinite(n) || n <= 0) return null;
+        const d = new Date(n < 1e12 ? n * 1000 : n);
+        return isNaN(d.getTime()) ? null : d.toISOString().slice(0, 10);
+      };
 
       if (platform === 'youtube') {
         // video_id + cover + title come straight from the URL / matching player
@@ -43,12 +54,23 @@ export async function start(tabId) {
         }
         const pr = window.ytInitialPlayerResponse;
         let vd = pr?.videoDetails?.videoId === video_id ? pr.videoDetails : null;
+        if (vd) published_at = toDay(pr?.microformat?.playerMicroformatRenderer?.publishDate);
         if (!vd && video_id) {
           // In-site (SPA) navigation leaves ytInitialPlayerResponse and the previous
           // page's hidden DOM behind; ask the same-origin oEmbed endpoint instead.
           const oe = await fetch(`https://www.youtube.com/oembed?url=${encodeURIComponent(video_url)}&format=json`)
             .then((r) => (r.ok ? r.json() : null)).catch(() => null);
           if (oe) vd = { title: oe.title, author: oe.author_name, authorUrl: oe.author_url };
+        }
+        if (!published_at && video_id) {
+          // WEB is the only Innertube client that returns microformat (verified
+          // 2026-07-17; iOS omits it). playabilityStatus is irrelevant for metadata.
+          const ply = await fetch('https://www.youtube.com/youtubei/v1/player?prettyPrint=false', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ context: { client: { clientName: 'WEB', clientVersion: '2.20250101.00.00' } }, videoId: video_id }),
+          }).then((r) => (r.ok ? r.json() : null)).catch(() => null);
+          published_at = toDay(ply?.microformat?.playerMicroformatRenderer?.publishDate);
         }
         if (vd?.title) title = vd.title;
         else { const dt = document.title.replace(/^\(\d+\)\s*/, '').replace(/\s*-\s*YouTube\s*$/i, '').trim(); if (dt) title = dt; }
@@ -63,6 +85,7 @@ export async function start(tabId) {
       } else if (platform === 'bilibili') {
         video_id = location.href.match(/\/video\/(BV[\w]+)/)?.[1] || null;
         channel = document.querySelector('.up-name, .username')?.textContent?.trim() || null;
+        published_at = toDay(window.__INITIAL_STATE__?.videoData?.pubdate);
       } else if (platform === 'xiaohongshu') {
         // og:image is a placeholder; the real cover/title/author live in __INITIAL_STATE__.
         const noteId = location.pathname.match(/\/(?:explore|discovery\/item)\/(\w+)/)?.[1];
@@ -72,6 +95,7 @@ export async function start(tabId) {
           channel = note.user?.nickname || null;
           const cover = note.imageList?.[0]?.urlDefault || note.imageList?.[0]?.url;
           if (cover) thumbnail_url = cover.startsWith('http://') ? 'https://' + cover.slice(7) : cover;
+          published_at = toDay(note.time);
         }
         video_id = noteId || video_id;
       }
@@ -85,7 +109,7 @@ export async function start(tabId) {
       if (!title) title = source_name; // never POST a blank title (hostname is always present)
       if (!thumbnail_url) return null; // nothing to save on this page
 
-      return { video_id, title, channel, channel_handle, thumbnail_url, source_name, views, video_url };
+      return { video_id, title, channel, channel_handle, thumbnail_url, source_name, views, video_url, published_at };
     },
     args: [platform],
   }).catch(() => null);
@@ -110,6 +134,7 @@ export async function start(tabId) {
       channel: meta.channel || null,
       channel_handle: meta.channel_handle || null,
       views: meta.views || null,
+      ...(meta.published_at ? { published_at: meta.published_at } : {}),
       captured_at: new Date().toISOString(),
     });
   } catch (err) {
