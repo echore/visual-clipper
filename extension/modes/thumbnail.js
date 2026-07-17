@@ -10,12 +10,12 @@ export async function start(tabId) {
   const results = await chrome.scripting.executeScript({
     target: { tabId },
     world: 'MAIN',
-    func: (platform) => {
+    func: async (platform) => {
       const metaContent = (sel) => document.querySelector(sel)?.getAttribute('content') || null;
       const og = (key) => metaContent(`meta[property="${key}"]`) || metaContent(`meta[name="${key}"]`);
 
       // ── Generic Open Graph / Twitter-card layer (works on most sites) ──
-      let title = (og('og:title') || og('twitter:title') || document.title || '')
+      let title = (og('og:title') || og('twitter:title') || document.title.replace(/^\(\d+\)\s*/, '') || '')
         .replace(/(?:\s*[-|–_]\s*(?:YouTube|bilibili|哔哩哔哩|小红书|Twitter|X|Vimeo))+\s*$/i, '').trim();
       let thumbnail_url = og('og:image') || og('twitter:image');
       if (thumbnail_url && thumbnail_url.startsWith('//')) thumbnail_url = 'https:' + thumbnail_url;
@@ -42,12 +42,20 @@ export async function start(tabId) {
           video_url = `https://www.youtube.com/watch?v=${video_id}`; // fresh, not SPA-stale
         }
         const pr = window.ytInitialPlayerResponse;
-        const vd = pr?.videoDetails?.videoId === video_id ? pr.videoDetails : null;
+        let vd = pr?.videoDetails?.videoId === video_id ? pr.videoDetails : null;
+        if (!vd && video_id) {
+          // In-site (SPA) navigation leaves ytInitialPlayerResponse and the previous
+          // page's hidden DOM behind; ask the same-origin oEmbed endpoint instead.
+          const oe = await fetch(`https://www.youtube.com/oembed?url=${encodeURIComponent(video_url)}&format=json`)
+            .then((r) => (r.ok ? r.json() : null)).catch(() => null);
+          if (oe) vd = { title: oe.title, author: oe.author_name, authorUrl: oe.author_url };
+        }
         if (vd?.title) title = vd.title;
-        else { const dt = document.title.replace(/\s*-\s*YouTube\s*$/i, '').trim(); if (dt) title = dt; }
-        const channelEl = document.querySelector('ytd-channel-name yt-formatted-string a, #channel-name a');
+        else { const dt = document.title.replace(/^\(\d+\)\s*/, '').replace(/\s*-\s*YouTube\s*$/i, '').trim(); if (dt) title = dt; }
+        // Scoped to ytd-watch-flexy: an unscoped lookup can hit a hidden previous page's card.
+        const channelEl = document.querySelector('ytd-watch-flexy ytd-channel-name yt-formatted-string a, ytd-watch-flexy #channel-name a');
         channel = vd?.author || channelEl?.textContent?.trim() || null;
-        channel_handle = (channelEl?.href || '').match(/\/@([^/?]+)/)?.[0] || null;
+        channel_handle = (vd?.authorUrl || channelEl?.href || '').match(/\/@([^/?]+)/)?.[0] || null;
         const v = parseInt(vd?.viewCount || '0', 10);
         if (v > 0) {
           views = new Intl.NumberFormat(chrome.i18n?.getUILanguage?.() || 'en', { notation: 'compact', maximumFractionDigits: 1 }).format(v);

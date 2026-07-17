@@ -424,7 +424,7 @@
   function extractVideoMeta() {
     const ytTitle = document.querySelector('h1.ytd-video-primary-info-renderer')?.textContent?.trim()
       || document.querySelector('h1.ytd-watch-metadata yt-formatted-string')?.textContent?.trim();
-    const ytChannel = document.querySelector('ytd-channel-name yt-formatted-string a')?.textContent?.trim();
+    const ytChannel = document.querySelector('ytd-watch-flexy ytd-channel-name yt-formatted-string a')?.textContent?.trim();
 
     const biliTitle = document.querySelector('.video-title')?.textContent?.trim()
       || document.querySelector('h1.video-title')?.textContent?.trim();
