@@ -311,12 +311,17 @@ async function probeSchema(cfg, dsId) {
 async function ensurePublishedProp(cfg, dsId, props) {
   if (props.published) return props;
   try {
-    let next = await probeSchema(cfg, dsId);
-    if (next && !next.published) {
+    let ds = await notionRequest(`/data_sources/${dsId}`, { token: cfg.token });
+    const existing = ds?.properties?.[DEFAULT_PROPS.published];
+    // A user-owned column already named Published but not date-typed: PATCHing
+    // would silently convert their data. Leave it alone and skip the feature.
+    if (existing && existing.type !== 'date') return props;
+    if (!existing) {
       await notionRequest(`/data_sources/${dsId}`, { method: 'PATCH', token: cfg.token,
         body: { properties: { [DEFAULT_PROPS.published]: { date: {} } } } });
-      next = await probeSchema(cfg, dsId);
+      ds = await notionRequest(`/data_sources/${dsId}`, { token: cfg.token });
     }
+    const next = resolveProps(ds?.properties);
     if (next?.published) {
       const merged = { ...props, published: next.published };
       await chrome.storage.local.set({ sc_notion_props: merged });
@@ -356,7 +361,10 @@ async function adoptChildDatabase(cfg, pageId) {
 }
 
 export async function ensureDataSource(cfg) {
-  if (cfg.dataSourceId) return { dsId: cfg.dataSourceId, props: cfg.props || DEFAULT_PROPS };
+  // No cached props (pre-Published-column installs): claim published only after
+  // ensurePublishedProp has verified/added the column — the database behind a
+  // bare cached id may predate it, and writing a nonexistent property 400s.
+  if (cfg.dataSourceId) return { dsId: cfg.dataSourceId, props: cfg.props || { ...DEFAULT_PROPS, published: null } };
   const targetId = parsePageId(cfg.parentUrl);
   if (!targetId) throw new Error(t('err_notion_not_configured'));
 

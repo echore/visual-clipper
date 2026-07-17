@@ -176,7 +176,9 @@ describe('ensureDataSource', () => {
   test('cached id without cached props falls back to English defaults (pre-existing users)', async () => {
     const calls = mockFetch(() => ok({}));
     const r = await ensureDataSource({ token: 'T', dataSourceId: 'DS1', props: null });
-    expect(r.props).toEqual({ title: 'Title', url: 'URL', select: 'Platform', date: 'Captured', published: 'Published' });
+    // published stays null here: the database behind a bare cached id may
+    // predate the Published column; ensurePublishedProp verifies/adds it later.
+    expect(r.props).toEqual({ title: 'Title', url: 'URL', select: 'Platform', date: 'Captured', published: null });
     expect(calls.length).toBe(0);
   });
 
@@ -643,5 +645,52 @@ describe('video embeds in hook/keyframe sections', () => {
     expect(videoEmbedUrl('https://x/y', 0)).toBe('https://x/y');
     expect(videoEmbedUrl('https://x/y', 30)).toBe('https://x/y?t=30');
     expect(videoEmbedUrl('not a url', 30)).toBe('not a url');
+  });
+});
+
+describe('published column migration (pre-existing users)', () => {
+  const PAYLOAD = { mode: 'thumbnail', platform: 'youtube', video_url: 'https://www.youtube.com/watch?v=abc12345678', thumbnail_url: 'http://x/y.jpg', title: 'T', captured_at: '2026-07-17T00:00:00.000Z', published_at: '2026-07-10' };
+  const bareSchema = { Title: { type: 'title' }, URL: { type: 'url' }, Platform: { type: 'select' }, Captured: { type: 'date' } };
+
+  test('cached id without props: probes, adds Published, writes it, clip succeeds', async () => {
+    globalThis.__stored = { sc_notion_token: 'T', sc_notion_ds: 'DS1' };
+    let patched = false;
+    const calls = mockFetch(({ url, init }) => {
+      const method = init.method || 'GET';
+      if (url.endsWith('/data_sources/DS1') && method === 'GET')
+        return ok({ properties: patched ? { ...bareSchema, Published: { type: 'date' } } : bareSchema });
+      if (url.endsWith('/data_sources/DS1') && method === 'PATCH') { patched = true; return ok({}); }
+      if (url.endsWith('/data_sources/DS1/query')) return ok({ results: [] });
+      if (url.endsWith('/pages') && method === 'POST') return ok({ id: 'P1', url: 'https://notion.so/P1' });
+      if (url.includes('/blocks/P1/children') && method === 'GET') return ok({ results: [], has_more: false });
+      if (url.includes('/blocks/P1/children') && method === 'PATCH') return ok({});
+      throw new Error('unhandled ' + method + ' ' + url);
+    });
+    const r = await send(PAYLOAD);
+    expect(r.success).toBe(true);
+    const patch = calls.find((c) => c.url.endsWith('/data_sources/DS1') && c.init.method === 'PATCH');
+    expect(JSON.parse(patch.init.body).properties).toEqual({ Published: { date: {} } });
+    const create = calls.find((c) => c.url.endsWith('/pages') && c.init.method === 'POST');
+    expect(JSON.parse(create.init.body).properties.Published).toEqual({ date: { start: '2026-07-10' } });
+    expect(globalThis.__stored.sc_notion_props.published).toBe('Published');
+  });
+
+  test('user-owned non-date Published column: no PATCH, no Published write, clip succeeds', async () => {
+    globalThis.__stored = { sc_notion_token: 'T', sc_notion_ds: 'DS1' };
+    const calls = mockFetch(({ url, init }) => {
+      const method = init.method || 'GET';
+      if (url.endsWith('/data_sources/DS1') && method === 'GET')
+        return ok({ properties: { ...bareSchema, Published: { type: 'rich_text' } } });
+      if (url.endsWith('/data_sources/DS1/query')) return ok({ results: [] });
+      if (url.endsWith('/pages') && method === 'POST') return ok({ id: 'P1', url: 'https://notion.so/P1' });
+      if (url.includes('/blocks/P1/children') && method === 'GET') return ok({ results: [], has_more: false });
+      if (url.includes('/blocks/P1/children') && method === 'PATCH') return ok({});
+      throw new Error('unhandled ' + method + ' ' + url);
+    });
+    const r = await send(PAYLOAD);
+    expect(r.success).toBe(true);
+    expect(calls.some((c) => c.url.endsWith('/data_sources/DS1') && c.init.method === 'PATCH')).toBe(false);
+    const create = calls.find((c) => c.url.endsWith('/pages') && c.init.method === 'POST');
+    expect(JSON.parse(create.init.body).properties.Published).toBeUndefined();
   });
 });

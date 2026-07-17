@@ -40,7 +40,11 @@ export async function start(tabId) {
         const n = Number(v);
         if (!Number.isFinite(n) || n <= 0) return null;
         const d = new Date(n < 1e12 ? n * 1000 : n);
-        return isNaN(d.getTime()) ? null : d.toISOString().slice(0, 10);
+        if (isNaN(d.getTime())) return null;
+        // Local date parts, not toISOString(): UTC truncation would show the
+        // previous calendar day for early-morning UTC+8 posts (Bilibili/XHS).
+        const pad = (x) => String(x).padStart(2, '0');
+        return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
       };
 
       if (platform === 'youtube') {
