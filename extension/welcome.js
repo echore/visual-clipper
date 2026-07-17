@@ -139,11 +139,17 @@ document.getElementById('btn-notion-save').addEventListener('click', async () =>
   refreshStatus();
 });
 
-// Guide screenshots are optional: slots stay hidden until the image file
-// actually loads, so a missing guide/*.png never shows a broken image.
+// Guide screenshots are optional: the whole figure (image + caption) stays
+// hidden until the image file actually loads, so a missing guide/*.png never
+// shows a broken image or an orphaned caption.
 for (const img of document.querySelectorAll('img.shot')) {
   const altKey = img.dataset.i18nAlt;
   if (altKey) img.alt = t(altKey);
-  img.addEventListener('load', () => { img.style.display = 'block'; });
-  if (img.complete && img.naturalWidth > 0) img.style.display = 'block';
+  const show = () => {
+    img.style.display = 'block';
+    const fig = img.closest('figure.guide-shot');
+    if (fig) fig.style.display = 'block';
+  };
+  img.addEventListener('load', show);
+  if (img.complete && img.naturalWidth > 0) show();
 }

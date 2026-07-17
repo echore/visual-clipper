@@ -98,13 +98,19 @@ async function main() {
     {
       const cls = await page.getAttribute('#conn-check', 'class');
       const status = await page.textContent('#conn-status');
+      const triageVisible = await page.isVisible('#setup-triage');
       const installGuideVisible = await page.isVisible('#install-guide');
       const tryItVisible = await page.isVisible('#try-it');
-      const dlHref = await page.getAttribute('#btn-download-zip', 'href');
       check('welcome (down): red state class', cls.includes('bad'), cls);
       check('welcome (down): disconnected copy', status === await msg(page, 'welcome_conn_bad'), status);
-      check('welcome (down): install guide visible', installGuideVisible);
+      check('welcome (down): fresh profile shows triage question', triageVisible);
+      check('welcome (down): install guide hidden until chosen', !installGuideVisible);
       check('welcome (down): try-it hidden', !tryItVisible);
+      await page.click('#btn-triage-first');
+      await page.waitForTimeout(800); // chooseSetupPath -> refreshStatus repaint
+      const installAfterChoice = await page.isVisible('#install-guide');
+      const dlHref = await page.getAttribute('#btn-download-zip', 'href');
+      check('welcome (down): choosing first-time reveals install guide', installAfterChoice);
       check('welcome (down): zip download href',
         dlHref === 'https://github.com/echore/vault-autopilot/releases/latest/download/vault-autopilot.zip', dlHref);
     }
