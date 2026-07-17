@@ -148,3 +148,18 @@ describe('Obsidian triage markup and copy', () => {
     expect(zh.welcome_conn_bad_detail).toBeUndefined();
   });
 });
+
+describe('Where things go copy', () => {
+  const html = read('./welcome.html');
+  test('declares the default-layout caption and the custom-folder guide', () => {
+    expect(html).toContain('data-i18n="welcome_tree_caption"');
+    expect(html).toContain('data-i18n-html="welcome_storage_custom_html"');
+    expect(html).toContain('src="guide/obsidian-unzip-plugins.png"');
+    expect(html).toContain('src="guide/obsidian-enable-plugin.png"');
+  });
+  test('storage copy presents Clips as a default and points at Base folder', () => {
+    expect(en.welcome_storage_body_html.message).toMatch(/default/i);
+    expect(en.welcome_storage_custom_html.message).toMatch(/Base folder/);
+    expect(zh.welcome_storage_custom_html.message).toMatch(/Base folder|根文件夹/);
+  });
+});

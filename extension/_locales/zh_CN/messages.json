@@ -99,6 +99,10 @@
   "welcome_install_s3_html": { "message": "Obsidian → 设置 → <strong>第三方插件</strong> → 启用 <strong>Vault Autopilot</strong>。若「第三方插件」总开关未开，先打开它。" },
   "welcome_install_s4":      { "message": "回到本页——上方状态会自动变绿 🟢" },
   "welcome_install_brat":    { "message": "备选：用 BRAT 插件安装（可自动更新）——BRAT 里选「Add Beta Plugin」，填 github.com/echore/vault-autopilot" },
+  "welcome_install_img1_alt":     { "message": "Finder 窗口：解压后的 vault-autopilot 文件夹位于 .obsidian/plugins 里" },
+  "welcome_install_img1_caption": { "message": "解压后，文件夹像这样放在 .obsidian/plugins 里。" },
+  "welcome_install_img2_alt":     { "message": "Obsidian 第三方插件设置：Vault Autopilot 已开启" },
+  "welcome_install_img2_caption": { "message": "第三方插件里 Vault Autopilot 处于开启状态。" },
 
   "welcome_tryit_title":     { "message": "去试一试" },
   "welcome_tryit_body":      { "message": "随便打开一个视频，点扩展图标，再点「收藏封面」——几秒钟后你的第一条笔记就出现在 Obsidian 里。" },
@@ -107,11 +111,13 @@
 
   "welcome_coop_title": { "message": "两件套如何配合" },
   "welcome_coop_body":  { "message": "扩展负责「抓」——在浏览器里截图、抽帧、拿字幕；vault-autopilot 插件负责「存」——在 Obsidian 里监听本地端口 17183，把内容写进库并排版成笔记。全程都在你自己的电脑上，内容不经过任何外部服务器。" },
-  "welcome_config_hint": { "message": "零配置即可用。想换存储位置、挂分析 SOP、改端口：Obsidian → 设置 → Vault Autopilot。" },
+  "welcome_config_hint": { "message": "同一个设置页里还有内置分析 SOP（一键安装）、存储文件夹和端口：Obsidian → 设置 → Vault Autopilot。" },
 
   "welcome_storage_title": { "message": "东西存在哪" },
-  "welcome_storage_body_html": { "message": "零配置即可用。<strong>一个视频 = 一条笔记</strong>：对同一个视频先后点封面、Hook、关键帧，内容都追加进同一条笔记，点几个存几个，顺序随意。想换位置：Obsidian → 设置 → Vault Autopilot → 存储位置。" },
+  "welcome_storage_body_html": { "message": "零配置即可用。<strong>一个视频 = 一条笔记</strong>：对同一个视频先后存封面、Hook、关键帧，内容都进同一条笔记，顺序随意。默认全部存进 <code>Clips/</code>：" },
   "welcome_tree": { "message": "Clips/\n├── Videos/            视频笔记（一视频一条）\n│   ├── covers/        封面图\n│   └── frames/        Hook / 关键帧抽的帧\n└── Screenshots/       网页截图笔记\n    └── frames/        截图图片" },
+  "welcome_tree_caption": { "message": "这只是默认布局。第一次保存时所有文件夹自动创建，什么都不用设置。" },
+  "welcome_storage_custom_html": { "message": "想用自己的文件夹，比如 <code>class</code> 或 <code>Great Videos</code>？只改一处：Obsidian → 设置 → <strong>Vault Autopilot</strong> → <strong>根文件夹（Base folder）</strong>。填上你的文件夹名，四个存储路径自动跟着换。之后保存的内容进新文件夹；之前存过的文件留在原地。" },
 
   "welcome_modes_title":   { "message": "四种模式" },
   "welcome_mode_ss_badge": { "message": "截图" },

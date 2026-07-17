@@ -99,6 +99,10 @@
   "welcome_install_s3_html": { "message": "Obsidian → Settings → <strong>Community plugins</strong> → enable <strong>Vault Autopilot</strong>. If “Community plugins” itself is switched off, turn it on first." },
   "welcome_install_s4":      { "message": "Come back to this page. The status above turns green automatically 🟢" },
   "welcome_install_brat":    { "message": "Alternative: install with the BRAT plugin (auto-updates). In BRAT choose “Add Beta Plugin” and enter github.com/echore/vault-autopilot" },
+  "welcome_install_img1_alt":     { "message": "Finder window showing the unzipped vault-autopilot folder inside .obsidian/plugins" },
+  "welcome_install_img1_caption": { "message": "After unzipping, the folder sits inside .obsidian/plugins like this." },
+  "welcome_install_img2_alt":     { "message": "Obsidian community plugins settings with Vault Autopilot switched on" },
+  "welcome_install_img2_caption": { "message": "Community plugins with Vault Autopilot switched on." },
 
   "welcome_tryit_title":     { "message": "Try it now" },
   "welcome_tryit_body":      { "message": "Open any video, click the extension icon, then hit “Save cover”. Your first note lands in Obsidian in seconds." },
@@ -107,11 +111,13 @@
 
   "welcome_coop_title": { "message": "How the two pieces work together" },
   "welcome_coop_body":  { "message": "The extension captures: screenshots, video frames, and subtitles, inside your browser. The vault-autopilot plugin stores: it listens on local port 17183 inside Obsidian, writes the files into your vault, and formats the note. Everything runs on your own machine; your content never passes through an external server." },
-  "welcome_config_hint": { "message": "Zero configuration needed. To change storage folders, attach analysis SOPs, or change the port: Obsidian → Settings → Vault Autopilot." },
+  "welcome_config_hint": { "message": "The same settings page holds bundled analysis SOPs (one click to install), the storage folders, and the port: Obsidian → Settings → Vault Autopilot." },
 
   "welcome_storage_title": { "message": "Where things go" },
-  "welcome_storage_body_html": { "message": "Works with zero config. <strong>One video = one note</strong>: save the cover, hooks and keyframes of the same video and everything appends into the same note, in any order. To change locations: Obsidian → Settings → Vault Autopilot → storage locations." },
+  "welcome_storage_body_html": { "message": "Zero configuration needed. <strong>One video = one note</strong>: save the cover, hooks, and keyframes of the same video and everything lands in the same note, in any order. By default it all goes into <code>Clips/</code>:" },
   "welcome_tree": { "message": "Clips/\n├── Videos/            video notes (one per video)\n│   ├── covers/        cover images\n│   └── frames/        hook / keyframe stills\n└── Screenshots/       web screenshot notes\n    └── frames/        screenshot images" },
+  "welcome_tree_caption": { "message": "This is only the default layout. Every folder is created automatically on your first save; there is nothing to set up." },
+  "welcome_storage_custom_html": { "message": "Want your own folder instead, say <code>class</code> or <code>Great Videos</code>? One change: Obsidian → Settings → <strong>Vault Autopilot</strong> → <strong>Base folder</strong>. Type your folder name there and all four storage paths follow it automatically. New saves land in the new folder; files you saved earlier stay where they are." },
 
   "welcome_modes_title":   { "message": "Four modes" },
   "welcome_mode_ss_badge": { "message": "Shot" },
