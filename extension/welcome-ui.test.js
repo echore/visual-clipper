@@ -157,7 +157,9 @@ describe('Obsidian triage markup and copy', () => {
         'welcome_pin_html', 'welcome_install_img_pin_alt', 'welcome_install_img_pin_caption',
         'welcome_install_img_panel_alt', 'welcome_install_img_panel_caption',
         'welcome_install_img_gallery_alt', 'welcome_install_img_gallery_caption',
-        'welcome_install_img_settings_alt', 'welcome_install_img_settings_caption']) {
+        'welcome_install_img_settings_alt', 'welcome_install_img_settings_caption',
+        'welcome_install_reload_html',
+        'welcome_install_img_reload_alt', 'welcome_install_img_reload_caption']) {
         expect({ key: k, present: typeof cat[k]?.message === 'string' && cat[k].message.length > 0 })
           .toEqual({ key: k, present: true });
       }
@@ -170,6 +172,7 @@ describe('Obsidian triage markup and copy', () => {
   test('journey markup: folder-icon install, gallery step, customize panel', () => {
     expect(html).toContain('guide/obsidian-plugins-folder.png');
     expect(html).toContain('guide/obsidian-unzip-plugins.png');
+    expect(html).toContain('guide/obsidian-reload-plugins.png');
     expect(html).toContain('id="customize-panel"');
     expect(html).toContain('guide/obsidian-gallery.png');
     expect(html).toContain('guide/obsidian-settings.png');

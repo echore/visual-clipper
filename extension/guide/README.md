@@ -10,6 +10,7 @@ stay hidden if a file cannot load, so missing shots never break the page.
 - `obsidian-open-settings.png`: Obsidian main window with the bottom-left settings gear highlighted
 - `obsidian-plugins-folder.png`: Community plugins settings with the folder icon next to Installed plugins highlighted
 - `obsidian-unzip-plugins.png`: Finder path bar showing vault › .obsidian › plugins with the vault-autopilot folder inside (main.js, manifest.json, styles.css visible)
+- `obsidian-reload-plugins.png`: Installed plugins heading with the reload icon highlighted
 - `obsidian-enable-plugin.png`: Community plugins settings with Vault Autopilot toggled on
 - `obsidian-gallery.png`: gallery view with the ribbon icon and a card wall of 3+ collected videos
 - `obsidian-settings.png`: Vault Autopilot settings tab with the folder and SOP sections in frame
