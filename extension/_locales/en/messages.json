@@ -95,7 +95,7 @@
   "welcome_install_title":   { "message": "Install vault-autopilot (one time)" },
   "welcome_install_s1":      { "message": "Download the plugin" },
   "welcome_install_s1_btn":  { "message": "Download vault-autopilot.zip" },
-  "welcome_install_s3_html": { "message": "Obsidian → Settings → <strong>Community plugins</strong> → enable <strong>Vault Autopilot</strong>. If “Community plugins” itself is switched off, turn it on first." },
+  "welcome_install_s3_html": { "message": "Back on the Community plugins page, hit the refresh icon and switch <strong>Vault Autopilot</strong> on." },
   "welcome_install_s4":      { "message": "Come back to this page. The status above turns green automatically 🟢" },
   "welcome_install_brat":    { "message": "Alternative: install with the BRAT plugin (auto-updates). In BRAT choose “Add Beta Plugin” and enter github.com/echore/vault-autopilot" },
   "welcome_install_img1_alt":     { "message": "Finder window showing the unzipped vault-autopilot folder inside .obsidian/plugins" },
@@ -220,8 +220,7 @@
   "err_notion_bad_schema": { "message": "That Notion database has no URL-type property. Add a column of type URL to it (any name), or paste a plain page link instead." },
   "default_title_screenshot": { "message": "Screenshot" },
 
-  "welcome_install_manual_c_html": { "message": "<strong>Unzip, then drag the whole <code>vault-autopilot</code> folder into <code>plugins/</code>.</strong> Double clicking the zip extracts it." },
-  "welcome_install_manual_check_html": { "message": "Plugin missing in the next step? Some unzip tools wrap everything in an extra vault-autopilot folder. Open it and drag the inner one into plugins instead." },
+  "welcome_install_manual_c_html": { "message": "Double click the zip, then drag the <code>vault-autopilot</code> folder into <code>plugins/</code>." },
   "welcome_zeroconfig_html": { "message": "<strong>Zero config:</strong> it works out of the box. Folders, port and note layout all have sensible defaults, nothing needs changing." },
   "welcome_gallery_html": { "message": "<strong>Open your video library.</strong> Click the gallery icon in Obsidian's left ribbon: every video you clip becomes a cover card, filterable by platform and dimension." },
   "welcome_manual_title": { "message": "Reference: how it all works" },

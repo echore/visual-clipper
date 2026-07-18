@@ -95,7 +95,7 @@
   "welcome_install_title":   { "message": "安装 vault-autopilot（只需一次）" },
   "welcome_install_s1":      { "message": "下载插件" },
   "welcome_install_s1_btn":  { "message": "下载 vault-autopilot.zip" },
-  "welcome_install_s3_html": { "message": "Obsidian → 设置 → <strong>第三方插件</strong> → 启用 <strong>Vault Autopilot</strong>。若「第三方插件」总开关未开，先打开它。" },
+  "welcome_install_s3_html": { "message": "回到刚才的 Community plugins 页面，点一下刷新图标，把 <strong>Vault Autopilot</strong> 的开关打开。" },
   "welcome_install_s4":      { "message": "回到本页——上方状态会自动变绿 🟢" },
   "welcome_install_brat":    { "message": "备选：用 BRAT 插件安装（可自动更新）——BRAT 里选「Add Beta Plugin」，填 github.com/echore/vault-autopilot" },
   "welcome_install_img1_alt":     { "message": "Finder 窗口：解压后的 vault-autopilot 文件夹位于 .obsidian/plugins 里" },
@@ -220,8 +220,7 @@
   "err_notion_bad_schema": { "message": "这个 Notion 数据库没有「网址 URL」类型的列——请给它加一列网址类型的属性（列名随意），或改贴一个普通页面链接。" },
   "default_title_screenshot": { "message": "截图" },
 
-  "welcome_install_manual_c_html": { "message": "<strong>解压后把整个 <code>vault-autopilot</code> 文件夹拖进 <code>plugins/</code>。</strong>双击 zip 即可解压。" },
-  "welcome_install_manual_check_html": { "message": "下一步的列表里看不到插件？有些解压工具会多包一层同名文件夹——打开看一眼，把里面那层拖进 plugins 才对。" },
+  "welcome_install_manual_c_html": { "message": "双击 zip，把 <code>vault-autopilot</code> 文件夹拖进 <code>plugins/</code>。" },
   "welcome_zeroconfig_html": { "message": "<strong>零配置：</strong>装好即用。文件夹、端口、笔记结构都有合理默认值，一项都不用改。" },
   "welcome_gallery_html": { "message": "<strong>打开你的视频库。</strong>点 Obsidian 左侧边栏的画廊图标：收藏过的视频都会变成封面卡片，可按平台和维度筛选。" },
   "welcome_manual_title": { "message": "手册：随时回来查" },
