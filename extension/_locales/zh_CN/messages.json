@@ -68,7 +68,7 @@
   "welcome_notion_bad":          { "message": "🔴 请检查 Token，并确认模板副本已添加该连接，然后重试" },
   "welcome_notion_invalid_parent": { "message": "这看起来不是一个 Notion 页面链接" },
   "welcome_notion_tryit_title":  { "message": "在 Notion 里试一次" },
-  "welcome_notion_tryit_body":   { "message": "打开任意视频，点击 Visual Clipper，再选择“收藏封面”。保存后会在 Notion 打开新建或更新的数据库页面。" },
+  "welcome_notion_tryit_body":   { "message": "随便打开一个视频，点一下 Visual Clipper 图标，会弹出四种采集模式的面板：截图（框选任意区域）、收藏封面（封面加标题）、Hook 分析、视频关键帧，都可以直接用。第一条就点「收藏封面」，几秒钟后你的 Notion 数据库里就会多出一行。" },
   "welcome_notion_tryit_link_text": { "message": "打开 bilibili，随便选择一个视频 →" },
   "welcome_notion_tryit_url":    { "message": "https://www.bilibili.com/" },
   "welcome_notion_workflow_title": { "message": "Visual Clipper 如何与 Notion 配合" },

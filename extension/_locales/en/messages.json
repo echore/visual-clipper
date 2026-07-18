@@ -68,7 +68,7 @@
   "welcome_notion_bad":          { "message": "🔴 Check the token, confirm the copied template has this connection, then try again" },
   "welcome_notion_invalid_parent": { "message": "That doesn't look like a Notion page link" },
   "welcome_notion_tryit_title":  { "message": "Try it in Notion" },
-  "welcome_notion_tryit_body":   { "message": "Open any video, click Visual Clipper, then choose “Save cover”. A new or updated database page will open in Notion." },
+  "welcome_notion_tryit_body":   { "message": "Open any video and click the Visual Clipper icon. A panel with the four capture modes pops up: Screenshot (drag select a region), Save cover (cover + title), Hook analysis, and Video keyframes, all ready to use. For your first clip, hit Save cover: a new row lands in your Notion database in seconds." },
   "welcome_notion_tryit_link_text": { "message": "Open YouTube and choose a video →" },
   "welcome_notion_tryit_url":    { "message": "https://www.youtube.com/" },
   "welcome_notion_workflow_title": { "message": "How Visual Clipper works with Notion" },
