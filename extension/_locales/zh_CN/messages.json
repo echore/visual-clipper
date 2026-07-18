@@ -23,7 +23,6 @@
   "welcome_trouble_s3": { "message": "还是红灯？核对端口：本扩展用 $PORT$，插件设置（Vault Autopilot → 高级 → 端口）里必须是同一个数字。", "placeholders": { "port": { "content": "$1" } } },
   "welcome_open_obsidian": { "message": "打开 Obsidian" },
   "welcome_trouble_to_install": { "message": "需要重新安装？展开安装步骤" },
-  "welcome_install_to_trouble": { "message": "已经装过了？展开排查步骤" },
 
   "welcome_dest_title":          { "message": "保存到哪里" },
   "welcome_dest_obsidian":       { "message": "Obsidian（本机，经 vault-autopilot）" },
@@ -97,7 +96,6 @@
   "welcome_install_s1_btn":  { "message": "下载 vault-autopilot.zip" },
   "welcome_install_s3_html": { "message": "回到刚才的 Community plugins 页面，点一下刷新图标，把 <strong>Vault Autopilot</strong> 的开关打开。" },
   "welcome_install_s4":      { "message": "回到本页——上方状态会自动变绿 🟢" },
-  "welcome_install_brat":    { "message": "备选：用 BRAT 插件安装（可自动更新）——BRAT 里选「Add Beta Plugin」，填 github.com/echore/vault-autopilot" },
   "welcome_install_img1_alt":     { "message": "Finder 窗口：解压后的 vault-autopilot 文件夹位于 .obsidian/plugins 里" },
   "welcome_install_img1_caption": { "message": "解压后，文件夹像这样放在 .obsidian/plugins 里。" },
   "welcome_install_img2_alt":     { "message": "Obsidian 第三方插件设置：Vault Autopilot 已开启" },

@@ -23,7 +23,6 @@
   "welcome_trouble_s3": { "message": "Still red? Check the port. This extension uses $PORT$; the plugin setting (Vault Autopilot → Advanced → Port) must show the same number.", "placeholders": { "port": { "content": "$1" } } },
   "welcome_open_obsidian": { "message": "Open Obsidian" },
   "welcome_trouble_to_install": { "message": "Need a fresh install? Show the install steps" },
-  "welcome_install_to_trouble": { "message": "Already installed? Show the troubleshooting steps" },
 
   "welcome_dest_title":          { "message": "Where to save" },
   "welcome_dest_obsidian":       { "message": "Obsidian (on this computer, via vault-autopilot)" },
@@ -97,7 +96,6 @@
   "welcome_install_s1_btn":  { "message": "Download vault-autopilot.zip" },
   "welcome_install_s3_html": { "message": "Back on the Community plugins page, hit the refresh icon and switch <strong>Vault Autopilot</strong> on." },
   "welcome_install_s4":      { "message": "Come back to this page. The status above turns green automatically 🟢" },
-  "welcome_install_brat":    { "message": "Alternative: install with the BRAT plugin (auto-updates). In BRAT choose “Add Beta Plugin” and enter github.com/echore/vault-autopilot" },
   "welcome_install_img1_alt":     { "message": "Finder window showing the unzipped vault-autopilot folder inside .obsidian/plugins" },
   "welcome_install_img1_caption": { "message": "After unzipping, the folder sits inside .obsidian/plugins like this." },
   "welcome_install_img2_alt":     { "message": "Obsidian community plugins settings with Vault Autopilot switched on" },

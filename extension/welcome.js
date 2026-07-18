@@ -103,7 +103,6 @@ async function chooseSetupPath(choice) {
 document.getElementById('btn-triage-first').addEventListener('click', () => chooseSetupPath('install'));
 document.getElementById('btn-triage-installed').addEventListener('click', () => chooseSetupPath('troubleshoot'));
 document.getElementById('lnk-show-install').addEventListener('click', (e) => { e.preventDefault(); chooseSetupPath('install'); });
-document.getElementById('lnk-show-trouble').addEventListener('click', (e) => { e.preventDefault(); chooseSetupPath('troubleshoot'); });
 // External-protocol navigation launches the app and leaves this page in place.
 document.getElementById('btn-open-obsidian').addEventListener('click', () => { window.location.href = 'obsidian://'; });
 
