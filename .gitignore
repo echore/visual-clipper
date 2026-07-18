@@ -12,3 +12,5 @@ headroom_memory.db
 .superpowers/
 .playwright-mcp/
 .pytest_cache/
+docs/
+LOG.md
