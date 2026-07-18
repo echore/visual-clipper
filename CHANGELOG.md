@@ -2,7 +2,7 @@
 
 All notable changes to the Obsidian Visual Clipper Chrome extension are documented in this file.
 
-## [Unreleased]
+## [0.3.0] — 2026-07-17
 
 Onboarding overhaul — the extension now walks a stranger from "just installed" to "first clip saved" without any manual configuration:
 
@@ -12,7 +12,8 @@ Onboarding overhaul — the extension now walks a stranger from "just installed"
 - Human-readable, actionable errors: connection failures now say what to check ("确认 Obsidian 开着、vault-autopilot 插件已启用...") instead of a raw exception
 - Content-script reliability: fixed a first-click failure mode and a duplicate-capture bug so every mode works on the first try, including after SPA navigation
 - Removed the legacy native-messaging host and local Python server — the extension now talks only to vault-autopilot over `localhost:17183`, simplifying install to "two extensions, no CLI setup"
-- Welcome page: install vault-autopilot via GitHub Release zip (with BRAT alternative); "Try it now" sample video replaces the synthetic test clip
+- Welcome page: guided 8-step journey with real screenshots at every step — pin the extension, download the vault-autopilot zip from GitHub Releases, install it via Obsidian's plugins-folder icon, enable it, try a sample video, and find your notes in the gallery; the Notion path mirrors the same structure
+- "Try it now" sample video replaces the synthetic test clip; a collapsible customize panel explains the three SOP choices (built-in analysis, your own rules, or clean captures with analysis off)
 - Full bilingual UI (English + 简体中文), follows the browser language
 - New "how the two pieces work together" explainer
 - Notion destination (personal access token) with per-section upsert and bilingual setup UI; paste a duplicated template (gallery view included) or any page — existing schema-valid databases are adopted by schema, plain pages get an auto-created "Video Clips" database; capture pipeline refactored behind a destinations adapter layer (Obsidian behaviour unchanged)
