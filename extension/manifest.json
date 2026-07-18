@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "__MSG_ext_name__",
   "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEArQgax6Bf9ExsKcekDymf3YslMzMX324di2LOty+TgbYgj7xiOG8trwYKQTIANmopq+P2Eaf/84LQrPOHS5YxqyzunpqAubfb9MQ9JFlxKKRbv+6oZ13BmYfeVl5rYyU/6lW6RfAEBvZQRIS53pPrB6SWCegX5vjymlTzbquL+TcZ4gld2YCN0jRKepcxSgsTdUDk1tkbfjQtXxRu4bI32LsBWu6T3kqVZbQ0t7CyqYGuY2KRtOtcA+AHd81QolXZNwTiS0L+et5wwEbCgceQqOBtfuGdc8dhlWxdPfMTXeCi6fLQjeAShMV6n8CDOWT73666soegCj4p4qTdO4nXoQIDAQAB",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "__MSG_ext_desc__",
   "default_locale": "en",
   "icons": {

@@ -2,6 +2,14 @@
 
 All notable changes to the Visual Clipper Chrome extension are documented in this file.
 
+## [0.3.1] — 2026-07-18
+
+Reliability and security hardening from a cross-repo code review; no changes to the capture flow:
+
+- Clip requests to vault-autopilot now time out after 30 seconds instead of hanging forever when the server stalls; you get the usual "check that Obsidian is open" notice.
+- Unexpected capture failures in the background worker are logged instead of vanishing as silent unhandled rejections.
+- Notion uploads name files by their actual image type (`clip.jpg` for JPEG video frames, `clip.png` for screenshots).
+
 ## [0.3.0] — 2026-07-17
 
 Onboarding overhaul — the extension now walks a stranger from "just installed" to "first clip saved" without any manual configuration:
