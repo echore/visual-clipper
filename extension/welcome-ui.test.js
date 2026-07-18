@@ -149,7 +149,7 @@ describe('Obsidian triage markup and copy', () => {
   });
   test('onboarding journey copy exists in both locales', () => {
     for (const cat of [en, zh]) {
-      for (const k of ['welcome_install_open_html', 'welcome_install_open_fallback_html',
+      for (const k of ['welcome_install_open_html',
         'welcome_install_manual_c_html', 'welcome_install_manual_check_html',
         'welcome_zeroconfig_html', 'welcome_gallery_html', 'welcome_manual_title',
         'welcome_customize_summary', 'welcome_customize_body_html',

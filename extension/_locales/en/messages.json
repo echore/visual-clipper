@@ -232,7 +232,6 @@
   "welcome_install_img_settings_alt": { "message": "Vault Autopilot settings tab with folder and SOP options" },
   "welcome_install_img_settings_caption": { "message": "Everything customizable lives in Settings → Vault Autopilot." },
   "welcome_install_open_html": { "message": "<strong>Open the plugins folder from inside Obsidian.</strong> Settings → <strong>Community plugins</strong> → turn them on if asked → click the <strong>folder icon</strong> next to Installed plugins. Your file manager opens the right folder straight away." },
-  "welcome_install_open_fallback_html": { "message": "No folder icon? In Finder press <code>Cmd+Shift+G</code> and enter <code>your vault/.obsidian/plugins</code> (Windows: paste the path into File Explorer's address bar)." },
   "welcome_install_img_folder_alt": { "message": "Community plugins settings with the open plugins folder icon highlighted" },
   "welcome_install_img_folder_caption": { "message": "The folder icon next to Installed plugins opens .obsidian/plugins directly." }
 }
