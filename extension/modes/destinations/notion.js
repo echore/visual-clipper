@@ -452,11 +452,13 @@ export async function createVideoPage(cfg, dsId, payload, props = DEFAULT_PROPS)
 export async function uploadImage(cfg, imageData) {
   const dataUrl = imageData.startsWith('data:') ? imageData : `data:image/png;base64,${imageData}`;
   const blob = await (await fetch(dataUrl)).blob();
+  const type = blob.type || 'image/png';
+  const ext = type === 'image/jpeg' ? 'jpg' : 'png';
   const fu = await notionRequest('/file_uploads', { method: 'POST', token: cfg.token, body: {
-    mode: 'single_part', filename: 'clip.png', content_type: blob.type || 'image/png',
+    mode: 'single_part', filename: `clip.${ext}`, content_type: type,
   } });
   const form = new FormData();
-  form.append('file', blob, 'clip.png');
+  form.append('file', blob, `clip.${ext}`);
   await notionRequest(`/file_uploads/${fu.id}/send`, { method: 'POST', token: cfg.token, form });
   return fu.id;
 }
