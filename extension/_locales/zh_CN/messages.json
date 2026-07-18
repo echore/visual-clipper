@@ -220,7 +220,7 @@
   "err_notion_bad_schema": { "message": "这个 Notion 数据库没有「网址 URL」类型的列——请给它加一列网址类型的属性（列名随意），或改贴一个普通页面链接。" },
   "default_title_screenshot": { "message": "截图" },
 
-  "welcome_install_manual_c_html": { "message": "双击 zip，把 <code>vault-autopilot</code> 文件夹拖进 <code>plugins/</code>。" },
+  "welcome_install_manual_c_html": { "message": "双击 zip，把解压出来的 <code>vault-autopilot</code> 文件夹拖进 <code>plugins/</code>。" },
   "welcome_zeroconfig_html": { "message": "<strong>零配置：</strong>装好即用。文件夹、端口、笔记结构都有合理默认值，一项都不用改。" },
   "welcome_gallery_html": { "message": "<strong>打开你的视频库。</strong>点 Obsidian 左侧边栏的画廊图标：收藏过的视频都会变成封面卡片，可按平台和维度筛选。" },
   "welcome_manual_title": { "message": "手册：随时回来查" },
@@ -230,7 +230,9 @@
   "welcome_install_img_gallery_caption": { "message": "视频库：收藏的内容变成可浏览的卡片墙。" },
   "welcome_install_img_settings_alt": { "message": "Vault Autopilot 设置页，含文件夹与 SOP 选项" },
   "welcome_install_img_settings_caption": { "message": "所有可自定义项都在设置 → Vault Autopilot 里。" },
-  "welcome_install_open_html": { "message": "<strong>从 Obsidian 里直接打开插件文件夹。</strong>设置 → <strong>Community plugins（社区插件）</strong> → 若有提示先打开社区插件开关 → 点「Installed plugins」旁的<strong>文件夹图标</strong>，访达会直接打开正确的文件夹。" },
+  "welcome_install_open_html": { "message": "<strong>从 Obsidian 里直接打开插件文件夹。</strong>点<strong>左下角的齿轮图标</strong>进设置 → <strong>Community plugins（社区插件）</strong> → 若有提示先打开开关 → 点「Installed plugins」旁的<strong>文件夹图标</strong>，访达会直接打开正确的文件夹。" },
   "welcome_install_img_folder_alt": { "message": "社区插件设置页，高亮打开插件文件夹的图标" },
-  "welcome_install_img_folder_caption": { "message": "「Installed plugins」旁的文件夹图标，直达 .obsidian/plugins。" }
+  "welcome_install_img_folder_caption": { "message": "「Installed plugins」旁的文件夹图标，直达 .obsidian/plugins。" },
+  "welcome_install_img_gear_alt": { "message": "Obsidian 主窗口，左下角设置齿轮高亮" },
+  "welcome_install_img_gear_caption": { "message": "设置入口就是左下角这个齿轮。" }
 }
