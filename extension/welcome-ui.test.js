@@ -147,6 +147,28 @@ describe('Obsidian triage markup and copy', () => {
     expect(en.welcome_conn_bad_detail).toBeUndefined();
     expect(zh.welcome_conn_bad_detail).toBeUndefined();
   });
+  test('onboarding journey copy exists in both locales', () => {
+    for (const cat of [en, zh]) {
+      for (const k of ['welcome_install_s2_intro', 'welcome_install_manual_summary',
+        'welcome_install_manual_a_html', 'welcome_install_manual_b_html',
+        'welcome_install_manual_c_html', 'welcome_install_manual_check_html',
+        'welcome_install_ai_summary', 'welcome_install_ai_body_html',
+        'welcome_install_ai_prompt', 'welcome_install_ai_copy', 'welcome_install_ai_copied',
+        'welcome_zeroconfig_html', 'welcome_gallery_html', 'welcome_manual_title',
+        'welcome_customize_summary', 'welcome_customize_body_html',
+        'welcome_install_img_reveal_alt', 'welcome_install_img_reveal_caption',
+        'welcome_install_img_ai_alt', 'welcome_install_img_ai_caption',
+        'welcome_install_img_gallery_alt', 'welcome_install_img_gallery_caption',
+        'welcome_install_img_settings_alt', 'welcome_install_img_settings_caption']) {
+        expect({ key: k, present: typeof cat[k]?.message === 'string' && cat[k].message.length > 0 })
+          .toEqual({ key: k, present: true });
+      }
+    }
+  });
+  test('the old one-line unzip copy is retired', () => {
+    expect(en.welcome_install_s2_html).toBeUndefined();
+    expect(zh.welcome_install_s2_html).toBeUndefined();
+  });
 });
 
 describe('Where things go copy', () => {
