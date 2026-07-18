@@ -169,6 +169,18 @@ describe('Obsidian triage markup and copy', () => {
     expect(en.welcome_install_s2_html).toBeUndefined();
     expect(zh.welcome_install_s2_html).toBeUndefined();
   });
+  test('journey markup: dual install paths, gallery step, customize panel', () => {
+    expect(html).toContain('id="install-manual-path"');
+    expect(html).toContain('id="install-ai-path"');
+    expect(html).toContain('id="btn-copy-prompt"');
+    expect(html).toContain('id="ai-prompt-text"');
+    expect(html).toContain('id="customize-panel"');
+    expect(html).toContain('guide/obsidian-reveal-vault.png');
+    expect(html).toContain('guide/obsidian-ai-install.png');
+    expect(html).toContain('guide/obsidian-gallery.png');
+    expect(html).toContain('guide/obsidian-settings.png');
+    expect(html).not.toContain('welcome_install_s2_html');
+  });
 });
 
 describe('Where things go copy', () => {
