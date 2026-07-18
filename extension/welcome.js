@@ -66,7 +66,9 @@ function setObsidianView(view, opts = {}) {
   setupTriage.hidden   = view !== 'triage';
   troubleGuide.hidden  = view !== 'troubleshoot';
   installGuide.hidden  = view !== 'install';
-  tryItObsidian.hidden = view !== 'green';
+  // Steps 6-7 also show alongside the install guide, so a first-time user
+  // sees the whole 1-7 journey, not a list that stops at 5.
+  tryItObsidian.hidden = view !== 'green' && view !== 'install';
   if (view === 'troubleshoot') {
     troubleKnown.hidden = !opts.everConnected;
     troublePort.textContent = t('welcome_trouble_s3', [String(opts.port)]);
