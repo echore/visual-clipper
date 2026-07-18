@@ -222,7 +222,7 @@
 
   "welcome_install_manual_c_html": { "message": "Double click the zip, then drag the unzipped <code>vault-autopilot</code> folder into <code>plugins/</code>." },
   "welcome_zeroconfig_html": { "message": "<strong>Zero config:</strong> it works out of the box. Folders, port and note layout all have sensible defaults, nothing needs changing." },
-  "welcome_gallery_html": { "message": "<strong>Open your video library.</strong> Click the gallery icon in Obsidian's left ribbon: every video you clip becomes a cover card, filterable by platform and dimension." },
+  "welcome_gallery_html": { "message": "<strong>Open your video library.</strong> Click the gallery icon in <strong>Obsidian's left sidebar</strong> (near the bottom): every video you clip becomes a cover card, filterable by platform and dimension." },
   "welcome_manual_title": { "message": "Reference: how it all works" },
   "welcome_customize_summary": { "message": "Want to customize? (optional)" },
   "welcome_customize_body_html": { "message": "Obsidian Settings → <strong>Vault Autopilot</strong>: change the base folder and subfolders your notes land in, swap the built in SOP of any capture mode for a note from your vault, or move the HTTP port (mirror a port change under Advanced below)." },

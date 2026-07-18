@@ -222,7 +222,7 @@
 
   "welcome_install_manual_c_html": { "message": "双击 zip，把解压出来的 <code>vault-autopilot</code> 文件夹拖进 <code>plugins/</code>。" },
   "welcome_zeroconfig_html": { "message": "<strong>零配置：</strong>装好即用。文件夹、端口、笔记结构都有合理默认值，一项都不用改。" },
-  "welcome_gallery_html": { "message": "<strong>打开你的视频库。</strong>点 Obsidian 左侧边栏的画廊图标：收藏过的视频都会变成封面卡片，可按平台和维度筛选。" },
+  "welcome_gallery_html": { "message": "<strong>打开你的视频库。</strong>点 <strong>Obsidian 左侧边栏</strong>靠下位置的画廊图标：收藏过的视频都会变成封面卡片，可按平台和维度筛选。" },
   "welcome_manual_title": { "message": "手册：随时回来查" },
   "welcome_customize_summary": { "message": "想自定义？（可选）" },
   "welcome_customize_body_html": { "message": "Obsidian 设置 → <strong>Vault Autopilot</strong>：可以改笔记存放的 Base 文件夹和各子文件夹，把任一采集模式的内置 SOP 换成你 vault 里的笔记，或修改 HTTP 端口（改端口时记得在下方「高级」里同步）。" },
