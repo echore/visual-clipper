@@ -1,4 +1,4 @@
-// background.js — Obsidian Visual Clipper service worker (thin router)
+// background.js — Visual Clipper service worker (thin router)
 import * as screenshot from './modes/screenshot.js';
 import * as hook from './modes/hook.js';
 import * as keyframe from './modes/keyframe.js';

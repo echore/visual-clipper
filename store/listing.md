@@ -1,8 +1,8 @@
-# Chrome Web Store Listing — Obsidian Visual Clipper
+# Chrome Web Store Listing — Visual Clipper
 
 ## Name
 
-Obsidian Visual Clipper
+Visual Clipper
 
 ## Category
 
@@ -18,7 +18,7 @@ Productivity
 
 ### English
 
-**Obsidian Visual Clipper turns anything on your screen into a structured note — with one click, and with your data going only where you choose.**
+**Visual Clipper turns anything on your screen into a structured note — with one click, and with your data going only where you choose.**
 
 By default it works together with its companion Obsidian plugin, **vault-autopilot**: the extension captures, vault-autopilot writes the note into your vault, and nothing is uploaded anywhere — the extension talks only to `localhost:17183`, a server that vault-autopilot runs *inside your own Obsidian install*. If you'd rather use Notion, you can switch destinations and clip straight into a database in your own Notion workspace using your own personal access token — no server operated by this extension's developer is ever involved, in either mode.
 
@@ -44,7 +44,7 @@ Capture the same video more than once — cover today, a hook frame tomorrow —
 
 ### 中文
 
-**Obsidian Visual Clipper 能把网页上的任何内容一键存成结构化笔记——数据仅发送到 localhost（Obsidian 模式），或你自己授权的 Notion 工作区（Notion 模式）；无开发者服务器。**
+**Visual Clipper 能把网页上的任何内容一键存成结构化笔记——数据仅发送到 localhost（Obsidian 模式），或你自己授权的 Notion 工作区（Notion 模式）；无开发者服务器。**
 
 默认配合 Obsidian 插件 **vault-autopilot** 使用：扩展负责抓取，vault-autopilot 负责把内容写进你的 vault，所有数据只在本机流转——扩展只会请求 `localhost:17183`，这是 vault-autopilot 在你自己的 Obsidian 里启动的本地服务。也可以改选 Notion 目的地，用你自己生成的个人访问令牌，直接把内容存进你自己 Notion 工作区里的一个 database——两种模式都不会经过本扩展开发者运营的任何服务器。
 

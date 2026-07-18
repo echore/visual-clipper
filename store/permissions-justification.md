@@ -1,6 +1,6 @@
-# Permissions Justification — Obsidian Visual Clipper
+# Permissions Justification — Visual Clipper
 
-This document explains, permission by permission, why Obsidian Visual Clipper requests each entry in `extension/manifest.json`. It is intended for the Chrome Web Store review form.
+This document explains, permission by permission, why Visual Clipper requests each entry in `extension/manifest.json`. It is intended for the Chrome Web Store review form.
 
 ## `storage`
 

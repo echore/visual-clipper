@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to the Obsidian Visual Clipper Chrome extension are documented in this file.
+All notable changes to the Visual Clipper Chrome extension are documented in this file.
 
 ## [0.3.0] — 2026-07-17
 

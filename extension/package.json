@@ -1,5 +1,5 @@
 {
-  "name": "obsidian-visual-clipper",
+  "name": "visual-clipper",
   "private": true,
   "type": "module",
   "devDependencies": {

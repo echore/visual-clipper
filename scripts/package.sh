@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Packages extension/ into dist/obsidian-visual-clipper-<version>.zip for
+# Packages extension/ into dist/visual-clipper-<version>.zip for
 # Chrome Web Store upload. Version is read from extension/manifest.json.
 set -euo pipefail
 
@@ -20,7 +20,7 @@ if [[ -z "$VERSION" ]]; then
 fi
 
 mkdir -p "$DIST_DIR"
-ZIP_PATH="$DIST_DIR/obsidian-visual-clipper-$VERSION.zip"
+ZIP_PATH="$DIST_DIR/visual-clipper-$VERSION.zip"
 rm -f "$ZIP_PATH"
 
 cd "$EXT_DIR"

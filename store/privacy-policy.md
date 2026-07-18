@@ -1,8 +1,8 @@
-# Privacy Policy — Obsidian Visual Clipper
+# Privacy Policy — Visual Clipper
 
 **Last updated:** 2026-07-13
 
-Obsidian Visual Clipper ("the extension") is built on one simple rule: **your data only ever goes to the destination you choose and authorize.** This policy explains exactly what the extension does, in plain language.
+Visual Clipper ("the extension") is built on one simple rule: **your data only ever goes to the destination you choose and authorize.** This policy explains exactly what the extension does, in plain language.
 
 ## What the extension captures
 
