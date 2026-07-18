@@ -149,15 +149,11 @@ describe('Obsidian triage markup and copy', () => {
   });
   test('onboarding journey copy exists in both locales', () => {
     for (const cat of [en, zh]) {
-      for (const k of ['welcome_install_s2_intro', 'welcome_install_manual_summary',
-        'welcome_install_manual_a_html', 'welcome_install_manual_b_html',
+      for (const k of ['welcome_install_open_html', 'welcome_install_open_fallback_html',
         'welcome_install_manual_c_html', 'welcome_install_manual_check_html',
-        'welcome_install_ai_summary', 'welcome_install_ai_body_html',
-        'welcome_install_ai_prompt', 'welcome_install_ai_copy', 'welcome_install_ai_copied',
         'welcome_zeroconfig_html', 'welcome_gallery_html', 'welcome_manual_title',
         'welcome_customize_summary', 'welcome_customize_body_html',
-        'welcome_install_img_reveal_alt', 'welcome_install_img_reveal_caption',
-        'welcome_install_img_ai_alt', 'welcome_install_img_ai_caption',
+        'welcome_install_img_folder_alt', 'welcome_install_img_folder_caption',
         'welcome_install_img_gallery_alt', 'welcome_install_img_gallery_caption',
         'welcome_install_img_settings_alt', 'welcome_install_img_settings_caption']) {
         expect({ key: k, present: typeof cat[k]?.message === 'string' && cat[k].message.length > 0 })
@@ -169,17 +165,14 @@ describe('Obsidian triage markup and copy', () => {
     expect(en.welcome_install_s2_html).toBeUndefined();
     expect(zh.welcome_install_s2_html).toBeUndefined();
   });
-  test('journey markup: dual install paths, gallery step, customize panel', () => {
-    expect(html).toContain('id="install-manual-path"');
-    expect(html).toContain('id="install-ai-path"');
-    expect(html).toContain('id="btn-copy-prompt"');
-    expect(html).toContain('id="ai-prompt-text"');
+  test('journey markup: folder-icon install, gallery step, customize panel', () => {
+    expect(html).toContain('guide/obsidian-plugins-folder.png');
+    expect(html).toContain('guide/obsidian-unzip-plugins.png');
     expect(html).toContain('id="customize-panel"');
-    expect(html).toContain('guide/obsidian-reveal-vault.png');
-    expect(html).toContain('guide/obsidian-ai-install.png');
     expect(html).toContain('guide/obsidian-gallery.png');
     expect(html).toContain('guide/obsidian-settings.png');
     expect(html).not.toContain('welcome_install_s2_html');
+    expect(html).not.toContain('install-ai-path');
   });
 });
 

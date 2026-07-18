@@ -5,12 +5,11 @@ stay hidden if a file cannot load, so missing shots never break the page.
 
 ## Obsidian onboarding (English UI, one set for both locales)
 
-- `obsidian-reveal-vault.png`: right-click menu on a note with Show in system explorer visible
+- `obsidian-plugins-folder.png`: Community plugins settings with the folder icon next to Installed plugins highlighted
 - `obsidian-unzip-plugins.png`: Finder path bar showing vault › .obsidian › plugins with the vault-autopilot folder inside (main.js, manifest.json, styles.css visible)
 - `obsidian-enable-plugin.png`: Community plugins settings with Vault Autopilot toggled on
 - `obsidian-gallery.png`: gallery view with the ribbon icon and a card wall of 3+ collected videos
 - `obsidian-settings.png`: Vault Autopilot settings tab with the folder and SOP sections in frame
-- `obsidian-ai-install.png`: a local AI agent session (for example Claude Code) completing the install from the provided prompt
 
 ## Notion onboarding
 

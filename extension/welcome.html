@@ -33,11 +33,7 @@
     details.adv summary { cursor: pointer; color: #6b7280; }
     details.adv input { width: 90px; font: 13px monospace; padding: 2px 6px;
       border: 1px solid #e5e7eb; border-radius: 4px; }
-    details.install-path { margin: 10px 0; border: 1px solid #e5e0d6; border-radius: 8px; padding: 10px 14px; background: #faf8f4; }
-    details.install-path summary { cursor: pointer; font-weight: 600; }
-    details.install-path .sub-steps { margin-top: 10px; }
     .check-warn { background: #fdf3e7; border: 1px solid #f0d9b8; border-radius: 6px; padding: 8px 12px; font-size: 13px; }
-    .ai-prompt { white-space: pre-wrap; background: #f3f1ec; border-radius: 6px; padding: 10px 12px; font-size: 12.5px; user-select: all; }
     .zeroconfig { background: #eef7f0; border-radius: 6px; padding: 8px 12px; }
     .dl-btn { display: inline-block; background: #6366f1; color: #fff; padding: 8px 16px;
       border-radius: 8px; text-decoration: none; font: 600 13px system-ui; }
@@ -276,46 +272,28 @@
       </div>
       <div class="step">
         <div class="step-num">2</div>
-        <div><p data-i18n="welcome_install_s2_intro"></p>
-        <details class="install-path" id="install-manual-path">
-          <summary data-i18n="welcome_install_manual_summary"></summary>
-          <div class="sub-steps">
-            <p data-i18n-html="welcome_install_manual_a_html"></p>
-            <figure class="guide-shot">
-              <a href="guide/obsidian-reveal-vault.png" target="_blank" rel="noopener">
-                <img class="shot" src="guide/obsidian-reveal-vault.png" data-i18n-alt="welcome_install_img_reveal_alt" alt="">
-              </a>
-              <figcaption data-i18n="welcome_install_img_reveal_caption"></figcaption>
-            </figure>
-            <p data-i18n-html="welcome_install_manual_b_html"></p>
-            <p data-i18n-html="welcome_install_manual_c_html"></p>
-            <figure class="guide-shot">
-              <a href="guide/obsidian-unzip-plugins.png" target="_blank" rel="noopener">
-                <img class="shot" src="guide/obsidian-unzip-plugins.png" data-i18n-alt="welcome_install_img1_alt" alt="">
-              </a>
-              <figcaption data-i18n="welcome_install_img1_caption"></figcaption>
-            </figure>
-            <p class="check-warn" data-i18n-html="welcome_install_manual_check_html"></p>
-          </div>
-        </details>
-        <details class="install-path" id="install-ai-path">
-          <summary data-i18n="welcome_install_ai_summary"></summary>
-          <div class="sub-steps">
-            <p data-i18n-html="welcome_install_ai_body_html"></p>
-            <pre class="ai-prompt" id="ai-prompt-text" data-i18n="welcome_install_ai_prompt"></pre>
-            <p><button class="act" id="btn-copy-prompt" data-i18n="welcome_install_ai_copy"></button></p>
-            <figure class="guide-shot">
-              <a href="guide/obsidian-ai-install.png" target="_blank" rel="noopener">
-                <img class="shot" src="guide/obsidian-ai-install.png" data-i18n-alt="welcome_install_img_ai_alt" alt="">
-              </a>
-              <figcaption data-i18n="welcome_install_img_ai_caption"></figcaption>
-            </figure>
-          </div>
-        </details>
-        </div>
+        <div><p data-i18n-html="welcome_install_open_html"></p>
+        <figure class="guide-shot">
+          <a href="guide/obsidian-plugins-folder.png" target="_blank" rel="noopener">
+            <img class="shot" src="guide/obsidian-plugins-folder.png" data-i18n-alt="welcome_install_img_folder_alt" alt="">
+          </a>
+          <figcaption data-i18n="welcome_install_img_folder_caption"></figcaption>
+        </figure>
+        <p class="alt" data-i18n-html="welcome_install_open_fallback_html"></p></div>
       </div>
       <div class="step">
         <div class="step-num">3</div>
+        <div><p data-i18n-html="welcome_install_manual_c_html"></p>
+        <figure class="guide-shot">
+          <a href="guide/obsidian-unzip-plugins.png" target="_blank" rel="noopener">
+            <img class="shot" src="guide/obsidian-unzip-plugins.png" data-i18n-alt="welcome_install_img1_alt" alt="">
+          </a>
+          <figcaption data-i18n="welcome_install_img1_caption"></figcaption>
+        </figure>
+        <p class="check-warn" data-i18n-html="welcome_install_manual_check_html"></p></div>
+      </div>
+      <div class="step">
+        <div class="step-num">4</div>
         <div><p data-i18n-html="welcome_install_s3_html"></p>
         <figure class="guide-shot">
           <a href="guide/obsidian-enable-plugin.png" target="_blank" rel="noopener">
@@ -325,7 +303,7 @@
         </figure></div>
       </div>
       <div class="step">
-        <div class="step-num">4</div>
+        <div class="step-num">5</div>
         <div><p data-i18n="welcome_install_s4"></p>
         <p class="zeroconfig" data-i18n-html="welcome_zeroconfig_html"></p></div>
       </div>
@@ -335,14 +313,14 @@
 
     <div id="try-it" hidden>
       <div class="step">
-        <div class="step-num">5</div>
+        <div class="step-num">6</div>
         <div><h2 style="margin:0 0 6px" data-i18n="welcome_tryit_title"></h2>
         <p data-i18n="welcome_tryit_body"></p>
         <p><a id="tryit-link" target="_blank" rel="noopener"
               data-i18n="welcome_tryit_link_text" data-i18n-href="welcome_tryit_url"></a></p></div>
       </div>
       <div class="step">
-        <div class="step-num">6</div>
+        <div class="step-num">7</div>
         <div><p data-i18n-html="welcome_gallery_html"></p>
         <figure class="guide-shot">
           <a href="guide/obsidian-gallery.png" target="_blank" rel="noopener">

@@ -153,13 +153,3 @@ for (const img of document.querySelectorAll('img.shot')) {
   img.addEventListener('load', show);
   if (img.complete && img.naturalWidth > 0) show();
 }
-
-// AI install path: one click copies the ready-made prompt.
-const copyBtn = document.getElementById('btn-copy-prompt');
-copyBtn.addEventListener('click', async () => {
-  try {
-    await navigator.clipboard.writeText(t('welcome_install_ai_prompt'));
-    copyBtn.textContent = t('welcome_install_ai_copied');
-    setTimeout(() => { copyBtn.textContent = t('welcome_install_ai_copy'); }, 1500);
-  } catch (_) {}
-});
