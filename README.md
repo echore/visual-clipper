@@ -1,53 +1,74 @@
-# Obsidian Visual Clipper
+# Visual Clipper · 视频画面一键存 Obsidian / Notion
 
-> Capture screenshots, video covers, hooks and keyframes from any webpage — one click, straight into your Obsidian vault.
+[![GitHub Release](https://img.shields.io/github/v/release/echore/visual-clipper?cacheSeconds=3600)](https://github.com/echore/visual-clipper/releases/latest)
 
-Chrome 扩展，配合 Obsidian 插件 **[vault-autopilot](https://github.com/echore/vault-autopilot)** 使用：在网页上截图、收藏视频封面、抓取视频开头（Hook）或标记关键帧，一键存成 Obsidian 笔记。也可切换到 Notion 模式，直接存进你自己的 Notion 工作区。全程不经过任何开发者服务器。
+<!-- 🎬 Demo video placeholder. Replace this line with the video embed when it is ready. -->
+> 🎬 Demo video coming soon · 演示视频即将上线
 
-## 工作原理
+Save what you see. Visual Clipper is a Chrome extension that clips screenshots, video covers, opening hooks, and keyframes from any webpage into **Obsidian** or **Notion**, in one click.
 
-```
-Chrome 扩展 ──POST localhost:17183──▶ vault-autopilot（Obsidian 插件）──▶ 写入你的 vault
-```
+Clips from the same video always land in the same note. Save the cover today, grab a hook tomorrow, mark keyframes next week: it all builds into one tidy note per video. Your clips go only to your own vault or your own Notion workspace. No accounts, no cloud, no telemetry.
 
-两件套缺一不可：扩展负责抓取，插件负责落库。**一个视频 = 一条笔记**——对同一个视频先后收藏封面、抓 Hook、标关键帧，内容都追加进同一条笔记，顺序随意。
+<img src="assets/demo-library.png" width="800" alt="A video library in Obsidian, built from clips">
 
-## 安装
+## What you need
 
-1. **装本扩展**：从 [Releases](https://github.com/echore/obsidian-visual-clipper/releases/latest) 下载 zip 并解压，`chrome://extensions` → 打开开发者模式 → 加载已解压的扩展程序 → 选解压出的文件夹（Chrome Web Store 版本上架后可直接搜索安装）
-2. **装 vault-autopilot**：从 [vault-autopilot Releases](https://github.com/echore/vault-autopilot/releases/latest) 下载 `vault-autopilot.zip`，解压到 vault 的 `.obsidian/plugins/` 文件夹后启用——扩展引导页有逐步截图指引（社区插件市场上架后可直接搜索安装）
-3. 装完扩展会自动打开引导页，上面有**实时连接检测**和**发送测试 clip** 按钮——变绿就能用了，全程零配置
+- Chrome
+- [Obsidian](https://obsidian.md) or [Notion](https://www.notion.so), either one
 
-## 四种模式
+## Install
 
-| 模式 | 用途 | 产出 |
-|---|---|---|
-| 📷 截图 | 框选网页任意区域 | 独立截图笔记（`Clips/Screenshots/`） |
-| 🖼️ 收藏封面 | YouTube / Bilibili / 小红书视频页 | 视频笔记 + 封面图（`Clips/Videos/`） |
-| 🎬 Hook 分析 | 抓取视频开头候选帧 + 字幕 | 追加进该视频的笔记 |
-| 🎞 关键帧 | 标记 In/Out 后采样区间帧 | 追加进该视频的笔记 |
+**Chrome Web Store: coming soon.** Until then, install manually. It takes two minutes.
 
-默认所有内容落在 vault 的 `Clips/` 文件夹下，位置可在 vault-autopilot 设置中修改。
+1. Download [visual-clipper.zip](https://github.com/echore/visual-clipper/releases/latest/download/visual-clipper.zip) and unzip it
+2. Open `chrome://extensions` and turn on **Developer mode** (top right corner)
+3. Click **Load unpacked** (top left corner) and pick the folder you just unzipped
 
-## 数据与隐私
+A welcome page opens on its own. It asks where you want your clips (Obsidian or Notion) and walks you through the rest with live checks and step by step screenshots. When the status light turns green, you are ready.
 
-你的 clip 数据只在本机流转（扩展 → 本机端口 17183 → 本地 Obsidian vault），不发送到任何开发者服务器。无账号、无云端、无遥测。唯一的外部请求：Hook/封面模式会用你自己的浏览器会话，直接向 YouTube/Bilibili 官方接口读取公开的视频元数据和字幕——等同于你自己浏览该页面，数据不经第三方中转。
+## How to use
 
-若切换到 Notion 模式，clip 会用你本人的 Notion token 直接写入你自己的 Notion 工作区（`api.notion.com`），token 只保存在浏览器本地，同样不经过任何开发者服务器。
+Open any webpage or video page (YouTube and Bilibili are fully supported), click the Visual Clipper icon, and pick a mode:
 
-## 常见问题
+| Mode | What it does |
+|---|---|
+| 📷 Screenshot | Drag to select any region of the page and save it |
+| 🖼️ Cover | Save the video cover and its info in one click |
+| 🎬 Hook | Sample the opening frames plus subtitles, then pick the best hook frame |
+| 🎞️ Keyframe | Mark In and Out points on a video, then sample frames across that range |
 
-- **弹窗显示红灯 / 提示"没连上 Obsidian"**：确认 Obsidian 开着、vault-autopilot 已启用。点扩展弹窗底部「安装说明 / 帮助」打开引导页，有逐项排查
-- **端口 17183 被占用**：Obsidian 会弹提示。关掉占用程序，或在插件设置和扩展引导页（高级 → 端口）两处改成同一个新端口
-- **`chrome://` 等页面无法框选**：浏览器限制，截图模式会自动改存整页
+<img src="extension/guide/chrome-panel.png" width="600" alt="The four capture modes">
 
-## 开发
+Every clip saves instantly and links you straight back to the note it created.
 
-```bash
-cd extension && npm install && npm test   # Jest 单元测试
-```
+---
 
-无构建步骤——`extension/` 目录即成品，改完代码在 `chrome://extensions` 点刷新即可。
+## 中文说明
+
+Visual Clipper 是一个 Chrome 扩展：网页截图、视频封面、开头 Hook、关键帧，一键存进 **Obsidian** 或 **Notion**。同一个视频的所有素材都进同一条笔记，越攒越完整。数据只进你自己的 vault 或你自己的 Notion 工作区，无账号、无云端、无遥测。
+
+### 安装
+
+商店版即将上架，当前手动安装（两分钟搞定）：
+
+1. 下载 [visual-clipper.zip](https://github.com/echore/visual-clipper/releases/latest/download/visual-clipper.zip) 并解压
+2. 打开 `chrome://extensions`，右上角开启**开发者模式**
+3. 点左上角**加载已解压的扩展程序**，选中解压出的文件夹
+
+装完会自动打开引导页：选择存到 Obsidian 还是 Notion，跟着截图一步步点完即可。状态灯变绿就能用，之后的所有配置都在引导页里完成，不需要手动改任何文件。
+
+### 使用
+
+打开任意网页或视频页（YouTube、Bilibili 完整支持），点工具栏的 Visual Clipper 图标，选一个模式：
+
+- 📷 **截图**：框选网页任意区域保存
+- 🖼️ **封面**：一键保存视频封面和信息
+- 🎬 **Hook**：抓取视频开头画面和字幕，挑出最好的开头帧
+- 🎞️ **关键帧**：标记起止点，批量采样这段范围的画面
+
+## Support this project
+
+If Visual Clipper is useful to you, a ⭐ [Star](https://github.com/echore/visual-clipper) helps a lot.
 
 ## License
 

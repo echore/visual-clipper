@@ -13,7 +13,7 @@
 2. 「新建项目」→ 上传 `obsidian-visual-clipper-0.3.0-webstore.zip`
 3. 商店listing：文案直接从 `store/listing.md` 复制（名称、短描述、详细描述、类别）
 4. 隐私标签页：
-   - 隐私政策 URL：`https://github.com/echore/obsidian-visual-clipper/blob/master/store/privacy-policy.md`
+   - 隐私政策 URL：`https://github.com/echore/visual-clipper/blob/master/store/privacy-policy.md`
    - 数据使用声明：不收集任何用户数据（参照 privacy-policy.md 逐项勾选）
    - 各权限用途说明：从 `store/permissions-justification.md` 逐条复制
 5. 截图素材（需自行截取，1280×800 或 640×400，至少 1 张）：
