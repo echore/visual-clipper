@@ -223,7 +223,7 @@
   "welcome_gallery_html": { "message": "<strong>Open your video library.</strong> Click the gallery icon in <strong>Obsidian's left sidebar</strong> (near the bottom): every video you clip becomes a cover card, filterable by platform and dimension." },
   "welcome_manual_title": { "message": "Reference: how it all works" },
   "welcome_customize_summary": { "message": "Want to customize? (optional)" },
-  "welcome_customize_body_html": { "message": "Obsidian Settings → <strong>Vault Autopilot</strong>: change the base folder and subfolders your notes land in, swap the built in SOP of any capture mode for a note from your vault, or move the HTTP port (mirror a port change under Advanced below)." },
+  "welcome_customize_body_html": { "message": "Everything ships with defaults, and everything can be changed in Obsidian Settings → <strong>Vault Autopilot</strong>: the base folder and subfolders your notes land in, the HTTP port (mirror a change under Advanced below), and how each capture mode analyzes. Three choices there: keep the built-in SOP, hit Customize to make it your own, or switch off Use built-in analysis SOPs to save clean material with no analysis at all." },
   "welcome_install_img_gallery_alt": { "message": "Obsidian gallery view showing collected videos as cover cards" },
   "welcome_install_img_gallery_caption": { "message": "The video library: your clips as a browsable card wall." },
   "welcome_install_img_settings_alt": { "message": "Vault Autopilot settings tab with folder and SOP options" },
