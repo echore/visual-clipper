@@ -159,7 +159,8 @@ describe('Obsidian triage markup and copy', () => {
         'welcome_install_img_gallery_alt', 'welcome_install_img_gallery_caption',
         'welcome_install_img_settings_alt', 'welcome_install_img_settings_caption',
         'welcome_install_reload_html',
-        'welcome_install_img_reload_alt', 'welcome_install_img_reload_caption']) {
+        'welcome_install_img_reload_alt', 'welcome_install_img_reload_caption',
+        'welcome_notion_no_access']) {
         expect({ key: k, present: typeof cat[k]?.message === 'string' && cat[k].message.length > 0 })
           .toEqual({ key: k, present: true });
       }

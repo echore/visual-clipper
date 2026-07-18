@@ -103,6 +103,19 @@ export async function ping() {
   }
 }
 
+// /users/me only proves the token; it says nothing about whether the user
+// finished the share step (page ••• → Connections). Touch the pasted target
+// itself so save-and-test catches the missing share before the first clip
+// does. The link may be a database (duplicated template) or a plain page.
+export async function verifyParentAccess(cfg) {
+  const id = parsePageId(cfg.parentUrl);
+  if (!id) return false;
+  for (const path of [`/databases/${id}`, `/pages/${id}`]) {
+    try { await notionRequest(path, { token: cfg.token }); return true; } catch (_) {}
+  }
+  return false;
+}
+
 // ── Content mapping ───────────────────────────────────────────────────────────
 // Section headings are CONTENT written into the user's Notion page, not UI
 // chrome — and upsert matching must recognize BOTH locales at once (the user

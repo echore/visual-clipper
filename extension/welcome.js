@@ -1,5 +1,5 @@
 import { pingAutopilot, getPort, DEFAULT_PORT } from './modes/destinations/obsidian.js';
-import { ping as notionPing, parsePageId } from './modes/destinations/notion.js';
+import { ping as notionPing, parsePageId, verifyParentAccess } from './modes/destinations/notion.js';
 import { t, localizeDocument } from './modes/i18n.js';
 import { applyDestinationView, normalizeDestination, resolveConnView } from './welcome-ui.js';
 
@@ -134,9 +134,15 @@ document.getElementById('btn-notion-save').addEventListener('click', async () =>
   if (prev.sc_notion_parent !== parent) await chrome.storage.local.remove(['sc_notion_ds', 'sc_notion_props']); // 换父页面 → 旧库缓存作废
   await chrome.storage.local.set({ sc_notion_token: token, sc_notion_parent: parent });
   const { connected } = await notionPing();
-  status.textContent = t(connected ? 'welcome_notion_ok' : 'welcome_notion_bad');
-  status.classList.toggle('ok', connected);
-  status.classList.toggle('bad', !connected);
+  let msgKey = connected ? 'welcome_notion_ok' : 'welcome_notion_bad';
+  let ok = connected;
+  if (connected && !(await verifyParentAccess({ token, parentUrl: parent }))) {
+    ok = false;
+    msgKey = 'welcome_notion_no_access';
+  }
+  status.textContent = t(msgKey);
+  status.classList.toggle('ok', ok);
+  status.classList.toggle('bad', !ok);
   refreshStatus();
 });
 

@@ -66,6 +66,7 @@
   "welcome_notion_save_test":    { "message": "保存并测试" },
   "welcome_notion_ok":           { "message": "🟢 Notion 已连接" },
   "welcome_notion_bad":          { "message": "🔴 请检查 Token，并确认模板副本已添加该连接，然后重试" },
+  "welcome_notion_no_access":    { "message": "🔴 Token 有效，但这个页面还没有添加你的连接。在页面右上角打开 ••• → Connections，把第 1 阶段创建的连接加上，然后重试" },
   "welcome_notion_invalid_parent": { "message": "这看起来不是一个 Notion 页面链接" },
   "welcome_notion_tryit_title":  { "message": "在 Notion 里试一次" },
   "welcome_notion_tryit_body":   { "message": "随便打开一个视频，点一下 Visual Clipper 图标，会弹出四种采集模式的面板：截图（框选任意区域）、收藏封面（封面加标题）、Hook 分析、视频关键帧，都可以直接用。第一条就点「收藏封面」，几秒钟后你的 Notion 数据库里就会多出一行。" },

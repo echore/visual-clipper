@@ -21,7 +21,7 @@ globalThis.chrome = {
           getUILanguage: () => 'en' },
 };
 
-import { parsePageId, canonicalVideoUrl, notionRequest, ping, NOTION_VERSION, SECTION_TITLES, sectionTitleFor, chunkText, collectImages, payloadToBlocks, findSection, scanSections, resolveProps, videoEmbedUrl, ensureDataSource, findPageByUrl, createVideoPage, uploadImage, upsertSection, send } from './notion.js';
+import { parsePageId, canonicalVideoUrl, notionRequest, ping, verifyParentAccess, NOTION_VERSION, SECTION_TITLES, sectionTitleFor, chunkText, collectImages, payloadToBlocks, findSection, scanSections, resolveProps, videoEmbedUrl, ensureDataSource, findPageByUrl, createVideoPage, uploadImage, upsertSection, send } from './notion.js';
 
 const ok  = (json) => ({ ok: true,  status: 200, json: async () => json });
 const err = (status) => ({ ok: false, status, json: async () => ({ message: 'x' }) });
@@ -97,6 +97,29 @@ describe('ping', () => {
     globalThis.__stored = { sc_notion_token: 'T' };
     mockFetch(() => ok({ object: 'user' }));
     expect(await ping()).toEqual({ connected: true });
+  });
+});
+
+describe('verifyParentAccess', () => {
+  const PARENT = 'https://www.notion.so/x-0123456789abcdef0123456789abcdef';
+  test('unparseable parent url → false, no fetch', async () => {
+    const calls = mockFetch(() => ok({}));
+    expect(await verifyParentAccess({ token: 'T', parentUrl: 'https://example.com/' })).toBe(false);
+    expect(calls.length).toBe(0);
+  });
+  test('database link reachable → true', async () => {
+    const calls = mockFetch(() => ok({ object: 'database' }));
+    expect(await verifyParentAccess({ token: 'T', parentUrl: PARENT })).toBe(true);
+    expect(calls[0].url).toContain('/databases/');
+  });
+  test('not a database but a reachable page → true', async () => {
+    const calls = mockFetch(({ url }) => (url.includes('/databases/') ? err(404) : ok({ object: 'page' })));
+    expect(await verifyParentAccess({ token: 'T', parentUrl: PARENT })).toBe(true);
+    expect(calls.length).toBe(2);
+  });
+  test('page never shared with the connection → false', async () => {
+    mockFetch(() => err(404));
+    expect(await verifyParentAccess({ token: 'T', parentUrl: PARENT })).toBe(false);
   });
 });
 

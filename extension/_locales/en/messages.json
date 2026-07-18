@@ -66,6 +66,7 @@
   "welcome_notion_save_test":    { "message": "Save & test" },
   "welcome_notion_ok":           { "message": "🟢 Notion connected" },
   "welcome_notion_bad":          { "message": "🔴 Check the token, confirm the copied template has this connection, then try again" },
+  "welcome_notion_no_access":    { "message": "🔴 The token works, but this page has not been shared with your connection yet. On the page, open ••• → Connections, add the connection from Stage 1, then try again" },
   "welcome_notion_invalid_parent": { "message": "That doesn't look like a Notion page link" },
   "welcome_notion_tryit_title":  { "message": "Try it in Notion" },
   "welcome_notion_tryit_body":   { "message": "Open any video and click the Visual Clipper icon. A panel with the four capture modes pops up: Screenshot (drag select a region), Save cover (cover + title), Hook analysis, and Video keyframes, all ready to use. For your first clip, hit Save cover: a new row lands in your Notion database in seconds." },
