@@ -44,6 +44,15 @@ describe('httpPost error mapping', () => {
     globalThis.fetch = () => Promise.reject(new TypeError('Failed to fetch'));
     await expect(httpPost({ mode: 'screenshot' })).rejects.toThrow(CONNECT_FAIL_MSG);
   });
+  test('a stalled request times out with the connect message', async () => {
+    let sawSignal;
+    globalThis.fetch = (_url, opts) => {
+      sawSignal = opts.signal;
+      return Promise.reject(new DOMException('Aborted', 'AbortError'));
+    };
+    await expect(httpPost({ mode: 'screenshot' })).rejects.toThrow(CONNECT_FAIL_MSG);
+    expect(sawSignal).toBeInstanceOf(AbortSignal);
+  });
   test('HTTP 500 surfaces server-provided reason', async () => {
     globalThis.fetch = async () => ({
       ok: false, status: 500,

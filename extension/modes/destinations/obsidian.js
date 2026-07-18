@@ -21,9 +21,10 @@ export async function httpPost(payload) {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
+      signal: AbortSignal.timeout(30000),
     });
   } catch (_) {
-    // Network-level failure: Obsidian closed / plugin disabled / port mismatch.
+    // Network-level failure or timeout: Obsidian closed / plugin disabled / stalled.
     throw new Error(CONNECT_FAIL_MSG);
   }
   if (!resp.ok) {

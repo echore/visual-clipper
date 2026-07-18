@@ -32,15 +32,16 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 
   switch (msg.action) {
     case 'startCapture':
-      screenshot.start(msg.tabId, msg.windowId);
+      screenshot.start(msg.tabId, msg.windowId).catch(err => console.error('[OVC] startCapture failed:', err));
       break;
     case 'regionSelected':
       if (tabId) screenshot.handleRegion(msg, tabId);
       break;
     case 'startHook':
-      hook.start(msg.tabId);
+      hook.start(msg.tabId).catch(err => console.error('[OVC] startHook failed:', err));
       break;
     case 'startKeyframe':
+      // keyframe.start is a synchronous no-op (state lives in popup.js) — no promise to catch.
       keyframe.start(msg.tabId);
       break;
     case 'markOut':
@@ -48,10 +49,10 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         .catch(err => console.error('[OVC] markOut failed:', err));
       break;
     case 'analyzeBatch':
-      screenshot.analyzeBatch(msg.queue);
+      screenshot.analyzeBatch(msg.queue).catch(err => console.error('[OVC] analyzeBatch failed:', err));
       break;
     case 'saveThumbnail':
-      thumbnail.start(msg.tabId);
+      thumbnail.start(msg.tabId).catch(err => console.error('[OVC] saveThumbnail failed:', err));
       break;
   }
   // Ack receipt immediately so popup senders can await delivery before closing
