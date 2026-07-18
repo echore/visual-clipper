@@ -9,3 +9,6 @@ dist/
 extension-key.pem
 .worktrees/
 headroom_memory.db
+.superpowers/
+.playwright-mcp/
+.pytest_cache/

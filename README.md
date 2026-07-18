@@ -2,7 +2,7 @@
 
 > Capture screenshots, video covers, hooks and keyframes from any webpage — one click, straight into your Obsidian vault.
 
-Chrome 扩展，配合 Obsidian 插件 **[vault-autopilot](../vault-autopilot/)** 使用：在网页上截图、收藏视频封面、抓取视频开头（Hook）或标记关键帧，一键存成 Obsidian 笔记。全程本地运行，不经过任何外部服务器。
+Chrome 扩展，配合 Obsidian 插件 **[vault-autopilot](https://github.com/echore/vault-autopilot)** 使用：在网页上截图、收藏视频封面、抓取视频开头（Hook）或标记关键帧，一键存成 Obsidian 笔记。也可切换到 Notion 模式，直接存进你自己的 Notion 工作区。全程不经过任何开发者服务器。
 
 ## 工作原理
 
@@ -14,8 +14,8 @@ Chrome 扩展 ──POST localhost:17183──▶ vault-autopilot（Obsidian 插
 
 ## 安装
 
-1. **装本扩展**：Chrome Web Store 搜索 "Obsidian Visual Clipper"（上架前：`chrome://extensions` → 开发者模式 → 加载已解压的扩展程序 → 选本仓库的 `extension/` 目录）
-2. **装 vault-autopilot**：Obsidian → 设置 → 第三方插件 → 社区插件市场搜索 vault-autopilot（上架前：用 BRAT 安装）
+1. **装本扩展**：从 [Releases](https://github.com/echore/obsidian-visual-clipper/releases/latest) 下载 zip 并解压，`chrome://extensions` → 打开开发者模式 → 加载已解压的扩展程序 → 选解压出的文件夹（Chrome Web Store 版本上架后可直接搜索安装）
+2. **装 vault-autopilot**：从 [vault-autopilot Releases](https://github.com/echore/vault-autopilot/releases/latest) 下载 `vault-autopilot.zip`，解压到 vault 的 `.obsidian/plugins/` 文件夹后启用——扩展引导页有逐步截图指引（社区插件市场上架后可直接搜索安装）
 3. 装完扩展会自动打开引导页，上面有**实时连接检测**和**发送测试 clip** 按钮——变绿就能用了，全程零配置
 
 ## 四种模式
@@ -32,6 +32,8 @@ Chrome 扩展 ──POST localhost:17183──▶ vault-autopilot（Obsidian 插
 ## 数据与隐私
 
 你的 clip 数据只在本机流转（扩展 → 本机端口 17183 → 本地 Obsidian vault），不发送到任何开发者服务器。无账号、无云端、无遥测。唯一的外部请求：Hook/封面模式会用你自己的浏览器会话，直接向 YouTube/Bilibili 官方接口读取公开的视频元数据和字幕——等同于你自己浏览该页面，数据不经第三方中转。
+
+若切换到 Notion 模式，clip 会用你本人的 Notion token 直接写入你自己的 Notion 工作区（`api.notion.com`），token 只保存在浏览器本地，同样不经过任何开发者服务器。
 
 ## 常见问题
 
