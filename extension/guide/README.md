@@ -5,6 +5,8 @@ stay hidden if a file cannot load, so missing shots never break the page.
 
 ## Obsidian onboarding (English UI, one set for both locales)
 
+- `chrome-pin-extension.png`: Chrome extensions puzzle menu with the Visual Clipper pin icon highlighted
+- `chrome-panel.png`: Visual Clipper panel open on a video page showing the four capture modes
 - `obsidian-open-settings.png`: Obsidian main window with the bottom-left settings gear highlighted
 - `obsidian-plugins-folder.png`: Community plugins settings with the folder icon next to Installed plugins highlighted
 - `obsidian-unzip-plugins.png`: Finder path bar showing vault › .obsidian › plugins with the vault-autopilot folder inside (main.js, manifest.json, styles.css visible)

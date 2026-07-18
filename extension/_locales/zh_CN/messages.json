@@ -102,7 +102,7 @@
   "welcome_install_img2_caption": { "message": "第三方插件里 Vault Autopilot 处于开启状态。" },
 
   "welcome_tryit_title":     { "message": "去试一试" },
-  "welcome_tryit_body":      { "message": "随便打开一个视频，点扩展图标，再点「收藏封面」——几秒钟后你的第一条笔记就出现在 Obsidian 里。" },
+  "welcome_tryit_body":      { "message": "随便打开一个视频，点一下 Visual Clipper 图标，会弹出四种采集模式的面板：截图（框选任意区域）、收藏封面（封面加标题）、Hook 分析、视频关键帧，都可以直接用。第一条就点「收藏封面」，几秒钟后笔记就会出现在 Obsidian 里。" },
   "welcome_tryit_link_text": { "message": "打开 bilibili，随便挑一个视频 →" },
   "welcome_tryit_url":       { "message": "https://www.bilibili.com/" },
 
@@ -232,5 +232,10 @@
   "welcome_install_img_folder_alt": { "message": "社区插件设置页，高亮打开插件文件夹的图标" },
   "welcome_install_img_folder_caption": { "message": "「Installed plugins」旁的文件夹图标，直达 .obsidian/plugins。" },
   "welcome_install_img_gear_alt": { "message": "Obsidian 主窗口，左下角设置齿轮高亮" },
-  "welcome_install_img_gear_caption": { "message": "设置入口就是左下角这个齿轮。" }
+  "welcome_install_img_gear_caption": { "message": "设置入口就是左下角这个齿轮。" },
+  "welcome_pin_html": { "message": "<strong>把扩展钉在工具栏。</strong>点 Chrome 工具栏的拼图图标，把 <strong>Visual Clipper</strong> 用图钉钉住，以后一键就能打开。" },
+  "welcome_install_img_pin_alt": { "message": "Chrome 扩展菜单，高亮 Visual Clipper 的图钉按钮" },
+  "welcome_install_img_pin_caption": { "message": "在拼图菜单里把 Visual Clipper 钉住。" },
+  "welcome_install_img_panel_alt": { "message": "YouTube 页面上的 Visual Clipper 面板，显示四种采集模式" },
+  "welcome_install_img_panel_caption": { "message": "视频页点图标，面板里就是全部四种模式。" }
 }

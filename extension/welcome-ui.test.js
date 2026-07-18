@@ -154,6 +154,8 @@ describe('Obsidian triage markup and copy', () => {
         'welcome_customize_summary', 'welcome_customize_body_html',
         'welcome_install_img_folder_alt', 'welcome_install_img_folder_caption',
         'welcome_install_img_gear_alt', 'welcome_install_img_gear_caption',
+        'welcome_pin_html', 'welcome_install_img_pin_alt', 'welcome_install_img_pin_caption',
+        'welcome_install_img_panel_alt', 'welcome_install_img_panel_caption',
         'welcome_install_img_gallery_alt', 'welcome_install_img_gallery_caption',
         'welcome_install_img_settings_alt', 'welcome_install_img_settings_caption']) {
         expect({ key: k, present: typeof cat[k]?.message === 'string' && cat[k].message.length > 0 })

@@ -102,7 +102,7 @@
   "welcome_install_img2_caption": { "message": "Community plugins with Vault Autopilot switched on." },
 
   "welcome_tryit_title":     { "message": "Try it now" },
-  "welcome_tryit_body":      { "message": "Open any video, click the extension icon, then hit “Save cover”. Your first note lands in Obsidian in seconds." },
+  "welcome_tryit_body":      { "message": "Open any video and click the Visual Clipper icon. A panel with the four capture modes pops up: Screenshot (drag select a region), Save cover (cover + title), Hook analysis, and Video keyframes, all ready to use. For your first clip, hit Save cover: the note lands in Obsidian in seconds." },
   "welcome_tryit_link_text": { "message": "Open YouTube and pick any video →" },
   "welcome_tryit_url":       { "message": "https://www.youtube.com/" },
 
@@ -232,5 +232,10 @@
   "welcome_install_img_folder_alt": { "message": "Community plugins settings with the open plugins folder icon highlighted" },
   "welcome_install_img_folder_caption": { "message": "The folder icon next to Installed plugins opens .obsidian/plugins directly." },
   "welcome_install_img_gear_alt": { "message": "Obsidian main window with the settings gear in the bottom left corner highlighted" },
-  "welcome_install_img_gear_caption": { "message": "Settings lives behind the gear in the bottom left corner." }
+  "welcome_install_img_gear_caption": { "message": "Settings lives behind the gear in the bottom left corner." },
+  "welcome_pin_html": { "message": "<strong>Pin the extension.</strong> Click the puzzle icon in Chrome's toolbar and pin <strong>Visual Clipper</strong>, so it is always one click away." },
+  "welcome_install_img_pin_alt": { "message": "Chrome extensions menu with the Visual Clipper pin icon highlighted" },
+  "welcome_install_img_pin_caption": { "message": "Pin Visual Clipper from the puzzle menu." },
+  "welcome_install_img_panel_alt": { "message": "Visual Clipper panel on a YouTube page showing the four capture modes" },
+  "welcome_install_img_panel_caption": { "message": "Click the icon on any video page: the panel offers all four modes." }
 }
