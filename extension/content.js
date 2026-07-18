@@ -256,7 +256,7 @@
     const fctx = full.getContext('2d');
     const SW = 32, SH = 18;                          // tiny canvas just for scoring
     const small = document.createElement('canvas'); small.width = SW; small.height = SH;
-    const sctx = small.getContext('2d');
+    const sctx = small.getContext('2d', { willReadFrequently: true });
 
     const cands = [];
     try {
