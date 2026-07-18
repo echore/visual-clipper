@@ -221,7 +221,7 @@
   "default_title_screenshot": { "message": "Screenshot" },
 
   "welcome_install_manual_c_html": { "message": "<strong>Unzip, then drag the whole <code>vault-autopilot</code> folder into <code>plugins/</code>.</strong> Double clicking the zip extracts it." },
-  "welcome_install_manual_check_html": { "message": "Quick check: open <code>plugins/vault-autopilot/</code>. It should directly contain <code>main.js</code>, <code>manifest.json</code> and <code>styles.css</code>. If you see another <code>vault-autopilot</code> folder nested inside, move the inner one up one level." },
+  "welcome_install_manual_check_html": { "message": "Plugin missing in the next step? Some unzip tools wrap everything in an extra vault-autopilot folder. Open it and drag the inner one into plugins instead." },
   "welcome_zeroconfig_html": { "message": "<strong>Zero config:</strong> it works out of the box. Folders, port and note layout all have sensible defaults, nothing needs changing." },
   "welcome_gallery_html": { "message": "<strong>Open your video library.</strong> Click the gallery icon in Obsidian's left ribbon: every video you clip becomes a cover card, filterable by platform and dimension." },
   "welcome_manual_title": { "message": "Reference: how it all works" },

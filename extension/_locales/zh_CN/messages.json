@@ -221,7 +221,7 @@
   "default_title_screenshot": { "message": "截图" },
 
   "welcome_install_manual_c_html": { "message": "<strong>解压后把整个 <code>vault-autopilot</code> 文件夹拖进 <code>plugins/</code>。</strong>双击 zip 即可解压。" },
-  "welcome_install_manual_check_html": { "message": "自查：打开 <code>plugins/vault-autopilot/</code>，里面应直接是 <code>main.js</code>、<code>manifest.json</code>、<code>styles.css</code> 三个文件。若里面又套了一层 vault-autopilot 文件夹，把内层的往上移一级。" },
+  "welcome_install_manual_check_html": { "message": "下一步的列表里看不到插件？有些解压工具会多包一层同名文件夹——打开看一眼，把里面那层拖进 plugins 才对。" },
   "welcome_zeroconfig_html": { "message": "<strong>零配置：</strong>装好即用。文件夹、端口、笔记结构都有合理默认值，一项都不用改。" },
   "welcome_gallery_html": { "message": "<strong>打开你的视频库。</strong>点 Obsidian 左侧边栏的画廊图标：收藏过的视频都会变成封面卡片，可按平台和维度筛选。" },
   "welcome_manual_title": { "message": "手册：随时回来查" },
