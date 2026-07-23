@@ -20,11 +20,9 @@
 
 ## 安装
 
-**Chrome Web Store 版即将上架。** 当前手动安装，两分钟搞定：
+从 Chrome Web Store 一键安装：
 
-1. 下载 [visual-clipper.zip](https://github.com/echore/visual-clipper/releases/latest/download/visual-clipper.zip) 并解压
-2. 打开 `chrome://extensions`，右上角开启**开发者模式**
-3. 点左上角**加载已解压的扩展程序**，选中解压出的文件夹
+**[添加到 Chrome →](https://chromewebstore.google.com/detail/fdacngopoamkfnnnafaagkkknnjcdnli)**
 
 装完会自动打开引导页：选择存到 Obsidian 还是 Notion，跟着实时检测和逐步截图点完即可。状态灯变绿就能用。
 

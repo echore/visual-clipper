@@ -20,11 +20,9 @@ Clips from the same video always land in the same note. Save the cover today, gr
 
 ## Install
 
-**Chrome Web Store: coming soon.** Until then, install manually. It takes two minutes.
+Install from the Chrome Web Store in one click:
 
-1. Download [visual-clipper.zip](https://github.com/echore/visual-clipper/releases/latest/download/visual-clipper.zip) and unzip it
-2. Open `chrome://extensions` and turn on **Developer mode** (top right corner)
-3. Click **Load unpacked** (top left corner) and pick the folder you just unzipped
+**[Add to Chrome →](https://chromewebstore.google.com/detail/fdacngopoamkfnnnafaagkkknnjcdnli)**
 
 A welcome page opens on its own. It asks where you want your clips (Obsidian or Notion) and walks you through the rest with live checks and step by step screenshots. When the status light turns green, you are ready.
 
